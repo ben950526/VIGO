@@ -62,7 +62,10 @@ export default async function DashboardPage() {
                 : "未通過"}
           </p>
           <p className="mb-4 text-[var(--text-secondary)]">
-            {profile.studio_name} · /creator/{profile.slug}
+            <Link href={`/creator/${profile.slug}`} className="text-[var(--accent)] hover:underline">
+              {profile.studio_name}
+            </Link>
+            {" "}· /creator/{profile.slug}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href="/dashboard/profile" className="btn-primary">
@@ -71,11 +74,11 @@ export default async function DashboardPage() {
             <Link href="/dashboard/portfolio/new" className="btn-secondary">
               新增作品
             </Link>
-            {profile.verification_status === "approved" && profile.is_listed && (
-              <Link href={`/creator/${profile.slug}`} className="btn-secondary">
-                查看公開頁
-              </Link>
-            )}
+            <Link href={`/creator/${profile.slug}`} className="btn-secondary">
+              {profile.verification_status === "approved" && profile.is_listed
+                ? "查看公開頁"
+                : "預覽工作室"}
+            </Link>
           </div>
 
           {profile.verification_status === "approved" && (

@@ -197,7 +197,7 @@ export async function approveCreator(formData: FormData): Promise<void> {
   const supabase = await createClient();
   await supabase
     .from("creator_profiles")
-    .update({ verification_status: "approved" })
+    .update({ verification_status: "approved", is_listed: true })
     .eq("id", id);
 
   revalidatePath("/admin/review");
@@ -256,7 +256,7 @@ export async function approveCreatorAndWorks(formData: FormData): Promise<void> 
 
   await supabase
     .from("creator_profiles")
-    .update({ verification_status: "approved" })
+    .update({ verification_status: "approved", is_listed: true })
     .eq("id", id);
 
   await supabase

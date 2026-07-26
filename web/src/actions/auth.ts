@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured, slugify } from "@/lib/utils";
+import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
 export async function signUp(formData: FormData) {
   if (!isSupabaseConfigured()) {
@@ -32,7 +32,7 @@ export async function signUp(formData: FormData) {
   if (error) return { error: error.message };
   if (!data.user) return { error: "註冊失敗，請稍後再試" };
 
-  const slug = slugify(studioName) || `creator-${data.user.id.slice(0, 8)}`;
+  const slug = createCreatorSlug(studioName, data.user.id);
 
   const { error: profileError } = await supabase.from("creator_profiles").insert({
     user_id: data.user.id,

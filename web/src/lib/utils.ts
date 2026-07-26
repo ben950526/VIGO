@@ -8,6 +8,41 @@ export function slugify(text: string): string {
     .slice(0, 48);
 }
 
+/** Next.js may pass dynamic route params still URL-encoded (e.g. %E5%93%88). */
+export function normalizeSlugParam(raw: string): string {
+  let slug = raw.trim();
+  for (let i = 0; i < 2; i++) {
+    try {
+      const decoded = decodeURIComponent(slug);
+      if (decoded === slug) break;
+      slug = decoded;
+    } catch {
+      break;
+    }
+  }
+  return slug;
+}
+
+/** Prefer ASCII slugs so /creator/[slug] works reliably on all hosts. */
+export function createCreatorSlug(studioName: string, userId: string): string {
+  const ascii = studioName
+    .toLowerCase()
+    .trim()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+
+  if (/^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(ascii)) {
+    return ascii;
+  }
+
+  return `creator-${userId.slice(0, 8)}`;
+}
+
 export function formatPriceRange(
   min: number | null,
   max: number | null,

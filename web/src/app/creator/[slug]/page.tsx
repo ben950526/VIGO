@@ -7,9 +7,10 @@ import { CreatorStudioInfo } from "@/components/creator/CreatorStudioInfo";
 import { DemoAccountBanner } from "@/components/creator/DemoAccountBanner";
 import { DemoBadge } from "@/components/creator/DemoBadge";
 import { PortfolioGridWithFilter } from "@/components/creator/PortfolioGridWithFilter";
+import { StudioPreviewBanner } from "@/components/creator/StudioPreviewBanner";
 import { getFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isDemoCreator } from "@/lib/demo-creator";
-import { getCreatorBySlug } from "@/lib/data/creators";
+import { getCreatorPageBySlug } from "@/lib/data/creators";
 import { UnpublishedText } from "@/components/creator/UnpublishedText";
 import { formatPriceRange } from "@/lib/utils";
 
@@ -19,18 +20,20 @@ interface CreatorPageProps {
 
 export async function generateMetadata({ params }: CreatorPageProps) {
   const { slug } = await params;
-  const creator = await getCreatorBySlug(slug);
-  if (!creator) return { title: "找不到創作者" };
+  const page = await getCreatorPageBySlug(slug);
+  if (!page) return { title: "找不到創作者" };
   return {
-    title: creator.studio_name,
-    description: creator.bio ?? `${creator.studio_name} 的短影音作品集`,
+    title: page.creator.studio_name,
+    description: page.creator.bio ?? `${page.creator.studio_name} 的短影音作品集`,
   };
 }
 
 export default async function CreatorPage({ params }: CreatorPageProps) {
   const { slug } = await params;
-  const creator = await getCreatorBySlug(slug);
-  if (!creator) notFound();
+  const page = await getCreatorPageBySlug(slug);
+  if (!page) notFound();
+
+  const { creator, previewReason } = page;
 
   const price = isDemoCreator(creator)
     ? null
@@ -40,6 +43,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   return (
     <>
+      {previewReason && <StudioPreviewBanner reason={previewReason} />}
       {isDemo && <DemoAccountBanner />}
       <section className="relative flex min-h-[50vh] items-end px-6 pb-16 pt-32 md:px-12">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-100 via-slate-200 to-blue-100" aria-hidden />
