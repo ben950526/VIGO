@@ -17,7 +17,7 @@
 | **2** | `migrations/002_admin_rls.sql` | 管理員可審核所有創作者／作品 |
 | **3** | `migrations/003_avatar_storage.sql` | 頭像 Storage bucket |
 | **4** | `RUN_ONCE.sql` | 工作室擴充欄位、價目表、意見箱、BUG 回報、下架、示範帳號撤除函式 |
-| **5** | `migrations/013_is_demo.sql` | 示範帳號標記 + 後台「建立示範帳號」按鈕 |
+| **5** | `migrations/013_is_demo.sql` | 示範帳號標記 + 審核管理「建立示範帳號」按鈕 |
 
 ### 怎麼執行（每一步都一樣）
 
@@ -68,7 +68,7 @@ where table_schema = 'public'
 | 002 | 管理員看不到待審列表 |
 | 003 | 上傳頭像失敗 |
 | RUN_ONCE | 價目表存不了、意見箱/BUG 無法送出、無法下架 |
-| 013 | 後台「建立示範帳號」按鈕失敗 |
+| 013 | 審核管理「建立示範帳號」按鈕失敗 |
 
 ---
 

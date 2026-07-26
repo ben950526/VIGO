@@ -20,7 +20,7 @@ export async function seedDemoAccounts(): Promise<{ ok: boolean; message: string
       return {
         ok: false,
         message:
-          "請先到 Supabase SQL Editor 執行 supabase/migrations/013_is_demo.sql，再從後台重試。",
+          "請先到 Supabase SQL Editor 執行 supabase/migrations/013_is_demo.sql，再從審核管理重試。",
       };
     }
     return { ok: false, message: error.message };
@@ -176,7 +176,7 @@ export async function removeAllDemoAccounts(): Promise<{ ok: boolean; message: s
       return {
         ok: false,
         message:
-          "請先到 Supabase SQL Editor 執行 supabase/migrations/011_remove_demo_accounts.sql，再從後台重試。",
+          "請先到 Supabase SQL Editor 執行 supabase/migrations/011_remove_demo_accounts.sql，再從審核管理重試。",
       };
     }
     return { ok: false, message: error.message };

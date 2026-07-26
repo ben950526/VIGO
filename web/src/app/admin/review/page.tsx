@@ -14,6 +14,10 @@ import {
   getPublishedCreators,
 } from "@/lib/data/admin";
 
+export const metadata = {
+  title: "審核管理",
+};
+
 export default async function AdminReviewPage({
   searchParams,
 }: {
@@ -232,10 +236,10 @@ export default async function AdminReviewPage({
 
         <div>
           <h2 className="mb-4 text-xl font-bold">
-            已公開內容管理 ({publishedCreators.length})
+            下架工作室與作品 ({publishedCreators.length})
           </h2>
           <p className="mb-4 text-sm text-[var(--text-muted)]">
-            可下架或重新上架已通過審核的工作室與作品。下架後不會出現在探索頁與公開連結。
+            於審核管理下架或重新上架已通過審核的工作室與作品。下架後不會出現在探索頁與公開連結。
           </p>
           {publishedCreators.length === 0 ? (
             <p className="text-[var(--text-muted)]">目前沒有已公開的創作者</p>
