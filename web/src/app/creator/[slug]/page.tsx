@@ -6,7 +6,7 @@ import { CreatorPriceList } from "@/components/creator/CreatorPriceList";
 import { CreatorStudioInfo } from "@/components/creator/CreatorStudioInfo";
 import { DemoAccountBanner } from "@/components/creator/DemoAccountBanner";
 import { DemoBadge } from "@/components/creator/DemoBadge";
-import { PortfolioGrid } from "@/components/creator/PortfolioGrid";
+import { PortfolioGridWithFilter } from "@/components/creator/PortfolioGridWithFilter";
 import { getFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isDemoCreator } from "@/lib/demo-creator";
 import { getCreatorBySlug } from "@/lib/data/creators";
@@ -126,7 +126,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
       <section className="section">
         <div className="container-narrow">
           <h2 className="mb-10 text-center text-3xl font-bold">全部作品</h2>
-          <PortfolioGrid items={creator.portfolio_items} />
+          <PortfolioGridWithFilter items={creator.portfolio_items} />
         </div>
       </section>
 
