@@ -1,0 +1,21 @@
+# 環境變數（含密鑰，絕不提交）
+.env
+.env.*
+!.env.example
+
+# 依賴與建置
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+reference/node_modules/
+
+# 系統與 IDE
+.DS_Store
+Thumbs.db
+*.log
+.vercel
+
+# TypeScript
+web/*.tsbuildinfo
+web/next-env.d.ts

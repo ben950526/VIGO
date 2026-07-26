@@ -1,0 +1,41 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { signUp } from "@/actions/auth";
+
+export default function RegisterPage() {
+  const [error, setError] = useState("");
+
+  async function handleSubmit(formData: FormData) {
+    const result = await signUp(formData);
+    if (result?.error) setError(result.error);
+  }
+
+  return (
+    <section className="section">
+      <div className="container-narrow mx-auto max-w-md">
+        <h1 className="mb-2 text-center text-3xl font-bold">接案者加入 Vigo</h1>
+        <p className="mb-8 text-center text-[var(--text-secondary)]">
+          建立工作室頁，被動等發案者找上門。初期全免費。
+        </p>
+        <form action={handleSubmit} className="space-y-4">
+          <input className="input" name="real_name" placeholder="真實姓名（實名驗證用）" required />
+          <input className="input" name="studio_name" placeholder="工作室名稱" required />
+          <input className="input" name="email" type="email" placeholder="Email" required />
+          <input className="input" name="password" type="password" placeholder="密碼（至少 6 碼）" minLength={6} required />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button type="submit" className="btn-primary w-full">
+            建立帳號
+          </button>
+        </form>
+        <p className="mt-6 text-center text-sm">
+          已有帳號？{" "}
+          <Link href="/login" className="text-[var(--accent)] hover:underline">
+            登入
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
+}
