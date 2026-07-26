@@ -6,10 +6,12 @@ import {
   rejectCreator,
   rejectPortfolioItem,
 } from "@/actions/admin";
+import { AdminPublishedCreatorCard } from "@/components/admin/AdminPublishedCreatorCard";
 import { requireAdmin } from "@/lib/auth/admin";
 import {
   getPendingCreators,
   getPendingPortfolioItems,
+  getPublishedCreators,
 } from "@/lib/data/admin";
 
 export default async function AdminReviewPage({
@@ -25,9 +27,10 @@ export default async function AdminReviewPage({
   await requireAdmin();
 
   const params = await searchParams;
-  const [pendingCreators, pendingItems] = await Promise.all([
+  const [pendingCreators, pendingItems, publishedCreators] = await Promise.all([
     getPendingCreators(),
     getPendingPortfolioItems(),
+    getPublishedCreators(),
   ]);
 
   const totalPending = pendingCreators.length + pendingItems.length;
@@ -174,7 +177,7 @@ export default async function AdminReviewPage({
           )}
         </div>
 
-        <div>
+        <div className="mb-12">
           <h2 className="mb-4 text-xl font-bold">
             待審作品 — 已公開創作者 ({pendingItems.length})
           </h2>
@@ -222,6 +225,24 @@ export default async function AdminReviewPage({
                     </form>
                   </div>
                 </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <h2 className="mb-4 text-xl font-bold">
+            已公開內容管理 ({publishedCreators.length})
+          </h2>
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
+            可下架或重新上架已通過審核的工作室與作品。下架後不會出現在探索頁與公開連結。
+          </p>
+          {publishedCreators.length === 0 ? (
+            <p className="text-[var(--text-muted)]">目前沒有已公開的創作者</p>
+          ) : (
+            <ul className="space-y-6">
+              {publishedCreators.map((creator) => (
+                <AdminPublishedCreatorCard key={creator.id} creator={creator} />
               ))}
             </ul>
           )}

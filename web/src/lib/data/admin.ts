@@ -62,3 +62,30 @@ export async function getPendingPortfolioItems(): Promise<
       };
     });
 }
+
+export interface PublishedCreator extends CreatorProfile {
+  portfolio_items: PortfolioItem[];
+}
+
+export async function getPublishedCreators(): Promise<PublishedCreator[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("creator_profiles")
+    .select("*, portfolio_items(*)")
+    .eq("verification_status", "approved")
+    .order("updated_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((row) => {
+    const record = row as Record<string, unknown>;
+    return {
+      ...(record as unknown as CreatorProfile),
+      price_list: parsePriceList(record.price_list),
+      is_listed: record.is_listed !== false,
+      portfolio_items: ((record.portfolio_items as PortfolioItem[]) ?? []).sort(
+        (a, b) => a.sort_order - b.sort_order,
+      ),
+    };
+  });
+}
