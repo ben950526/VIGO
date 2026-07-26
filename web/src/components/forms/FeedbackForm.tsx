@@ -57,7 +57,11 @@ export function FeedbackForm({ defaultPageUrl }: FeedbackFormProps) {
           placeholder="例如：希望探索頁能篩選價格區間、創作者頁想看到更多作品案例…"
         />
         <p className="mt-1 text-xs text-[var(--text-muted)]">
-          自由填寫即可，幾句話就很有幫助，約 30 秒能寫完。無需登入或留聯絡方式。
+          自由填寫即可，幾句話就很有幫助，約 30 秒能寫完。無需登入或留聯絡方式。送出即表示您同意我們依{" "}
+          <a href="/privacy" className="text-[var(--accent)] hover:underline">
+            隱私權政策
+          </a>{" "}
+          處理所填內容。
         </p>
       </div>
 

@@ -71,6 +71,9 @@ export function ContactSection({ creator }: ContactSectionProps) {
         ) : (
           <UnpublishedText />
         )}
+        <p className="mt-8 text-xs text-[var(--text-muted)]">
+          Vigo 僅提供媒合資訊，不介入雙方交易、付款或履約；請自行評估合作風險並保留溝通紀錄。
+        </p>
       </div>
     </section>
   );

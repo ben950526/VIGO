@@ -24,6 +24,26 @@ export default function RegisterPage() {
           <input className="input" name="studio_name" placeholder="工作室名稱" required />
           <input className="input" name="email" type="email" placeholder="Email" required />
           <input className="input" name="password" type="password" placeholder="密碼（至少 6 碼）" minLength={6} required />
+          <label className="flex items-start gap-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+            <input
+              type="checkbox"
+              name="accept_terms"
+              value="yes"
+              required
+              className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+            />
+            <span>
+              我已年滿 18 歲（或具完全行為能力），並已閱讀且同意{" "}
+              <Link href="/terms" target="_blank" className="text-[var(--accent)] hover:underline">
+                使用條款
+              </Link>{" "}
+              與{" "}
+              <Link href="/privacy" target="_blank" className="text-[var(--accent)] hover:underline">
+                隱私權政策
+              </Link>
+              。
+            </span>
+          </label>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button type="submit" className="btn-primary w-full">
             建立帳號

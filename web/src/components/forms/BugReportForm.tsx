@@ -82,7 +82,11 @@ export function BugReportForm({ defaultPageUrl }: BugReportFormProps) {
           placeholder="例如：改完價目表 → 捲到底 → 按儲存"
         />
         <p className="mt-1 text-xs text-[var(--text-muted)]">
-          無需登入或留聯絡方式。我們會自動記錄頁面與裝置資訊，方便排查。
+          無需登入或留聯絡方式。我們會自動記錄頁面與裝置資訊，方便排查。送出即表示您同意我們依{" "}
+          <a href="/privacy" className="text-[var(--accent)] hover:underline">
+            隱私權政策
+          </a>{" "}
+          處理所填內容。
         </p>
       </div>
 

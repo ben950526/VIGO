@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { TERMS_VERSION } from "@/lib/legal";
 import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
 export async function signUp(formData: FormData) {
@@ -19,12 +20,21 @@ export async function signUp(formData: FormData) {
     return { error: "請填寫所有必填欄位" };
   }
 
+  if (formData.get("accept_terms") !== "yes") {
+    return { error: "請先閱讀並同意使用條款與隱私權政策" };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { real_name: realName, role: "creator" },
+      data: {
+        real_name: realName,
+        role: "creator",
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: TERMS_VERSION,
+      },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
   });
