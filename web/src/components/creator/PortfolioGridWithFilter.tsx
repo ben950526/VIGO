@@ -33,48 +33,53 @@ export function PortfolioGridWithFilter({ items }: PortfolioGridWithFilterProps)
     return items.filter((item) => item.style_tags.includes(selectedTag));
   }, [items, selectedTag]);
 
-  const showFilter = availableTags.length >= 2;
+  if (items.length === 0) {
+    return <PortfolioGrid items={items} />;
+  }
 
   return (
     <div className="space-y-8">
-      {showFilter && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4">
-          <p className="mb-3 text-sm font-medium text-[var(--text-secondary)]">
-            依作品風格篩選
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedTag(null)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                selectedTag === null
-                  ? "bg-[var(--btn)] text-white"
-                  : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]"
-              }`}
-            >
-              全部 ({items.length})
-            </button>
-            {availableTags.map((tag) => {
-              const count = items.filter((item) => item.style_tags.includes(tag)).length;
-              const active = selectedTag === tag;
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setSelectedTag(active ? null : tag)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-[var(--btn)] text-white"
-                      : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]"
-                  }`}
-                >
-                  {tag} ({count})
-                </button>
-              );
-            })}
-          </div>
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4">
+        <p className="mb-3 text-sm font-medium text-[var(--text-secondary)]">
+          依作品風格篩選
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedTag(null)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              selectedTag === null
+                ? "bg-[var(--btn)] text-white"
+                : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]"
+            }`}
+          >
+            全部 ({items.length})
+          </button>
+          {availableTags.map((tag) => {
+            const count = items.filter((item) => item.style_tags.includes(tag)).length;
+            const active = selectedTag === tag;
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setSelectedTag(active ? null : tag)}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-[var(--btn)] text-white"
+                    : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]"
+                }`}
+              >
+                {tag} ({count})
+              </button>
+            );
+          })}
         </div>
-      )}
+        {availableTags.length === 0 && (
+          <p className="mt-3 text-sm text-[var(--text-muted)]">
+            此創作者尚未為作品標記風格
+          </p>
+        )}
+      </div>
 
       {filteredItems.length === 0 ? (
         <p className="text-center text-[var(--text-muted)]">
