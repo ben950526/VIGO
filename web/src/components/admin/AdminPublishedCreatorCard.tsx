@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { SubmitButton } from "@/components/forms/SubmitButton";
-import {
-  adminSetCreatorListing,
-  adminSetPortfolioListing,
-} from "@/actions/admin";
+import { adminSetCreatorListing, adminSetPortfolioListing } from "@/actions/admin";
+import { AdminToggleForm } from "@/components/admin/AdminActionForm";
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
 
 interface AdminPublishedCreatorCardProps {
@@ -44,24 +41,19 @@ export function AdminPublishedCreatorCard({
             查看公開頁
           </Link>
         </div>
-        <form action={adminSetCreatorListing}>
-          <input type="hidden" name="id" value={creator.id} />
-          <input
-            type="hidden"
-            name="listed"
-            value={creator.is_listed ? "false" : "true"}
-          />
-          <SubmitButton
-            className={
-              creator.is_listed
-                ? "rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                : "btn-primary text-sm"
-            }
-            pendingText={creator.is_listed ? "下架中…" : "上架中…"}
-          >
-            {creator.is_listed ? "下架工作室" : "重新上架工作室"}
-          </SubmitButton>
-        </form>
+        <AdminToggleForm
+          action={adminSetCreatorListing}
+          id={creator.id}
+          listed={creator.is_listed}
+          className={
+            creator.is_listed
+              ? "rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              : "btn-primary text-sm"
+          }
+          pendingText={creator.is_listed ? "下架中…" : "上架中…"}
+        >
+          {creator.is_listed ? "下架工作室" : "重新上架工作室"}
+        </AdminToggleForm>
       </div>
 
       {creator.portfolio_items.length === 0 ? (
@@ -92,24 +84,19 @@ export function AdminPublishedCreatorCard({
                   </span>
                 </span>
                 {item.status !== "pending" && (
-                  <form action={adminSetPortfolioListing}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <input
-                      type="hidden"
-                      name="listed"
-                      value={isPublic ? "false" : "true"}
-                    />
-                    <SubmitButton
-                      className={
-                        isPublic
-                          ? "text-red-600 hover:underline"
-                          : "text-[var(--accent)] hover:underline"
-                      }
-                      pendingText="處理中…"
-                    >
-                      {isPublic ? "下架作品" : "重新上架作品"}
-                    </SubmitButton>
-                  </form>
+                  <AdminToggleForm
+                    action={adminSetPortfolioListing}
+                    id={item.id}
+                    listed={isPublic}
+                    className={
+                      isPublic
+                        ? "text-red-600 hover:underline"
+                        : "text-[var(--accent)] hover:underline"
+                    }
+                    pendingText="處理中…"
+                  >
+                    {isPublic ? "下架作品" : "重新上架作品"}
+                  </AdminToggleForm>
                 )}
               </li>
             );

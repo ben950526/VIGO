@@ -27,35 +27,21 @@ export async function requireAdmin(): Promise<Profile> {
     redirect("/dashboard");
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
+  const profile = await getCurrentUserProfile();
   if (!profile) redirect("/login");
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const emailMatch =
-    adminEmail && profile.email.toLowerCase() === adminEmail;
+  const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
 
   if (profile.role !== "admin" && emailMatch) {
-    await supabase
-      .from("profiles")
-      .update({ role: "admin" })
-      .eq("id", user.id);
+    const supabase = await createClient();
+    await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);
     profile.role = "admin";
   }
 
   if (profile.role !== "admin") redirect("/dashboard");
 
-  return profile as Profile;
+  return profile;
 }
 
 export async function isCurrentUserAdmin(): Promise<boolean> {
@@ -63,10 +49,8 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
   if (!profile) return false;
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const emailMatch =
-    adminEmail && profile.email.toLowerCase() === adminEmail;
+  const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
 
-  // Only ADMIN_EMAIL (you) gets auto-promoted; other users stay creator
   if (profile.role !== "admin" && emailMatch) {
     const supabase = await createClient();
     await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);

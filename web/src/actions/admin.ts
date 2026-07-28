@@ -254,16 +254,17 @@ export async function approveCreatorAndWorks(formData: FormData): Promise<void> 
 
   const supabase = await createClient();
 
-  await supabase
-    .from("creator_profiles")
-    .update({ verification_status: "approved", is_listed: true })
-    .eq("id", id);
-
-  await supabase
-    .from("portfolio_items")
-    .update({ status: "approved" })
-    .eq("creator_id", id)
-    .eq("status", "pending");
+  await Promise.all([
+    supabase
+      .from("creator_profiles")
+      .update({ verification_status: "approved", is_listed: true })
+      .eq("id", id),
+    supabase
+      .from("portfolio_items")
+      .update({ status: "approved" })
+      .eq("creator_id", id)
+      .eq("status", "pending"),
+  ]);
 
   revalidateAfterPublicCreatorChange();
 }

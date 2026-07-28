@@ -2,6 +2,11 @@ import type { CreatorProfile, PortfolioItem } from "@/types/database";
 import { parsePriceList } from "@/lib/price-list";
 import { createClient } from "@/lib/supabase/server";
 
+const PENDING_CREATOR_FIELDS =
+  "id, studio_name, slug, region, bio, contact_email, verification_status, created_at";
+const PORTFOLIO_SUMMARY_FIELDS = "id, title, status, sort_order, creator_id";
+const PUBLISHED_CREATOR_FIELDS = "id, studio_name, slug, region, is_listed, updated_at";
+
 export interface PendingCreator extends CreatorProfile {
   portfolio_items: PortfolioItem[];
 }
@@ -10,7 +15,7 @@ export async function getPendingCreators(): Promise<PendingCreator[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select("*, portfolio_items(*)")
+    .select(`${PENDING_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_SUMMARY_FIELDS})`)
     .eq("verification_status", "pending")
     .order("created_at", { ascending: false });
 
@@ -34,7 +39,7 @@ export async function getPendingPortfolioItems(): Promise<
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("portfolio_items")
-    .select("*, creator_profiles(studio_name, slug, verification_status)")
+    .select("id, title, embed_url, status, created_at, creator_profiles(studio_name, slug, verification_status)")
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
@@ -48,19 +53,12 @@ export async function getPendingPortfolioItems(): Promise<
         | null
         | undefined;
       return creator?.verification_status === "approved";
-    })
-    .map((row) => {
-      const record = row as Record<string, unknown>;
-      const creator = record.creator_profiles as Pick<
-        CreatorProfile,
-        "studio_name" | "slug"
-      >;
-      const item = record as unknown as PortfolioItem;
-      return {
-        ...item,
-        creator,
-      };
-    });
+    }).map((row) => {
+    const record = row as Record<string, unknown>;
+    const creator = record.creator_profiles as Pick<CreatorProfile, "studio_name" | "slug">;
+    const item = record as unknown as PortfolioItem;
+    return { ...item, creator };
+  });
 }
 
 export interface PublishedCreator extends CreatorProfile {
@@ -71,7 +69,7 @@ export async function getPublishedCreators(): Promise<PublishedCreator[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select("*, portfolio_items(*)")
+    .select(`${PUBLISHED_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_SUMMARY_FIELDS})`)
     .eq("verification_status", "approved")
     .order("updated_at", { ascending: false });
 

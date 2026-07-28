@@ -1,15 +1,13 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { signOut } from "@/actions/auth";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
-import { isCurrentUserAdmin } from "@/lib/auth/admin";
-import {
-  getCurrentUserCreatorProfile,
-  getCurrentUserPortfolio,
-} from "@/lib/data/creators";
+import { getDashboardData } from "@/lib/data/dashboard";
 import { isFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ListingControl } from "@/components/dashboard/ListingControl";
+import { SubmitButton } from "@/components/forms/SubmitButton";
+
 export default async function DashboardPage() {
   if (!isSupabaseConfigured()) {
     return (
@@ -25,11 +23,10 @@ export default async function DashboardPage() {
     );
   }
 
-  const profile = await getCurrentUserCreatorProfile();
-  if (!profile) redirect("/login");
+  const data = await getDashboardData();
+  if (!data) redirect("/login");
 
-  const portfolio = await getCurrentUserPortfolio();
-  const isAdmin = await isCurrentUserAdmin();
+  const { profile, portfolio, isAdmin } = data;
 
   return (
     <section className="section">
@@ -43,9 +40,7 @@ export default async function DashboardPage() {
               </Link>
             )}
             <form action={signOut}>
-            <button type="submit" className="btn-secondary text-sm">
-              登出
-            </button>
+              <SubmitButton className="btn-secondary text-sm">登出</SubmitButton>
             </form>
           </div>
         </div>
@@ -117,16 +112,15 @@ export default async function DashboardPage() {
                   {!isFeatured && item.status === "approved" && (
                     <form action={setFeaturedPortfolioItem}>
                       <input type="hidden" name="id" value={item.id} />
-                      <button type="submit" className="btn-secondary text-sm">
-                        設為精選
-                      </button>
+                      <SubmitButton className="btn-secondary text-sm">設為精選</SubmitButton>
                     </form>
                   )}
                 </li>
               );
             })}
           </ul>
-        )}      </div>
+        )}
+      </div>
     </section>
   );
 }

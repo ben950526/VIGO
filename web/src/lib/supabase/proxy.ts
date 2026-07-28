@@ -25,8 +25,8 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Refresh session if expired — required for Server Components
-  await supabase.auth.getUser();
+  // 僅刷新 cookie 內 session，避免每次請求都打 Auth API
+  await supabase.auth.getSession();
 
   return supabaseResponse;
 }
