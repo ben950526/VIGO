@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateCreatorList } from "@/lib/cache/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { parseEmbedUrl } from "@/lib/embed";
 import { parsePriceList } from "@/lib/price-list";
@@ -134,7 +135,7 @@ export async function updateCreatorProfile(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
-  revalidatePath("/explore");
+  revalidateCreatorList();
   return { success: true };
 }
 
@@ -276,8 +277,7 @@ export async function setCreatorListing(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
-  revalidatePath("/explore");
-  revalidatePath("/");
+  revalidateCreatorList();
   revalidatePath(`/creator/${profile.slug}`);
 
   return { success: true };

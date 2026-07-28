@@ -35,6 +35,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export function ProfileForm({ profile }: ProfileFormProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [pending, setPending] = useState(false);
   const [preview, setPreview] = useState<string | null>(profile.avatar_url);
   const [priceList, setPriceList] = useState<PriceListItem[]>(
     profile.price_list?.length ? profile.price_list : [],
@@ -47,14 +48,19 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
   async function handleSubmit(formData: FormData) {
     setSuccess(false);
-    formData.set("price_list_json", JSON.stringify(parsePriceList(priceList)));
-    const result = await updateCreatorProfile(formData);
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
+    setPending(true);
     setError("");
-    setSuccess(true);
+    formData.set("price_list_json", JSON.stringify(parsePriceList(priceList)));
+    try {
+      const result = await updateCreatorProfile(formData);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setSuccess(true);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -238,7 +244,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           {success && <p className="text-sm text-green-700">已儲存，等待審核後公開。</p>}
-          <button type="submit" className="btn-primary">儲存</button>
+          <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
+            {pending ? "儲存中…" : "儲存"}
+          </button>
         </form>
       </div>
     </section>

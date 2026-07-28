@@ -3,6 +3,8 @@ import { CreatorCard } from "@/components/creator/CreatorCard";
 import { ExploreFilters } from "@/components/explore/ExploreFilters";
 import { getApprovedCreators } from "@/lib/data/creators";
 
+export const revalidate = 60;
+
 interface ExplorePageProps {
   searchParams: Promise<{
     q?: string;

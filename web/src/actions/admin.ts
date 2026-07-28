@@ -1,6 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  revalidateAdminReviewOnly,
+  revalidateAfterPublicCreatorChange,
+  revalidateCreatorList,
+} from "@/lib/cache/revalidate";
 import { demoPortfolioBySlug } from "@/lib/demo-portfolio-data";
 import { demoPatchToDbRow, demoStudioPatches } from "@/lib/demo-studio-data";
 import { createClient } from "@/lib/supabase/server";
@@ -82,12 +87,11 @@ export async function seedDemoPortfolioData(): Promise<{
     }
   }
 
+  revalidateCreatorList();
+  revalidatePath("/admin/review");
   for (const group of demoPortfolioBySlug) {
     revalidatePath(`/creator/${group.slug}`);
   }
-  revalidatePath("/explore");
-  revalidatePath("/");
-  revalidatePath("/admin/review");
 
   if (errors.length > 0) {
     return {
@@ -133,12 +137,11 @@ export async function updateDemoStudioData(): Promise<{ ok: boolean; message: st
     }
   }
 
-  revalidatePath("/explore");
-  revalidatePath("/");
+  revalidateCreatorList();
+  revalidatePath("/admin/review");
   for (const patch of demoStudioPatches) {
     revalidatePath(`/creator/${patch.slug}`);
   }
-  revalidatePath("/admin/review");
 
   if (errors.length > 0) {
     return {
@@ -182,8 +185,7 @@ export async function removeAllDemoAccounts(): Promise<{ ok: boolean; message: s
     return { ok: false, message: error.message };
   }
 
-  revalidatePath("/");
-  revalidatePath("/explore");
+  revalidateCreatorList();
   revalidatePath("/admin/review");
 
   return { ok: true, message: String(data ?? "已撤除所有假帳號") };
@@ -200,8 +202,7 @@ export async function approveCreator(formData: FormData): Promise<void> {
     .update({ verification_status: "approved", is_listed: true })
     .eq("id", id);
 
-  revalidatePath("/admin/review");
-  revalidatePath("/explore");
+  revalidateAfterPublicCreatorChange();
 }
 
 export async function rejectCreator(formData: FormData): Promise<void> {
@@ -215,7 +216,7 @@ export async function rejectCreator(formData: FormData): Promise<void> {
     .update({ verification_status: "rejected" })
     .eq("id", id);
 
-  revalidatePath("/admin/review");
+  revalidateAdminReviewOnly();
 }
 
 export async function approvePortfolioItem(formData: FormData): Promise<void> {
@@ -229,8 +230,7 @@ export async function approvePortfolioItem(formData: FormData): Promise<void> {
     .update({ status: "approved" })
     .eq("id", id);
 
-  revalidatePath("/admin/review");
-  revalidatePath("/explore");
+  revalidateAfterPublicCreatorChange();
 }
 
 export async function rejectPortfolioItem(formData: FormData): Promise<void> {
@@ -244,7 +244,7 @@ export async function rejectPortfolioItem(formData: FormData): Promise<void> {
     .update({ status: "rejected" })
     .eq("id", id);
 
-  revalidatePath("/admin/review");
+  revalidateAdminReviewOnly();
 }
 
 export async function approveCreatorAndWorks(formData: FormData): Promise<void> {
@@ -265,8 +265,7 @@ export async function approveCreatorAndWorks(formData: FormData): Promise<void> 
     .eq("creator_id", id)
     .eq("status", "pending");
 
-  revalidatePath("/admin/review");
-  revalidatePath("/explore");
+  revalidateAfterPublicCreatorChange();
 }
 
 export async function adminSetCreatorListing(formData: FormData): Promise<void> {
@@ -288,10 +287,7 @@ export async function adminSetCreatorListing(formData: FormData): Promise<void> 
     .update({ is_listed: listed })
     .eq("id", id);
 
-  revalidatePath("/admin/review");
-  revalidatePath("/explore");
-  revalidatePath("/");
-  if (creator?.slug) revalidatePath(`/creator/${creator.slug}`);
+  revalidateAfterPublicCreatorChange(creator?.slug);
 }
 
 export async function adminSetPortfolioListing(formData: FormData): Promise<void> {
@@ -313,13 +309,7 @@ export async function adminSetPortfolioListing(formData: FormData): Promise<void
     .update({ status: listed ? "approved" : "rejected" })
     .eq("id", id);
 
-  revalidatePath("/admin/review");
-  revalidatePath("/explore");
-  revalidatePath("/");
-
   const record = item as Record<string, unknown> | null;
   const creatorProfiles = record?.creator_profiles as { slug?: string } | null;
-  if (creatorProfiles?.slug) {
-    revalidatePath(`/creator/${creatorProfiles.slug}`);
-  }
+  revalidateAfterPublicCreatorChange(creatorProfiles?.slug);
 }

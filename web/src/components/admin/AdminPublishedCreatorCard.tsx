@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 import {
   adminSetCreatorListing,
   adminSetPortfolioListing,
@@ -50,16 +51,16 @@ export function AdminPublishedCreatorCard({
             name="listed"
             value={creator.is_listed ? "false" : "true"}
           />
-          <button
-            type="submit"
+          <SubmitButton
             className={
               creator.is_listed
                 ? "rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 : "btn-primary text-sm"
             }
+            pendingText={creator.is_listed ? "下架中…" : "上架中…"}
           >
             {creator.is_listed ? "下架工作室" : "重新上架工作室"}
-          </button>
+          </SubmitButton>
         </form>
       </div>
 
@@ -98,16 +99,16 @@ export function AdminPublishedCreatorCard({
                       name="listed"
                       value={isPublic ? "false" : "true"}
                     />
-                    <button
-                      type="submit"
+                    <SubmitButton
                       className={
                         isPublic
                           ? "text-red-600 hover:underline"
                           : "text-[var(--accent)] hover:underline"
                       }
+                      pendingText="處理中…"
                     >
                       {isPublic ? "下架作品" : "重新上架作品"}
-                    </button>
+                    </SubmitButton>
                   </form>
                 )}
               </li>

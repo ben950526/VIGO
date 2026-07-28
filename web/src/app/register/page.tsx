@@ -6,10 +6,17 @@ import { signUp } from "@/actions/auth";
 
 export default function RegisterPage() {
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
   async function handleSubmit(formData: FormData) {
-    const result = await signUp(formData);
-    if (result?.error) setError(result.error);
+    setPending(true);
+    setError("");
+    try {
+      const result = await signUp(formData);
+      if (result?.error) setError(result.error);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -45,8 +52,8 @@ export default function RegisterPage() {
             </span>
           </label>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button type="submit" className="btn-primary w-full">
-            建立帳號
+          <button type="submit" disabled={pending} className="btn-primary w-full disabled:opacity-70">
+            {pending ? "建立中…" : "建立帳號"}
           </button>
         </form>
         <p className="mt-6 text-center text-sm">

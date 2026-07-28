@@ -6,10 +6,17 @@ import { signIn } from "@/actions/auth";
 
 export default function LoginPage() {
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
   async function handleSubmit(formData: FormData) {
-    const result = await signIn(formData);
-    if (result?.error) setError(result.error);
+    setPending(true);
+    setError("");
+    try {
+      const result = await signIn(formData);
+      if (result?.error) setError(result.error);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -23,8 +30,8 @@ export default function LoginPage() {
           <input className="input" name="email" type="email" placeholder="Email" required />
           <input className="input" name="password" type="password" placeholder="密碼" required />
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button type="submit" className="btn-primary w-full">
-            登入
+          <button type="submit" disabled={pending} className="btn-primary w-full disabled:opacity-70">
+            {pending ? "登入中…" : "登入"}
           </button>
         </form>
         <p className="mt-6 text-center text-sm">

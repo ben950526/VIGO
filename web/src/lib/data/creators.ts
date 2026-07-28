@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import type { CreatorProfile, CreatorWithPortfolio, PortfolioItem } from "@/types/database";
+import { CREATOR_LIST_TAG } from "@/lib/cache/revalidate";
 import { isDemoCreator } from "@/lib/demo-creator";
 import { isCurrentUserAdmin } from "@/lib/auth/admin";
 import { parsePriceList } from "@/lib/price-list";
@@ -26,45 +28,39 @@ function mapCreatorRow(row: Record<string, unknown>): CreatorWithPortfolio {
   };
 }
 
+function mapCreatorListRow(row: Record<string, unknown>): CreatorWithPortfolio {
+  return {
+    ...normalizeCreator(row),
+    portfolio_items: [],
+  };
+}
+
 function isPublicCreator(profile: CreatorProfile): boolean {
   return profile.verification_status === "approved" && profile.is_listed;
 }
 
-export async function getApprovedCreators(filters?: {
+type CreatorFilters = {
   region?: string;
   styleTag?: string;
   serviceType?: string;
   query?: string;
-}): Promise<CreatorWithPortfolio[]> {
-  if (!isSupabaseConfigured()) return [];
+};
 
-  const supabase = await createClient();
-  let query = supabase
-    .from("creator_profiles")
-    .select("*, portfolio_items(*)")
-    .eq("verification_status", "approved")
-    .order("featured", { ascending: false })
-    .order("updated_at", { ascending: false });
+function applyCreatorFilters(
+  creators: CreatorWithPortfolio[],
+  filters?: CreatorFilters,
+): CreatorWithPortfolio[] {
+  let result = creators;
 
-  if (filters?.region) query = query.eq("region", filters.region);
-
-  const { data, error } = await query;
-  if (error || !data) return [];
-
-  let creators = data
-    .map((row) => mapCreatorRow(row as Record<string, unknown>))
-    .filter((creator) => creator.is_listed);
   if (filters?.styleTag) {
-    creators = creators.filter((c) => c.style_tags.includes(filters.styleTag!));
+    result = result.filter((c) => c.style_tags.includes(filters.styleTag!));
   }
   if (filters?.serviceType) {
-    creators = creators.filter((c) =>
-      c.service_types.includes(filters.serviceType!),
-    );
+    result = result.filter((c) => c.service_types.includes(filters.serviceType!));
   }
   if (filters?.query) {
     const q = filters.query.toLowerCase();
-    creators = creators.filter((c) => {
+    result = result.filter((c) => {
       const haystack = [
         c.studio_name,
         c.bio ?? "",
@@ -77,14 +73,46 @@ export async function getApprovedCreators(filters?: {
     });
   }
 
-  creators.sort((a, b) => {
+  result.sort((a, b) => {
     const aDemo = isDemoCreator(a) ? 1 : 0;
     const bDemo = isDemoCreator(b) ? 1 : 0;
     if (aDemo !== bDemo) return aDemo - bDemo;
     return 0;
   });
 
-  return creators;
+  return result;
+}
+
+async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorWithPortfolio[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createClient();
+  let query = supabase
+    .from("creator_profiles")
+    .select("*")
+    .eq("verification_status", "approved")
+    .eq("is_listed", true)
+    .order("featured", { ascending: false })
+    .order("updated_at", { ascending: false });
+
+  if (filters?.region) query = query.eq("region", filters.region);
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+
+  const creators = data.map((row) => mapCreatorListRow(row as Record<string, unknown>));
+  return applyCreatorFilters(creators, filters);
+}
+
+export async function getApprovedCreators(
+  filters?: CreatorFilters,
+): Promise<CreatorWithPortfolio[]> {
+  const cacheKey = JSON.stringify(filters ?? {});
+
+  return unstable_cache(() => fetchApprovedCreators(filters), ["approved-creators", cacheKey], {
+    revalidate: 60,
+    tags: [CREATOR_LIST_TAG],
+  })();
 }
 
 export async function getCreatorBySlug(
@@ -124,17 +152,21 @@ export async function getCreatorPageBySlug(
   const record = data as Record<string, unknown>;
   const profile = normalizeCreator(record);
   const creator = mapCreatorRow(record);
-  const isOwner = user?.id === profile.user_id;
-  const isAdmin = user ? await isCurrentUserAdmin() : false;
 
   if (isPublicCreator(profile)) {
     return { creator };
   }
 
-  if (!isOwner && !isAdmin) return null;
+  if (!user) return null;
+
+  const isOwner = user.id === profile.user_id;
+  if (!isOwner) {
+    const isAdmin = await isCurrentUserAdmin();
+    if (!isAdmin) return null;
+  }
 
   let previewReason: StudioPreviewReason;
-  if (isAdmin && !isOwner) previewReason = "admin";
+  if (!isOwner) previewReason = "admin";
   else if (profile.verification_status === "pending") previewReason = "pending";
   else if (profile.verification_status === "rejected") previewReason = "rejected";
   else previewReason = "unlisted";
@@ -142,11 +174,41 @@ export async function getCreatorPageBySlug(
   return { creator, previewReason };
 }
 
-export async function getFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
-  const creators = await getApprovedCreators();
+async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("creator_profiles")
+    .select("*")
+    .eq("verification_status", "approved")
+    .eq("is_listed", true)
+    .order("featured", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(24);
+
+  if (error || !data) return [];
+
+  const creators = data.map((row) => mapCreatorListRow(row as Record<string, unknown>));
   const featured = creators.filter((c) => c.featured);
   const rest = creators.filter((c) => !c.featured);
-  return [...featured, ...rest].slice(0, 12);
+  const sorted = [...featured, ...rest];
+
+  sorted.sort((a, b) => {
+    const aDemo = isDemoCreator(a) ? 1 : 0;
+    const bDemo = isDemoCreator(b) ? 1 : 0;
+    if (aDemo !== bDemo) return aDemo - bDemo;
+    return 0;
+  });
+
+  return sorted.slice(0, 12);
+}
+
+export async function getFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
+  return unstable_cache(fetchFeaturedCreators, ["featured-creators"], {
+    revalidate: 60,
+    tags: [CREATOR_LIST_TAG],
+  })();
 }
 
 export async function getCurrentUserCreatorProfile(): Promise<CreatorProfile | null> {

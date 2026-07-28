@@ -1,9 +1,10 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/database";
 import { isSupabaseConfigured } from "@/lib/utils";
 
-export async function getCurrentUserProfile(): Promise<Profile | null> {
+export const getCurrentUserProfile = cache(async (): Promise<Profile | null> => {
   if (!isSupabaseConfigured()) return null;
 
   const supabase = await createClient();
@@ -19,7 +20,7 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
     .single();
 
   return (data as Profile) ?? null;
-}
+});
 
 export async function requireAdmin(): Promise<Profile> {
   if (!isSupabaseConfigured()) {

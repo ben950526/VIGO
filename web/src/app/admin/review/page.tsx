@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 import {
   approveCreator,
   approveCreatorAndWorks,
@@ -122,24 +123,20 @@ export default async function AdminReviewPage({
                     <div className="flex flex-wrap gap-2">
                       <form action={approveCreatorAndWorks}>
                         <input type="hidden" name="id" value={creator.id} />
-                        <button type="submit" className="btn-primary text-sm">
-                          通過（含全部作品）
-                        </button>
+                        <SubmitButton className="btn-primary text-sm">通過（含全部作品）</SubmitButton>
                       </form>
                       <form action={approveCreator}>
                         <input type="hidden" name="id" value={creator.id} />
-                        <button type="submit" className="btn-secondary text-sm">
-                          僅通過創作者
-                        </button>
+                        <SubmitButton className="btn-secondary text-sm">僅通過創作者</SubmitButton>
                       </form>
                       <form action={rejectCreator}>
                         <input type="hidden" name="id" value={creator.id} />
-                        <button
-                          type="submit"
+                        <SubmitButton
                           className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          pendingText="退件中…"
                         >
                           退件
-                        </button>
+                        </SubmitButton>
                       </form>
                     </div>
                   </div>
@@ -159,15 +156,15 @@ export default async function AdminReviewPage({
                             <div className="flex gap-2">
                               <form action={approvePortfolioItem}>
                                 <input type="hidden" name="id" value={item.id} />
-                                <button type="submit" className="text-[var(--accent)] hover:underline">
+                                <SubmitButton className="text-[var(--accent)] hover:underline">
                                   通過作品
-                                </button>
+                                </SubmitButton>
                               </form>
                               <form action={rejectPortfolioItem}>
                                 <input type="hidden" name="id" value={item.id} />
-                                <button type="submit" className="text-red-600 hover:underline">
+                                <SubmitButton className="text-red-600 hover:underline" pendingText="退件中…">
                                   退件
-                                </button>
+                                </SubmitButton>
                               </form>
                             </div>
                           )}
@@ -214,18 +211,16 @@ export default async function AdminReviewPage({
                   <div className="flex gap-2">
                     <form action={approvePortfolioItem}>
                       <input type="hidden" name="id" value={item.id} />
-                      <button type="submit" className="btn-primary text-sm">
-                        通過
-                      </button>
+                      <SubmitButton className="btn-primary text-sm">通過</SubmitButton>
                     </form>
                     <form action={rejectPortfolioItem}>
                       <input type="hidden" name="id" value={item.id} />
-                      <button
-                        type="submit"
+                      <SubmitButton
                         className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600"
+                        pendingText="退件中…"
                       >
                         退件
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </li>
