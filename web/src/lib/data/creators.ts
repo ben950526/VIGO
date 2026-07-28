@@ -5,6 +5,7 @@ import { isDemoCreator } from "@/lib/demo-creator";
 import { isCurrentUserAdmin } from "@/lib/auth/admin";
 import { parsePriceList } from "@/lib/price-list";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured, normalizeSlugParam } from "@/lib/utils";
 
 function normalizeCreator(row: Record<string, unknown>): CreatorProfile {
@@ -86,7 +87,7 @@ function applyCreatorFilters(
 async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorWithPortfolio[]> {
   if (!isSupabaseConfigured()) return [];
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   let query = supabase
     .from("creator_profiles")
     .select("*")
@@ -177,7 +178,7 @@ export async function getCreatorPageBySlug(
 async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
   if (!isSupabaseConfigured()) return [];
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("creator_profiles")
     .select("*")
