@@ -41,6 +41,7 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
             id={creator.id}
             className="btn-primary text-sm"
             removeOnSuccess={false}
+            skipRefresh
             onDone={onDone}
           >
             通過（含全部作品）
@@ -50,6 +51,7 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
             id={creator.id}
             className="btn-secondary text-sm"
             removeOnSuccess={false}
+            skipRefresh
             onDone={onDone}
           >
             僅通過創作者
@@ -60,6 +62,7 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
             className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
             pendingText="退件中…"
             removeOnSuccess={false}
+            skipRefresh
             onDone={onDone}
           >
             退件
@@ -102,6 +105,7 @@ function PendingPortfolioLine({
             id={itemId}
             className="text-[var(--accent)] hover:underline"
             removeOnSuccess={false}
+            skipRefresh
             onDone={() => setRemoved(true)}
           >
             通過作品
@@ -112,6 +116,7 @@ function PendingPortfolioLine({
             className="text-red-600 hover:underline"
             pendingText="退件中…"
             removeOnSuccess={false}
+            skipRefresh
             onDone={() => setRemoved(true)}
           >
             退件

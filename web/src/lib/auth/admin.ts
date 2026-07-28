@@ -1,25 +1,16 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getAuthProfile,
+  isAdminProfile,
+} from "@/lib/auth/session";
 import type { Profile } from "@/types/database";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 export const getCurrentUserProfile = cache(async (): Promise<Profile | null> => {
-  if (!isSupabaseConfigured()) return null;
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  return (data as Profile) ?? null;
+  const profile = await getAuthProfile();
+  return profile as Profile | null;
 });
 
 export async function requireAdmin(): Promise<Profile> {
@@ -27,35 +18,36 @@ export async function requireAdmin(): Promise<Profile> {
     redirect("/dashboard");
   }
 
-  const profile = await getCurrentUserProfile();
+  const profile = await getAuthProfile();
   if (!profile) redirect("/login");
 
-  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
+  if (!isAdminProfile(profile)) {
+    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
 
-  if (profile.role !== "admin" && emailMatch) {
-    const supabase = await createClient();
-    await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);
-    profile.role = "admin";
+    if (emailMatch) {
+      const supabase = await createClient();
+      await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);
+      return { ...profile, role: "admin" } as Profile;
+    }
+
+    redirect("/dashboard");
   }
 
-  if (profile.role !== "admin") redirect("/dashboard");
-
-  return profile;
+  return profile as Profile;
 }
 
 export async function isCurrentUserAdmin(): Promise<boolean> {
-  const profile = await getCurrentUserProfile();
+  const profile = await getAuthProfile();
   if (!profile) return false;
+
+  if (isAdminProfile(profile)) return true;
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
+  if (!emailMatch) return false;
 
-  if (profile.role !== "admin" && emailMatch) {
-    const supabase = await createClient();
-    await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);
-    return true;
-  }
-
-  return profile.role === "admin";
+  const supabase = await createClient();
+  await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);
+  return true;
 }

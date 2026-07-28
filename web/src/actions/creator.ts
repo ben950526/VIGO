@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { revalidateCreatorList } from "@/lib/cache/revalidate";
+import { getAuthUserId } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { parseEmbedUrl } from "@/lib/embed";
 import { parsePriceList } from "@/lib/price-list";
@@ -27,15 +28,13 @@ export async function updateCreatorProfile(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "請先登入" };
+  const userId = await getAuthUserId();
+  if (!userId) return { error: "請先登入" };
 
   const { data: profile } = await supabase
     .from("creator_profiles")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (!profile) return { error: "找不到創作者資料" };
@@ -76,7 +75,7 @@ export async function updateCreatorProfile(formData: FormData) {
       avatarFile.type === "image/jpeg"
         ? "jpg"
         : avatarFile.type.replace("image/", "");
-    const path = `${user.id}/avatar.${ext}`;
+    const path = `${userId}/avatar.${ext}`;
     const buffer = Buffer.from(await avatarFile.arrayBuffer());
 
     const { error: uploadError } = await supabase.storage
@@ -145,22 +144,20 @@ export async function addPortfolioItem(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "請先登入" };
+  const userId = await getAuthUserId();
+  if (!userId) return { error: "請先登入" };
 
   const { data: profile } = await supabase
     .from("creator_profiles")
     .select("id, subscription_tier")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (!profile) return { error: "請先完成工作室資料" };
 
   const { count } = await supabase
     .from("portfolio_items")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("creator_id", profile.id);
 
   const limit =
@@ -198,15 +195,13 @@ export async function setFeaturedPortfolioItem(formData: FormData): Promise<void
   if (!itemId) return;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+  const userId = await getAuthUserId();
+  if (!userId) return;
 
   const { data: profile } = await supabase
     .from("creator_profiles")
     .select("id, slug")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (!profile) return;
@@ -225,9 +220,12 @@ export async function setFeaturedPortfolioItem(formData: FormData): Promise<void
   const reordered = [target, ...items.filter((item) => item.id !== itemId)];
 
   await Promise.all(
-    reordered.map((item, index) =>
-      supabase.from("portfolio_items").update({ sort_order: index }).eq("id", item.id),
-    ),
+    reordered
+      .map((item, index) => ({ id: item.id, index, prev: item.sort_order }))
+      .filter(({ index, prev }) => index !== prev)
+      .map(({ id, index }) =>
+        supabase.from("portfolio_items").update({ sort_order: index }).eq("id", id),
+      ),
   );
 
   revalidatePath("/dashboard");
@@ -241,15 +239,13 @@ export async function setCreatorListing(formData: FormData) {
 
   const listed = formData.get("listed") === "true";
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "請先登入" };
+  const userId = await getAuthUserId();
+  if (!userId) return { error: "請先登入" };
 
   const { data: profile } = await supabase
     .from("creator_profiles")
     .select("id, slug, verification_status")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (!profile) return { error: "找不到創作者資料" };

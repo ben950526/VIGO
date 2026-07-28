@@ -7,7 +7,8 @@ interface ListingControlProps {
   isListed: boolean;
 }
 
-export function ListingControl({ isListed }: ListingControlProps) {
+export function ListingControl({ isListed: initialListed }: ListingControlProps) {
+  const [isListed, setIsListed] = useState(initialListed);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -21,12 +22,16 @@ export function ListingControl({ isListed }: ListingControlProps) {
       if (!ok) return;
     }
 
+    const prev = isListed;
+    setIsListed(nextListed);
     setPending(true);
     setError("");
+
     const result = await setCreatorListing(formData);
     setPending(false);
 
     if (result.error) {
+      setIsListed(prev);
       setError(result.error);
     }
   }
@@ -45,7 +50,7 @@ export function ListingControl({ isListed }: ListingControlProps) {
         <button
           type="submit"
           disabled={pending}
-          className={isListed ? "btn-secondary text-sm" : "btn-primary text-sm"}
+          className={isListed ? "btn-secondary text-sm disabled:opacity-70" : "btn-primary text-sm disabled:opacity-70"}
         >
           {pending ? "處理中…" : isListed ? "下架工作室" : "重新上架"}
         </button>

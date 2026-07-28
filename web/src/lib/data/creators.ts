@@ -1,12 +1,16 @@
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { CreatorProfile, CreatorWithPortfolio, PortfolioItem } from "@/types/database";
 import { CREATOR_LIST_TAG } from "@/lib/cache/revalidate";
+import { getAuthProfile, getAuthUserId, isAdminProfile } from "@/lib/auth/session";
 import { isDemoCreator } from "@/lib/demo-creator";
-import { isCurrentUserAdmin } from "@/lib/auth/admin";
 import { parsePriceList } from "@/lib/price-list";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured, normalizeSlugParam } from "@/lib/utils";
+
+const CREATOR_CARD_FIELDS =
+  "id, slug, studio_name, avatar_url, region, style_tags, service_types, bio, price_min, price_max, featured, is_demo, verification_status, is_listed";
 
 function normalizeCreator(row: Record<string, unknown>): CreatorProfile {
   return {
@@ -34,10 +38,6 @@ function mapCreatorListRow(row: Record<string, unknown>): CreatorWithPortfolio {
     ...normalizeCreator(row),
     portfolio_items: [],
   };
-}
-
-function isPublicCreator(profile: CreatorProfile): boolean {
-  return profile.verification_status === "approved" && profile.is_listed;
 }
 
 type CreatorFilters = {
@@ -90,7 +90,7 @@ async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorW
   const supabase = createPublicClient();
   let query = supabase
     .from("creator_profiles")
-    .select("*")
+    .select(CREATOR_CARD_FIELDS)
     .eq("verification_status", "approved")
     .eq("is_listed", true)
     .order("featured", { ascending: false })
@@ -111,7 +111,7 @@ export async function getApprovedCreators(
   const cacheKey = JSON.stringify(filters ?? {});
 
   return unstable_cache(() => fetchApprovedCreators(filters), ["approved-creators", cacheKey], {
-    revalidate: 60,
+    revalidate: 120,
     tags: [CREATOR_LIST_TAG],
   })();
 }
@@ -131,49 +131,73 @@ export interface CreatorPageData {
   previewReason?: StudioPreviewReason;
 }
 
-export async function getCreatorPageBySlug(
-  slug: string,
-): Promise<CreatorPageData | null> {
+async function fetchPublicCreatorPage(slug: string): Promise<CreatorPageData | null> {
   if (!isSupabaseConfigured()) return null;
 
-  const normalizedSlug = normalizeSlugParam(slug);
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("creator_profiles")
     .select("*, portfolio_items(*)")
-    .eq("slug", normalizedSlug)
+    .eq("slug", slug)
+    .eq("verification_status", "approved")
+    .eq("is_listed", true)
     .maybeSingle();
 
   if (error || !data) return null;
 
-  const record = data as Record<string, unknown>;
-  const profile = normalizeCreator(record);
-  const creator = mapCreatorRow(record);
-
-  if (isPublicCreator(profile)) {
-    return { creator };
-  }
-
-  if (!user) return null;
-
-  const isOwner = user.id === profile.user_id;
-  if (!isOwner) {
-    const isAdmin = await isCurrentUserAdmin();
-    if (!isAdmin) return null;
-  }
-
-  let previewReason: StudioPreviewReason;
-  if (!isOwner) previewReason = "admin";
-  else if (profile.verification_status === "pending") previewReason = "pending";
-  else if (profile.verification_status === "rejected") previewReason = "rejected";
-  else previewReason = "unlisted";
-
-  return { creator, previewReason };
+  return { creator: mapCreatorRow(data as Record<string, unknown>) };
 }
+
+function getCachedPublicCreatorPage(slug: string): Promise<CreatorPageData | null> {
+  return unstable_cache(
+    () => fetchPublicCreatorPage(slug),
+    ["creator-page-public", slug],
+    { revalidate: 120, tags: [CREATOR_LIST_TAG] },
+  )();
+}
+
+export const getCreatorPageBySlug = cache(
+  async (slug: string): Promise<CreatorPageData | null> => {
+    if (!isSupabaseConfigured()) return null;
+
+    const normalizedSlug = normalizeSlugParam(slug);
+
+    const publicPage = await getCachedPublicCreatorPage(normalizedSlug);
+    if (publicPage) return publicPage;
+
+    const supabase = await createClient();
+    const [userId, authProfile, { data, error }] = await Promise.all([
+      getAuthUserId(),
+      getAuthProfile(),
+      supabase
+        .from("creator_profiles")
+        .select("*, portfolio_items(*)")
+        .eq("slug", normalizedSlug)
+        .maybeSingle(),
+    ]);
+
+    if (error || !data) return null;
+
+    const record = data as Record<string, unknown>;
+    const profile = normalizeCreator(record);
+    const creator = mapCreatorRow(record);
+
+    if (!userId) return null;
+
+    const isOwner = userId === profile.user_id;
+    if (!isOwner && !(authProfile && isAdminProfile(authProfile))) {
+      return null;
+    }
+
+    let previewReason: StudioPreviewReason;
+    if (!isOwner) previewReason = "admin";
+    else if (profile.verification_status === "pending") previewReason = "pending";
+    else if (profile.verification_status === "rejected") previewReason = "rejected";
+    else previewReason = "unlisted";
+
+    return { creator, previewReason };
+  },
+);
 
 async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
   if (!isSupabaseConfigured()) return [];
@@ -181,7 +205,7 @@ async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select("*")
+    .select(CREATOR_CARD_FIELDS)
     .eq("verification_status", "approved")
     .eq("is_listed", true)
     .order("featured", { ascending: false })
@@ -207,28 +231,26 @@ async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
 
 export async function getFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
   return unstable_cache(fetchFeaturedCreators, ["featured-creators"], {
-    revalidate: 60,
+    revalidate: 120,
     tags: [CREATOR_LIST_TAG],
   })();
 }
 
-export async function getCurrentUserCreatorProfile(): Promise<CreatorProfile | null> {
+export const getCurrentUserCreatorProfile = cache(async (): Promise<CreatorProfile | null> => {
   if (!isSupabaseConfigured()) return null;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const userId = await getAuthUserId();
+  if (!userId) return null;
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from("creator_profiles")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   return data ? normalizeCreator(data as Record<string, unknown>) : null;
-}
+});
 
 export async function getCurrentUserPortfolio(): Promise<PortfolioItem[]> {
   if (!isSupabaseConfigured()) return [];
@@ -239,7 +261,7 @@ export async function getCurrentUserPortfolio(): Promise<PortfolioItem[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("portfolio_items")
-    .select("*")
+    .select("id, title, status, sort_order, embed_url, embed_type, thumbnail_url, style_tags, creator_id")
     .eq("creator_id", profile.id)
     .order("sort_order", { ascending: true });
 

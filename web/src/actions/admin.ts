@@ -272,45 +272,28 @@ export async function approveCreatorAndWorks(formData: FormData): Promise<void> 
 export async function adminSetCreatorListing(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
+  const slug = String(formData.get("slug") ?? "") || undefined;
   const listed = formData.get("listed") === "true";
   if (!id) return;
 
   const supabase = await createClient();
+  await supabase.from("creator_profiles").update({ is_listed: listed }).eq("id", id);
 
-  const { data: creator } = await supabase
-    .from("creator_profiles")
-    .select("slug")
-    .eq("id", id)
-    .single();
-
-  await supabase
-    .from("creator_profiles")
-    .update({ is_listed: listed })
-    .eq("id", id);
-
-  revalidateAfterPublicCreatorChange(creator?.slug);
+  revalidateAfterPublicCreatorChange(slug);
 }
 
 export async function adminSetPortfolioListing(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
+  const slug = String(formData.get("slug") ?? "") || undefined;
   const listed = formData.get("listed") === "true";
   if (!id) return;
 
   const supabase = await createClient();
-
-  const { data: item } = await supabase
-    .from("portfolio_items")
-    .select("creator_id, creator_profiles(slug)")
-    .eq("id", id)
-    .single();
-
   await supabase
     .from("portfolio_items")
     .update({ status: listed ? "approved" : "rejected" })
     .eq("id", id);
 
-  const record = item as Record<string, unknown> | null;
-  const creatorProfiles = record?.creator_profiles as { slug?: string } | null;
-  revalidateAfterPublicCreatorChange(creatorProfiles?.slug);
+  revalidateAfterPublicCreatorChange(slug);
 }

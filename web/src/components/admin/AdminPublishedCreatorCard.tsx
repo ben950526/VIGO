@@ -44,6 +44,7 @@ export function AdminPublishedCreatorCard({
         <AdminToggleForm
           action={adminSetCreatorListing}
           id={creator.id}
+          slug={creator.slug}
           listed={creator.is_listed}
           className={
             creator.is_listed
@@ -51,9 +52,9 @@ export function AdminPublishedCreatorCard({
               : "btn-primary text-sm"
           }
           pendingText={creator.is_listed ? "下架中…" : "上架中…"}
-        >
-          {creator.is_listed ? "下架工作室" : "重新上架工作室"}
-        </AdminToggleForm>
+          labelWhenListed="下架工作室"
+          labelWhenUnlisted="重新上架工作室"
+        />
       </div>
 
       {creator.portfolio_items.length === 0 ? (
@@ -87,6 +88,7 @@ export function AdminPublishedCreatorCard({
                   <AdminToggleForm
                     action={adminSetPortfolioListing}
                     id={item.id}
+                    slug={creator.slug}
                     listed={isPublic}
                     className={
                       isPublic
@@ -94,9 +96,9 @@ export function AdminPublishedCreatorCard({
                         : "text-[var(--accent)] hover:underline"
                     }
                     pendingText="處理中…"
-                  >
-                    {isPublic ? "下架作品" : "重新上架作品"}
-                  </AdminToggleForm>
+                    labelWhenListed="下架作品"
+                    labelWhenUnlisted="重新上架作品"
+                  />
                 )}
               </li>
             );

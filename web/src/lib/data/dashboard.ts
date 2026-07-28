@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { getCurrentUserProfile } from "@/lib/auth/admin";
+import { getAuthProfile, getAuthUserId, isAdminProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
 import { parsePriceList } from "@/lib/price-list";
@@ -26,19 +26,17 @@ export type DashboardData = {
 export const getDashboardData = cache(async (): Promise<DashboardData | null> => {
   if (!isSupabaseConfigured()) return null;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const userId = await getAuthUserId();
+  if (!userId) return null;
 
-  const [{ data: row }, profileRecord] = await Promise.all([
+  const supabase = await createClient();
+  const [{ data: row }, authProfile] = await Promise.all([
     supabase
       .from("creator_profiles")
       .select("*, portfolio_items(id, title, status, sort_order)")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single(),
-    getCurrentUserProfile(),
+    getAuthProfile(),
   ]);
 
   if (!row) return null;
@@ -49,9 +47,14 @@ export const getDashboardData = cache(async (): Promise<DashboardData | null> =>
     (a, b) => a.sort_order - b.sort_order,
   );
 
-  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const emailMatch = adminEmail && profileRecord?.email.toLowerCase() === adminEmail;
-  const isAdmin = profileRecord?.role === "admin" || Boolean(emailMatch);
+  return {
+    profile,
+    portfolio,
+    isAdmin: authProfile ? isAdminProfile(authProfile) : false,
+  };
+});
 
-  return { profile, portfolio, isAdmin };
+export const getDashboardProfile = cache(async (): Promise<CreatorProfile | null> => {
+  const data = await getDashboardData();
+  return data?.profile ?? null;
 });

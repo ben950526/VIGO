@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthProfile, getAuthUserId, isAdminProfile } from "@/lib/auth/session";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 export type NavAuth = {
@@ -12,29 +13,15 @@ export const getNavAuth = cache(async (): Promise<NavAuth> => {
     return { isLoggedIn: false, isAdmin: false };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const user = session?.user;
-  if (!user) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return { isLoggedIn: false, isAdmin: false };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, email")
-    .eq("id", user.id)
-    .single();
-
+  const profile = await getAuthProfile();
   if (!profile) {
     return { isLoggedIn: true, isAdmin: false };
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
-  const isAdmin = profile.role === "admin" || Boolean(emailMatch);
-
-  return { isLoggedIn: true, isAdmin };
+  return { isLoggedIn: true, isAdmin: isAdminProfile(profile) };
 });

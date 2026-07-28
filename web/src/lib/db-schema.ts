@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 const EXTENDED_COLUMNS = [
@@ -10,13 +11,13 @@ const EXTENDED_COLUMNS = [
   "typical_scope",
 ] as const;
 
-export async function checkCreatorProfileSchema(): Promise<{
+async function probeCreatorProfileSchema(): Promise<{
   ok: boolean;
   missingColumn?: string;
 }> {
   if (!isSupabaseConfigured()) return { ok: true };
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { error } = await supabase
     .from("creator_profiles")
     .select(EXTENDED_COLUMNS.join(", "))
@@ -29,6 +30,15 @@ export async function checkCreatorProfileSchema(): Promise<{
     ok: false,
     missingColumn: match?.[1] ?? "unknown",
   };
+}
+
+export async function checkCreatorProfileSchema(): Promise<{
+  ok: boolean;
+  missingColumn?: string;
+}> {
+  return unstable_cache(probeCreatorProfileSchema, ["creator-profile-schema"], {
+    revalidate: 3600,
+  })();
 }
 
 export function formatSchemaError(message: string): string | null {

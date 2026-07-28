@@ -35,6 +35,7 @@ export function PendingPortfolioRow({ item }: PendingPortfolioRowProps) {
           id={item.id}
           className="btn-primary text-sm"
           removeOnSuccess={false}
+          skipRefresh
           onDone={() => setRemoved(true)}
         >
           通過
@@ -45,6 +46,7 @@ export function PendingPortfolioRow({ item }: PendingPortfolioRowProps) {
           className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600"
           pendingText="退件中…"
           removeOnSuccess={false}
+          skipRefresh
           onDone={() => setRemoved(true)}
         >
           退件

@@ -3,7 +3,7 @@ import { CreatorCard } from "@/components/creator/CreatorCard";
 import { SITE_NAME } from "@/lib/constants";
 import { getFeaturedCreators } from "@/lib/data/creators";
 
-export const revalidate = 60;
+export const revalidate = 120;
 
 export default async function HomePage() {
   const featured = await getFeaturedCreators();

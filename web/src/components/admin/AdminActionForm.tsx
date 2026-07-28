@@ -14,6 +14,7 @@ interface AdminActionFormProps {
   children: React.ReactNode;
   removeOnSuccess?: boolean;
   onDone?: () => void;
+  skipRefresh?: boolean;
 }
 
 export function AdminActionForm({
@@ -24,6 +25,7 @@ export function AdminActionForm({
   children,
   removeOnSuccess = true,
   onDone,
+  skipRefresh = false,
 }: AdminActionFormProps) {
   const router = useRouter();
   const [removed, setRemoved] = useState(false);
@@ -37,7 +39,7 @@ export function AdminActionForm({
     startTransition(async () => {
       try {
         await action(formData);
-        router.refresh();
+        if (!skipRefresh) router.refresh();
       } catch {
         if (removeOnSuccess) setRemoved(false);
       }
@@ -57,36 +59,48 @@ export function AdminActionForm({
 interface AdminToggleFormProps {
   action: ServerAction;
   id: string;
+  slug?: string;
   listed: boolean;
   className?: string;
   pendingText?: string;
-  children: React.ReactNode;
+  labelWhenListed: string;
+  labelWhenUnlisted: string;
 }
 
 export function AdminToggleForm({
   action,
   id,
+  slug,
   listed,
   className,
   pendingText,
-  children,
+  labelWhenListed,
+  labelWhenUnlisted,
 }: AdminToggleFormProps) {
   const router = useRouter();
+  const [isListed, setIsListed] = useState(listed);
   const [, startTransition] = useTransition();
 
   async function handleSubmit(formData: FormData) {
+    const prev = isListed;
+    setIsListed(!isListed);
     startTransition(async () => {
-      await action(formData);
-      router.refresh();
+      try {
+        await action(formData);
+      } catch {
+        setIsListed(prev);
+        router.refresh();
+      }
     });
   }
 
   return (
     <form action={handleSubmit}>
       <input type="hidden" name="id" value={id} />
-      <input type="hidden" name="listed" value={listed ? "false" : "true"} />
+      {slug && <input type="hidden" name="slug" value={slug} />}
+      <input type="hidden" name="listed" value={isListed ? "false" : "true"} />
       <SubmitButton className={className} pendingText={pendingText}>
-        {children}
+        {isListed ? labelWhenListed : labelWhenUnlisted}
       </SubmitButton>
     </form>
   );
