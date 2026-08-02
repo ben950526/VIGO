@@ -4,6 +4,7 @@ import { CreatorPriceList } from "@/components/creator/CreatorPriceList";
 import { CreatorStudioInfo } from "@/components/creator/CreatorStudioInfo";
 import { PortfolioGridWithFilter } from "@/components/creator/PortfolioGridWithFilter";
 import { getFeaturedPortfolioItem } from "@/lib/portfolio";
+import { resolvePortfolioThumbnail } from "@/lib/embed";
 import type { CreatorWithPortfolio } from "@/types/database";
 import { UnpublishedText } from "@/components/creator/UnpublishedText";
 import { formatPriceRange } from "@/lib/utils";
@@ -64,7 +65,10 @@ export function CreatorFullContent({ creator }: CreatorFullContentProps) {
                 embedType={heroItem.embed_type}
                 embedUrl={heroItem.embed_url}
                 title={heroItem.title}
-                thumbnailUrl={heroItem.thumbnail_url}
+                thumbnailUrl={resolvePortfolioThumbnail(
+                  heroItem.embed_url,
+                  heroItem.thumbnail_url,
+                )}
               />
             ) : (
               <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]">

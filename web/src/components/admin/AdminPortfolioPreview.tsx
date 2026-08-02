@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { parseEmbedUrl } from "@/lib/embed";
+import { parseEmbedUrl, resolvePortfolioThumbnail } from "@/lib/embed";
 import type { EmbedType } from "@/types/database";
 
 interface AdminPortfolioPreviewProps {
@@ -10,14 +10,6 @@ interface AdminPortfolioPreviewProps {
   creatorSlug?: string;
 }
 
-function resolveThumbnail(
-  embedUrl: string,
-  thumbnailUrl?: string | null,
-): string | null {
-  const parsed = parseEmbedUrl(embedUrl);
-  return thumbnailUrl ?? parsed?.thumbnailUrl ?? null;
-}
-
 export function AdminPortfolioPreview({
   title,
   embedUrl,
@@ -26,7 +18,7 @@ export function AdminPortfolioPreview({
   creatorSlug,
 }: AdminPortfolioPreviewProps) {
   const parsed = parseEmbedUrl(embedUrl);
-  const thumb = resolveThumbnail(embedUrl, thumbnailUrl);
+  const thumb = resolvePortfolioThumbnail(embedUrl, thumbnailUrl);
 
   return (
     <div className="border-t border-[var(--border)] bg-[var(--bg)]">

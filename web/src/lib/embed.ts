@@ -63,3 +63,27 @@ export function getEmbedSrc(type: EmbedType, embedId: string): string {
       return embedId;
   }
 }
+
+export function resolvePortfolioThumbnail(
+  embedUrl: string,
+  thumbnailUrl?: string | null,
+): string | null {
+  const trimmed = thumbnailUrl?.trim();
+  if (trimmed) return trimmed;
+  return parseEmbedUrl(embedUrl)?.thumbnailUrl ?? null;
+}
+
+export function getInlineEmbedSrc(type: EmbedType, embedId: string): string {
+  switch (type) {
+    case "youtube":
+      return `${getEmbedSrc(type, embedId)}?rel=0&modestbranding=1&playsinline=1`;
+    case "vimeo":
+      return `${getEmbedSrc(type, embedId)}`;
+    default:
+      return getEmbedSrc(type, embedId);
+  }
+}
+
+export function supportsInlineEmbed(type: EmbedType): boolean {
+  return type === "youtube" || type === "vimeo";
+}
