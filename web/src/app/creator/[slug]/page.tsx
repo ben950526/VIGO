@@ -8,6 +8,7 @@ import { StudioPreviewBanner } from "@/components/creator/StudioPreviewBanner";
 import { isDemoCreator } from "@/lib/demo-creator";
 import { toPublicCreatorProfile } from "@/lib/creator/sensitive";
 import { getCreatorPageBySlug } from "@/lib/data/creators";
+import { isCreatorKnockUnlocked } from "@/lib/knock/cookie";
 
 interface CreatorPageProps {
   params: Promise<{ slug: string }>;
@@ -32,6 +33,9 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   const isPreview = Boolean(previewReason);
   const isDemo = isDemoCreator(creator);
   const publicCreator = toPublicCreatorProfile(creator);
+  const knocked =
+    !isPreview && !isDemo && (await isCreatorKnockUnlocked(creator.id));
+  const showFullContent = isPreview || isDemo || knocked;
 
   return (
     <>
@@ -62,7 +66,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               {creator.studio_name}
               <DemoBadge creator={creator} className="text-sm" />
             </h1>
-            {!isPreview && !isDemo && (
+            {!showFullContent && (
               <p className="text-sm text-[var(--text-muted)]">
                 敲門後查看自介、風格、作品與聯絡方式
               </p>
@@ -71,7 +75,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         </div>
       </section>
 
-      {isPreview || isDemo ? (
+      {showFullContent ? (
         <CreatorFullContent creator={creator} />
       ) : (
         <CreatorKnockGate creator={publicCreator} />

@@ -6,6 +6,7 @@ import {
   type CreatorKnockUnlock,
 } from "@/lib/creator/sensitive";
 import { createPublicClient } from "@/lib/supabase/public";
+import { setCreatorKnockUnlocked } from "@/lib/knock/cookie";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 export type KnockResult =
@@ -62,6 +63,7 @@ export async function knockCreator(formData: FormData): Promise<KnockResult> {
   }
 
   if (!isSupabaseConfigured()) {
+    await setCreatorKnockUnlocked(creatorId);
     return { success: true, unlock: DEMO_UNLOCK };
   }
 
@@ -88,7 +90,14 @@ export async function knockCreator(formData: FormData): Promise<KnockResult> {
     return { error: error.message };
   }
 
+  await setCreatorKnockUnlocked(creatorId);
   return { success: true, unlock };
+}
+
+/** 僅同步 cookie，不新增敲門紀錄（給曾敲過門但尚未寫 cookie 的訪客） */
+export async function syncKnockCookie(creatorId: string): Promise<void> {
+  if (!creatorId) return;
+  await setCreatorKnockUnlocked(creatorId);
 }
 
 /** 已敲過門的訪客重新載入時取資料，不新增敲門紀錄 */
