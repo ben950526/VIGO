@@ -3,8 +3,9 @@ import { parsePriceList } from "@/lib/price-list";
 import { createClient } from "@/lib/supabase/server";
 
 const PENDING_CREATOR_FIELDS =
-  "id, studio_name, slug, region, bio, contact_email, verification_status, created_at";
-const PORTFOLIO_SUMMARY_FIELDS = "id, title, status, sort_order, creator_id";
+  "id, user_id, studio_name, slug, region, bio, avatar_url, service_types, style_tags, price_min, price_max, price_list, contact_email, line_id, phone, show_email, show_line, show_phone, verification_status, turnaround, revision_policy, response_time, team_size, platforms, client_types, languages, typical_scope, website_url, created_at";
+const PORTFOLIO_REVIEW_FIELDS =
+  "id, title, description, embed_url, embed_type, thumbnail_url, style_tags, sort_order, status, creator_id, created_at";
 const PUBLISHED_CREATOR_FIELDS = "id, studio_name, slug, region, is_listed, updated_at";
 
 export interface PendingCreator extends CreatorProfile {
@@ -15,7 +16,7 @@ export async function getPendingCreators(): Promise<PendingCreator[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select(`${PENDING_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_SUMMARY_FIELDS})`)
+    .select(`${PENDING_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_REVIEW_FIELDS})`)
     .eq("verification_status", "pending")
     .order("created_at", { ascending: false });
 
@@ -39,7 +40,7 @@ export async function getPendingPortfolioItems(): Promise<
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("portfolio_items")
-    .select("id, title, embed_url, status, created_at, creator_profiles(studio_name, slug, verification_status)")
+    .select(`id, title, description, embed_url, embed_type, thumbnail_url, style_tags, status, created_at, creator_profiles(studio_name, slug, verification_status)`)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
@@ -69,7 +70,7 @@ export async function getPublishedCreators(): Promise<PublishedCreator[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select(`${PUBLISHED_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_SUMMARY_FIELDS})`)
+    .select(`${PUBLISHED_CREATOR_FIELDS}, portfolio_items(id, title, status, sort_order, creator_id)`)
     .eq("verification_status", "approved")
     .order("updated_at", { ascending: false });
 

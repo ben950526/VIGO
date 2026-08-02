@@ -9,11 +9,58 @@ import {
   rejectPortfolioItem,
 } from "@/actions/admin";
 import { AdminActionForm } from "@/components/admin/AdminActionForm";
+import { AdminPendingCreatorPreview } from "@/components/admin/AdminPendingCreatorPreview";
 import type { PendingCreator } from "@/lib/data/admin";
+
+function ReviewActions({
+  creatorId,
+  onDone,
+}: {
+  creatorId: string;
+  onDone: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <AdminActionForm
+        action={approveCreatorAndWorks}
+        id={creatorId}
+        className="btn-primary text-sm"
+        removeOnSuccess={false}
+        skipRefresh
+        onDone={onDone}
+      >
+        通過（含全部作品）
+      </AdminActionForm>
+      <AdminActionForm
+        action={approveCreator}
+        id={creatorId}
+        className="btn-secondary text-sm"
+        removeOnSuccess={false}
+        skipRefresh
+        onDone={onDone}
+      >
+        僅通過創作者
+      </AdminActionForm>
+      <AdminActionForm
+        action={rejectCreator}
+        id={creatorId}
+        className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+        pendingText="退件中…"
+        removeOnSuccess={false}
+        skipRefresh
+        onDone={onDone}
+      >
+        退件
+      </AdminActionForm>
+    </div>
+  );
+}
 
 export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
   const [removed, setRemoved] = useState(false);
   if (removed) return null;
+
+  const pendingCount = creator.portfolio_items.filter((p) => p.status === "pending").length;
 
   function onDone() {
     setRemoved(true);
@@ -21,62 +68,40 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
 
   return (
     <li className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
         <div>
-          <h3 className="text-lg font-bold">{creator.studio_name}</h3>
-          <p className="text-sm text-[var(--text-muted)]">
-            {creator.contact_email} · {creator.region ?? "未填地區"} · slug: {creator.slug}
+          <h3 className="text-xl font-bold">{creator.studio_name}</h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            {creator.contact_email ?? "未填 Email"} · slug: {creator.slug}
           </p>
-          {creator.bio && (
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">{creator.bio}</p>
-          )}
-          <p className="mt-2 text-sm">
-            待審作品：{" "}
-            {creator.portfolio_items.filter((p) => p.status === "pending").length} 件
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            待審作品 {pendingCount} 件 · 共 {creator.portfolio_items.length} 件
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <AdminActionForm
-            action={approveCreatorAndWorks}
-            id={creator.id}
-            className="btn-primary text-sm"
-            removeOnSuccess={false}
-            skipRefresh
-            onDone={onDone}
-          >
-            通過（含全部作品）
-          </AdminActionForm>
-          <AdminActionForm
-            action={approveCreator}
-            id={creator.id}
-            className="btn-secondary text-sm"
-            removeOnSuccess={false}
-            skipRefresh
-            onDone={onDone}
-          >
-            僅通過創作者
-          </AdminActionForm>
-          <AdminActionForm
-            action={rejectCreator}
-            id={creator.id}
-            className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-            pendingText="退件中…"
-            removeOnSuccess={false}
-            skipRefresh
-            onDone={onDone}
-          >
-            退件
-          </AdminActionForm>
-        </div>
+        <ReviewActions creatorId={creator.id} onDone={onDone} />
       </div>
 
-      {creator.portfolio_items.length > 0 && (
-        <ul className="space-y-2 border-t border-[var(--border)] pt-4">
-          {creator.portfolio_items.map((item) => (
-            <PendingPortfolioLine key={item.id} itemId={item.id} title={item.title} status={item.status} />
-          ))}
-        </ul>
+      <AdminPendingCreatorPreview creator={creator} />
+
+      {creator.portfolio_items.some((item) => item.status === "pending") && (
+        <div className="mt-6 border-t border-[var(--border)] pt-4">
+          <p className="mb-3 text-sm font-medium text-[var(--text)]">個別審核作品</p>
+          <ul className="space-y-2">
+            {creator.portfolio_items.map((item) => (
+              <PendingPortfolioLine
+                key={item.id}
+                itemId={item.id}
+                title={item.title}
+                status={item.status}
+              />
+            ))}
+          </ul>
+        </div>
       )}
+
+      <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-[var(--border)] pt-4">
+        <ReviewActions creatorId={creator.id} onDone={onDone} />
+      </div>
     </li>
   );
 }
@@ -96,7 +121,8 @@ function PendingPortfolioLine({
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 text-sm">
       <span>
-        {title} <span className="text-[var(--text-muted)]">({status})</span>
+        {title}{" "}
+        <span className="text-[var(--text-muted)]">({status})</span>
       </span>
       {status === "pending" && (
         <div className="flex gap-2">
