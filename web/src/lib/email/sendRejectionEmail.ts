@@ -1,15 +1,14 @@
 import { Resend } from "resend";
-import { buildApprovalEmailHtml } from "@/lib/email/approvalEmailHtml";
+import { buildRejectionEmailHtml } from "@/lib/email/rejectionEmailHtml";
 import { emailFrom, resendApiKey, siteUrl } from "@/lib/email/config";
 
-export async function sendCreatorApprovalEmail(params: {
+export async function sendCreatorRejectionEmail(params: {
   to: string;
   studioName: string;
-  slug: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const apiKey = resendApiKey();
   if (!apiKey) {
-    console.warn("[email] RESEND_API_KEY not set; skipping approval email");
+    console.warn("[email] RESEND_API_KEY not set; skipping rejection email");
     return { ok: false, error: "RESEND_API_KEY not configured" };
   }
 
@@ -18,16 +17,16 @@ export async function sendCreatorApprovalEmail(params: {
   const { error } = await resend.emails.send({
     from: emailFrom(),
     to: params.to,
-    subject: `【Vigo】你的工作室「${params.studioName}」已審核通過`,
-    html: buildApprovalEmailHtml({
+    subject: `【Vigo】你的工作室「${params.studioName}」審核未通過`,
+    html: buildRejectionEmailHtml({
       studioName: params.studioName,
-      creatorUrl: `${baseUrl}/creator/${params.slug}`,
+      profileUrl: `${baseUrl}/dashboard/profile`,
       dashboardUrl: `${baseUrl}/dashboard`,
     }),
   });
 
   if (error) {
-    console.error("[email] approval email failed:", error);
+    console.error("[email] rejection email failed:", error);
     return { ok: false, error: error.message };
   }
 

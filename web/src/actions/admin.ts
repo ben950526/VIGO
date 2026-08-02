@@ -13,6 +13,7 @@ import { requireAdmin } from "@/lib/auth/admin";
 import {
   loadCreatorApprovalSnapshot,
   notifyCreatorApprovedFromPending,
+  notifyCreatorRejectedFromPending,
 } from "@/lib/email/notifyCreatorApproved";
 
 export async function seedDemoAccounts(): Promise<{ ok: boolean; message: string }> {
@@ -218,11 +219,14 @@ export async function rejectCreator(formData: FormData): Promise<void> {
   if (!id) return;
 
   const supabase = await createClient();
+  const before = await loadCreatorApprovalSnapshot(supabase, id);
+
   await supabase
     .from("creator_profiles")
     .update({ verification_status: "rejected" })
     .eq("id", id);
 
+  await notifyCreatorRejectedFromPending(before);
   revalidateAdminReviewOnly();
 }
 
