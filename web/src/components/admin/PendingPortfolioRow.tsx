@@ -5,7 +5,7 @@ import Link from "next/link";
 import { approvePortfolioItem, rejectPortfolioItem } from "@/actions/admin";
 import { AdminActionForm } from "@/components/admin/AdminActionForm";
 import { AdminReviewTagList } from "@/components/admin/AdminReviewFields";
-import { ClickToPlayVideo } from "@/components/creator/ClickToPlayVideo";
+import { AdminPortfolioPreview } from "@/components/admin/AdminPortfolioPreview";
 import type { PortfolioItem, CreatorProfile } from "@/types/database";
 
 interface PendingPortfolioRowProps {
@@ -65,11 +65,12 @@ export function PendingPortfolioRow({ item }: PendingPortfolioRowProps) {
           </AdminActionForm>
         </div>
       </div>
-      <ClickToPlayVideo
-        embedType={item.embed_type}
-        embedUrl={item.embed_url}
+      <AdminPortfolioPreview
         title={item.title}
+        embedUrl={item.embed_url}
+        embedType={item.embed_type}
         thumbnailUrl={item.thumbnail_url}
+        creatorSlug={item.creator.slug}
       />
     </li>
   );
