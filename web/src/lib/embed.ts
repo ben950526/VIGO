@@ -6,6 +6,10 @@ export interface ParsedEmbed {
   thumbnailUrl: string | null;
 }
 
+function siteOrigin(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://vigo-woad.vercel.app";
+}
+
 export function parseEmbedUrl(url: string): ParsedEmbed | null {
   const trimmed = url.trim();
   if (!trimmed) return null;
@@ -22,7 +26,7 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
     };
   }
 
-  const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/);
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (vimeoMatch) {
     return {
       type: "vimeo",
@@ -34,6 +38,14 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
   if (/instagram\.com\/(reel|p|tv)\//.test(trimmed)) {
     return {
       type: "instagram",
+      embedId: trimmed,
+      thumbnailUrl: null,
+    };
+  }
+
+  if (/douyin\.com|iesdouyin\.com|tiktok\.com|xiaohongshu\.com|xhslink\.com|facebook\.com|fb\.watch/i.test(trimmed)) {
+    return {
+      type: "other",
       embedId: trimmed,
       thumbnailUrl: null,
     };
@@ -54,7 +66,7 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
 export function getEmbedSrc(type: EmbedType, embedId: string): string {
   switch (type) {
     case "youtube":
-      return `https://www.youtube.com/embed/${embedId}`;
+      return `https://www.youtube-nocookie.com/embed/${embedId}`;
     case "vimeo":
       return `https://player.vimeo.com/video/${embedId}`;
     case "instagram":
@@ -62,6 +74,18 @@ export function getEmbedSrc(type: EmbedType, embedId: string): string {
     default:
       return embedId;
   }
+}
+
+export function getWatchUrl(embedUrl: string, parsed?: ParsedEmbed | null): string {
+  const info = parsed ?? parseEmbedUrl(embedUrl);
+  if (!info) return embedUrl;
+  if (info.type === "youtube") {
+    return `https://www.youtube.com/watch?v=${info.embedId}`;
+  }
+  if (info.type === "vimeo") {
+    return `https://vimeo.com/${info.embedId}`;
+  }
+  return embedUrl;
 }
 
 export function resolvePortfolioThumbnail(
@@ -75,15 +99,17 @@ export function resolvePortfolioThumbnail(
 
 export function getInlineEmbedSrc(type: EmbedType, embedId: string): string {
   switch (type) {
-    case "youtube":
-      return `${getEmbedSrc(type, embedId)}?rel=0&modestbranding=1&playsinline=1`;
+    case "youtube": {
+      const origin = encodeURIComponent(siteOrigin());
+      return `${getEmbedSrc(type, embedId)}?rel=0&modestbranding=1&playsinline=1&origin=${origin}`;
+    }
     case "vimeo":
-      return `${getEmbedSrc(type, embedId)}`;
+      return `${getEmbedSrc(type, embedId)}?title=0&byline=0&portrait=0`;
     default:
       return getEmbedSrc(type, embedId);
   }
 }
 
-export function supportsInlineEmbed(type: EmbedType): boolean {
-  return type === "youtube" || type === "vimeo";
+export function supportsInlineEmbed(parsed: ParsedEmbed | null): parsed is ParsedEmbed {
+  return parsed !== null && (parsed.type === "youtube" || parsed.type === "vimeo");
 }
