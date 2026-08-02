@@ -1,18 +1,13 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ClickToPlayVideo } from "@/components/creator/ClickToPlayVideo";
-import { ContactSection } from "@/components/creator/ContactSection";
-import { CreatorPriceList } from "@/components/creator/CreatorPriceList";
-import { CreatorStudioInfo } from "@/components/creator/CreatorStudioInfo";
+import { CreatorFullContent } from "@/components/creator/CreatorFullContent";
+import { CreatorKnockGate } from "@/components/creator/CreatorKnockGate";
 import { DemoAccountBanner } from "@/components/creator/DemoAccountBanner";
 import { DemoBadge } from "@/components/creator/DemoBadge";
-import { PortfolioGridWithFilter } from "@/components/creator/PortfolioGridWithFilter";
 import { StudioPreviewBanner } from "@/components/creator/StudioPreviewBanner";
-import { getFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isDemoCreator } from "@/lib/demo-creator";
+import { toPublicCreatorProfile } from "@/lib/creator/sensitive";
 import { getCreatorPageBySlug } from "@/lib/data/creators";
-import { UnpublishedText } from "@/components/creator/UnpublishedText";
-import { formatPriceRange } from "@/lib/utils";
 
 interface CreatorPageProps {
   params: Promise<{ slug: string }>;
@@ -24,7 +19,7 @@ export async function generateMetadata({ params }: CreatorPageProps) {
   if (!page) return { title: "找不到創作者" };
   return {
     title: page.creator.studio_name,
-    description: page.creator.bio ?? `${page.creator.studio_name} 的短影音作品集`,
+    description: `${page.creator.studio_name} 的短影音作品集`,
   };
 }
 
@@ -34,12 +29,9 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   if (!page) notFound();
 
   const { creator, previewReason } = page;
-
-  const price = isDemoCreator(creator)
-    ? null
-    : formatPriceRange(creator.price_min, creator.price_max);
-  const heroItem = getFeaturedPortfolioItem(creator.portfolio_items);
+  const isPreview = Boolean(previewReason);
   const isDemo = isDemoCreator(creator);
+  const publicCreator = toPublicCreatorProfile(creator);
 
   return (
     <>
@@ -70,71 +62,20 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               {creator.studio_name}
               <DemoBadge creator={creator} className="text-sm" />
             </h1>
-            {creator.team_size && (
-              <p className="mb-2 text-sm text-[var(--text-secondary)]">{creator.team_size}</p>
-            )}
-            {price ? (
-              <p className="mb-4 text-lg text-[var(--text-secondary)]">{price}</p>
-            ) : !isDemo ? (
-              <p className="mb-4 text-sm text-[var(--text-muted)]">參考報價：尚未公布</p>
-            ) : null}
-            <div className="flex flex-wrap gap-2">
-              {creator.style_tags.length > 0 ? (
-                creator.style_tags.map((tag) => (
-                  <span key={tag} className="tag">{tag}</span>
-                ))
-              ) : (
-                <span className="text-sm text-[var(--text-muted)]">風格標籤：尚未公布</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container-narrow grid gap-12 lg:grid-cols-[1fr_1.4fr]">
-          <div>
-            <h2 className="mb-4 text-2xl font-bold">關於工作室</h2>
-            <p className="mb-6 whitespace-pre-wrap text-[var(--text-secondary)]">
-              {creator.bio ?? "尚未公布"}
-            </p>
-            <p className="text-sm">
-              <strong>服務：</strong>{" "}
-              {creator.service_types.length > 0
-                ? creator.service_types.join("、")
-                : "尚未公布"}
-            </p>
-          </div>
-          <div>
-            <h2 className="mb-4 text-2xl font-bold">精選作品</h2>
-            {heroItem ? (
-              <ClickToPlayVideo
-                embedType={heroItem.embed_type}
-                embedUrl={heroItem.embed_url}
-                title={heroItem.title}
-                thumbnailUrl={heroItem.thumbnail_url}
-              />
-            ) : (
-              <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]">
-                <UnpublishedText />
-              </div>
+            {!isPreview && !isDemo && (
+              <p className="text-sm text-[var(--text-muted)]">
+                敲門後查看自介、風格、作品與聯絡方式
+              </p>
             )}
           </div>
         </div>
       </section>
 
-      <CreatorStudioInfo creator={creator} />
-
-      <CreatorPriceList creator={creator} />
-
-      <section className="section">
-        <div className="container-narrow">
-          <h2 className="mb-10 text-center text-3xl font-bold">全部作品</h2>
-          <PortfolioGridWithFilter items={creator.portfolio_items} />
-        </div>
-      </section>
-
-      <ContactSection creator={creator} />
+      {isPreview || isDemo ? (
+        <CreatorFullContent creator={creator} />
+      ) : (
+        <CreatorKnockGate creator={publicCreator} />
+      )}
     </>
   );
 }

@@ -104,6 +104,15 @@ export interface FeedbackItem {
   created_at: string;
 }
 
+export interface Knock {
+  id: string;
+  creator_id: string;
+  visitor_key: string;
+  page_url: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
 export interface CreatorWithPortfolio extends CreatorProfile {
   portfolio_items: PortfolioItem[];
 }

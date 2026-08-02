@@ -252,6 +252,33 @@ export interface Database {
         };
         Relationships: [];
       };
+      knocks: {
+        Row: {
+          id: string;
+          creator_id: string;
+          visitor_key: string;
+          page_url: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          creator_id: string;
+          visitor_key: string;
+          page_url?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          creator_id?: string;
+          visitor_key?: string;
+          page_url?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       inquiries: {
         Row: {
           id: string;

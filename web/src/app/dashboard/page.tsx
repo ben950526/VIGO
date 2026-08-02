@@ -3,6 +3,7 @@ import Link from "next/link";
 import { signOut } from "@/actions/auth";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { getCreatorKnockStats } from "@/lib/data/knocks";
 import { isFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ListingControl } from "@/components/dashboard/ListingControl";
@@ -27,6 +28,7 @@ export default async function DashboardPage() {
   if (!data) redirect("/login");
 
   const { profile, portfolio, isAdmin } = data;
+  const knockStats = await getCreatorKnockStats(profile.id);
 
   return (
     <section className="section">
@@ -62,6 +64,15 @@ export default async function DashboardPage() {
             </Link>
             {" "}· /creator/{profile.slug}
           </p>
+          <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm">
+            <p className="font-medium text-[var(--text)]">敲門統計</p>
+            <p className="mt-1 text-[var(--text-secondary)]">
+              累計 {knockStats.total} 次 · 本週 {knockStats.thisWeek} 次 · 本月 {knockStats.thisMonth} 次
+            </p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              發案者敲門後才會看到完整工作室內容；每次敲門都會計入次數。
+            </p>
+          </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/dashboard/profile" className="btn-primary">
               編輯資料
