@@ -10,6 +10,10 @@ import { demoPortfolioBySlug } from "@/lib/demo-portfolio-data";
 import { demoPatchToDbRow, demoStudioPatches } from "@/lib/demo-studio-data";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/admin";
+import {
+  loadCreatorApprovalSnapshot,
+  notifyCreatorApprovedFromPending,
+} from "@/lib/email/notifyCreatorApproved";
 
 export async function seedDemoAccounts(): Promise<{ ok: boolean; message: string }> {
   await requireAdmin();
@@ -197,11 +201,14 @@ export async function approveCreator(formData: FormData): Promise<void> {
   if (!id) return;
 
   const supabase = await createClient();
+  const before = await loadCreatorApprovalSnapshot(supabase, id);
+
   await supabase
     .from("creator_profiles")
     .update({ verification_status: "approved", is_listed: true })
     .eq("id", id);
 
+  await notifyCreatorApprovedFromPending(before);
   revalidateAfterPublicCreatorChange();
 }
 
@@ -253,6 +260,7 @@ export async function approveCreatorAndWorks(formData: FormData): Promise<void> 
   if (!id) return;
 
   const supabase = await createClient();
+  const before = await loadCreatorApprovalSnapshot(supabase, id);
 
   await Promise.all([
     supabase
@@ -266,6 +274,7 @@ export async function approveCreatorAndWorks(formData: FormData): Promise<void> 
       .eq("status", "pending"),
   ]);
 
+  await notifyCreatorApprovedFromPending(before);
   revalidateAfterPublicCreatorChange();
 }
 
