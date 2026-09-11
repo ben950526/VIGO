@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { signOut } from "@/actions/auth";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
+import { SignOutButton } from "@/components/forms/SignOutButton";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getCreatorKnockStats } from "@/lib/data/knocks";
 import { isFeaturedPortfolioItem } from "@/lib/portfolio";
@@ -41,9 +41,7 @@ export default async function DashboardPage() {
                 審核管理
               </Link>
             )}
-            <form action={signOut}>
-              <SubmitButton className="btn-secondary text-sm">登出</SubmitButton>
-            </form>
+            <SignOutButton className="btn-secondary text-sm">登出</SignOutButton>
           </div>
         </div>
 
@@ -74,11 +72,8 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/dashboard/profile" className="btn-primary">
-              編輯資料
-            </Link>
-            <Link href="/dashboard/portfolio/new" className="btn-secondary">
-              新增作品
+            <Link href="/dashboard/studio" className="btn-primary">
+              編輯工作室內容
             </Link>
             <Link href={`/creator/${profile.slug}`} className="btn-secondary">
               {profile.verification_status === "approved" && profile.is_listed
@@ -97,7 +92,13 @@ export default async function DashboardPage() {
           公開頁的「精選作品」= 排序第一且已審核通過的作品。按「設為精選」可更換。
         </p>
         {portfolio.length === 0 ? (
-          <p className="text-[var(--text-muted)]">尚無作品，請新增 YouTube / Reels 連結。</p>
+          <p className="text-[var(--text-muted)]">
+            尚無作品，請至{" "}
+            <Link href="/dashboard/studio#portfolio" className="text-[var(--accent)] hover:underline">
+              編輯工作室內容
+            </Link>{" "}
+            新增 YouTube / Reels 連結。
+          </p>
         ) : (
           <ul className="space-y-3">
             {portfolio.map((item) => {

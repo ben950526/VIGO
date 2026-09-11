@@ -20,7 +20,7 @@ export async function sendCreatorRejectionEmail(params: {
     subject: `【Vigo】你的工作室「${params.studioName}」審核未通過`,
     html: buildRejectionEmailHtml({
       studioName: params.studioName,
-      profileUrl: `${baseUrl}/dashboard/profile`,
+      profileUrl: `${baseUrl}/dashboard/studio`,
       dashboardUrl: `${baseUrl}/dashboard`,
     }),
   });

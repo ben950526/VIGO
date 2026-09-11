@@ -22,6 +22,8 @@ import { parsePriceList } from "@/lib/price-list";
 
 interface ProfileFormProps {
   profile: CreatorProfile;
+  /** 嵌入「編輯工作室內容」頁時不顯示頁首 */
+  embedded?: boolean;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -32,7 +34,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ProfileForm({ profile }: ProfileFormProps) {
+export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
@@ -63,20 +65,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     }
   }
 
-  return (
-    <section className="section">
-      <div className="container-narrow max-w-2xl">
-        <Link href="/dashboard" className="mb-6 inline-block text-sm text-[var(--accent)]">
-          ← 返回我的工作室
-        </Link>
-        <h1 className="mb-2 text-3xl font-bold">編輯工作室資料</h1>
-        <p className="mb-4 text-sm text-[var(--text-secondary)]">
-          填寫發案者最在意的合作資訊，有助提高詢問轉換
-        </p>
-        <p className="mb-8 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-          修改完記得捲到最下方，按 <strong className="text-[var(--text)]">儲存</strong> 才會生效。
-        </p>
-
+  const form = (
         <form action={handleSubmit} className="space-y-10">
           {/* 基本 */}
           <div className="space-y-4">
@@ -245,9 +234,37 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           {error && <p className="text-sm text-red-600">{error}</p>}
           {success && <p className="text-sm text-green-700">已儲存，等待審核後公開。</p>}
           <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
-            {pending ? "儲存中…" : "儲存"}
+            {pending ? "儲存中…" : "儲存資料"}
           </button>
         </form>
+  );
+
+  if (embedded) {
+    return (
+      <div id="profile" className="scroll-mt-8 space-y-4">
+        <SectionTitle>工作室資料</SectionTitle>
+        <p className="text-sm text-[var(--text-secondary)]">
+          填寫發案者最在意的合作資訊，有助提高詢問轉換
+        </p>
+        {form}
+      </div>
+    );
+  }
+
+  return (
+    <section className="section">
+      <div className="container-narrow max-w-2xl">
+        <Link href="/dashboard" className="mb-6 inline-block text-sm text-[var(--accent)]">
+          ← 返回我的工作室
+        </Link>
+        <h1 className="mb-2 text-3xl font-bold">編輯工作室資料</h1>
+        <p className="mb-4 text-sm text-[var(--text-secondary)]">
+          填寫發案者最在意的合作資訊，有助提高詢問轉換
+        </p>
+        <p className="mb-8 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+          修改完記得捲到最下方，按 <strong className="text-[var(--text)]">儲存資料</strong> 才會生效。
+        </p>
+        {form}
       </div>
     </section>
   );

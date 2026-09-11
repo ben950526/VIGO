@@ -133,6 +133,7 @@ export async function updateCreatorProfile(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/studio");
   revalidatePath("/dashboard/profile");
   revalidateCreatorList();
   return { success: true };
@@ -185,6 +186,7 @@ export async function addPortfolioItem(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/studio");
   return { success: true };
 }
 
@@ -229,6 +231,7 @@ export async function setFeaturedPortfolioItem(formData: FormData): Promise<void
   );
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/studio");
   revalidatePath(`/creator/${profile.slug}`);
 }
 
