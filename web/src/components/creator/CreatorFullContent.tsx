@@ -24,9 +24,6 @@ export function CreatorFullContent({ creator }: CreatorFullContentProps) {
     <>
       <section className="border-b border-[var(--border)] bg-[var(--surface)] py-4">
         <div className="container-narrow">
-          {creator.team_size && (
-            <p className="mb-2 text-sm text-[var(--text-secondary)]">{creator.team_size}</p>
-          )}
           {price ? (
             <p className="mb-3 text-lg text-[var(--text-secondary)]">{price}</p>
           ) : !isDemoCreator(creator) ? (

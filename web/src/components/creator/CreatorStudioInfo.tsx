@@ -22,13 +22,10 @@ export function CreatorStudioInfo({ creator }: { creator: CreatorProfile }) {
       <div className="container-narrow">
         <h2 className="mb-2 text-2xl font-bold">合作資訊</h2>
         <p className="mb-8 text-sm text-[var(--text-muted)]">
-          發案者最常確認的項目：修改、回覆、平台與適合案型
+          熟悉平台、適合客戶與服務語言
         </p>
 
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InfoField label="修改政策" value={creator.revision_policy} />
-          <InfoField label="回覆速度" value={creator.response_time} />
-          <InfoField label="團隊規模" value={creator.team_size} />
           <InfoField
             label="熟悉平台"
             value={creator.platforms?.length ? creator.platforms.join("、") : null}
@@ -41,17 +38,6 @@ export function CreatorStudioInfo({ creator }: { creator: CreatorProfile }) {
             label="語言"
             value={creator.languages?.length ? creator.languages.join("、") : null}
           />
-        </div>
-
-        <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-5">
-          <p className="mb-2 text-sm font-medium text-[var(--text-muted)]">常接案內容</p>
-          {creator.typical_scope ? (
-            <p className="whitespace-pre-wrap text-[var(--text-secondary)]">
-              {creator.typical_scope}
-            </p>
-          ) : (
-            <UnpublishedText className="text-sm" />
-          )}
         </div>
 
         <div className="text-sm">

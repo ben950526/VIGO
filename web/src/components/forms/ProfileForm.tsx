@@ -11,11 +11,8 @@ import {
   LANGUAGES,
   PLATFORMS,
   REGIONS,
-  REVISION_OPTIONS,
-  RESPONSE_TIME_OPTIONS,
   SERVICE_TYPES,
   STYLE_TAGS,
-  TEAM_SIZES,
 } from "@/lib/constants";
 import type { CreatorProfile, PriceListItem } from "@/types/database";
 import { parsePriceList } from "@/lib/price-list";
@@ -130,43 +127,6 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
             <div>
               <label className="mb-1 block text-sm font-medium">作品集 / 官網連結（選填）</label>
               <input className="input" name="website_url" type="url" placeholder="https://" defaultValue={profile.website_url ?? ""} />
-            </div>
-          </div>
-
-          {/* 發案者在意 */}
-          <div className="space-y-4">
-            <SectionTitle>合作條件（發案者最在意）</SectionTitle>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm">修改政策</label>
-                <select className="input" name="revision_policy" defaultValue={profile.revision_policy ?? ""}>
-                  <option value="">請選擇</option>
-                  {REVISION_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm">回覆速度</label>
-                <select className="input" name="response_time" defaultValue={profile.response_time ?? ""}>
-                  <option value="">請選擇</option>
-                  {RESPONSE_TIME_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm">團隊規模</label>
-                <select className="input" name="team_size" defaultValue={profile.team_size ?? ""}>
-                  <option value="">請選擇</option>
-                  {TEAM_SIZES.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">常接案內容</label>
-              <textarea
-                className="input min-h-24"
-                name="typical_scope"
-                placeholder="例如：15–60 秒 Reels、電商開箱 3–5 支/月、含腳本與拍攝..."
-                defaultValue={profile.typical_scope ?? ""}
-              />
             </div>
           </div>
 

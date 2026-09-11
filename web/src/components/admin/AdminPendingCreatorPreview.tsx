@@ -57,7 +57,6 @@ export function AdminPendingCreatorPreview({ creator }: { creator: PendingCreato
             value={priceRange ?? undefined}
             empty="未填"
           />
-          <AdminReviewField label="團隊規模" value={creator.team_size} />
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <AdminReviewTagList label="風格標籤" tags={creator.style_tags} />
@@ -90,8 +89,6 @@ export function AdminPendingCreatorPreview({ creator }: { creator: PendingCreato
 
       <AdminReviewSection title="合作資訊">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AdminReviewField label="修改政策" value={creator.revision_policy} />
-          <AdminReviewField label="回覆速度" value={creator.response_time} />
           <AdminReviewField
             label="熟悉平台"
             value={creator.platforms.length ? creator.platforms.join("、") : undefined}
@@ -106,11 +103,6 @@ export function AdminPendingCreatorPreview({ creator }: { creator: PendingCreato
           />
           <AdminReviewField label="作品網站" value={creator.website_url} />
         </div>
-        {creator.typical_scope?.trim() && (
-          <div className="mt-4">
-            <AdminReviewField label="常接案內容" value={creator.typical_scope} />
-          </div>
-        )}
       </AdminReviewSection>
 
       {(creator.price_list?.length ?? 0) > 0 && (
