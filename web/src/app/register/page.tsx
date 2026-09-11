@@ -1,23 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import { signUp } from "@/actions/auth";
 
 export default function RegisterPage() {
-  const [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
-
-  async function handleSubmit(formData: FormData) {
-    setPending(true);
-    setError("");
-    try {
-      const result = await signUp(formData);
-      if (result?.error) setError(result.error);
-    } finally {
-      setPending(false);
-    }
-  }
+  const [state, formAction, pending] = useActionState(signUp, null);
 
   return (
     <section className="section">
@@ -26,7 +14,7 @@ export default function RegisterPage() {
         <p className="mb-8 text-center text-[var(--text-secondary)]">
           建立工作室頁，被動等發案者找上門。初期全免費。
         </p>
-        <form action={handleSubmit} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <input className="input" name="real_name" placeholder="真實姓名（實名驗證用）" required />
           <input className="input" name="studio_name" placeholder="工作室名稱" required />
           <input className="input" name="email" type="email" placeholder="Email" required />
@@ -51,7 +39,7 @@ export default function RegisterPage() {
               。
             </span>
           </label>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
           <button type="submit" disabled={pending} className="btn-primary w-full disabled:opacity-70">
             {pending ? "建立中…" : "建立帳號"}
           </button>

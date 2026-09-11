@@ -1,12 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION } from "@/lib/legal";
 import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
-export async function signUp(formData: FormData) {
+export type AuthFormState = { error?: string };
+
+export async function signUp(
+  _prevState: AuthFormState | null,
+  formData: FormData,
+): Promise<AuthFormState> {
   if (!isSupabaseConfigured()) {
     return { error: "請先設定 Supabase 環境變數（見 .env.example）" };
   }
@@ -57,7 +61,10 @@ export async function signUp(formData: FormData) {
   redirect("/dashboard");
 }
 
-export async function signIn(formData: FormData) {
+export async function signIn(
+  _prevState: AuthFormState | null,
+  formData: FormData,
+): Promise<AuthFormState> {
   if (!isSupabaseConfigured()) {
     return { error: "請先設定 Supabase 環境變數（見 .env.example）" };
   }
