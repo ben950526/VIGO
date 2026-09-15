@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SchemaSetupBanner } from "@/components/admin/SchemaSetupBanner";
 import { PortfolioSection } from "@/components/dashboard/PortfolioSection";
+import { StudioPreviewBar } from "@/components/dashboard/StudioPreviewBar";
 import { ProfileForm } from "@/components/forms/ProfileForm";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { checkCreatorProfileSchema } from "@/lib/db-schema";
@@ -30,10 +31,12 @@ export default async function StudioContentPage() {
           <p className="mb-4 text-sm text-[var(--text-secondary)]">
             更新工作室資料與作品集。資料與作品分開儲存，各自送出後才會生效。
           </p>
-          <p className="mb-10 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+          <p className="mb-6 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
             工作室資料按 <strong className="text-[var(--text)]">儲存資料</strong>；新作品按{" "}
             <strong className="text-[var(--text)]">新增作品</strong>，送出後需等待審核。
           </p>
+
+          <StudioPreviewBar slug={profile.slug} />
 
           <div className="space-y-16">
             <ProfileForm profile={profile} embedded />

@@ -75,10 +75,8 @@ export default async function DashboardPage() {
             <Link href="/dashboard/studio" className="btn-primary">
               編輯工作室內容
             </Link>
-            <Link href={`/creator/${profile.slug}`} className="btn-secondary">
-              {profile.verification_status === "approved" && profile.is_listed
-                ? "查看公開頁"
-                : "預覽工作室"}
+            <Link href="/dashboard/preview" className="btn-secondary">
+              預覽公開頁
             </Link>
           </div>
 

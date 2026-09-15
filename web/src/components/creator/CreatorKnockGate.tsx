@@ -8,15 +8,23 @@ import { getVisitorKey, isKnockUnlocked, setKnockUnlocked } from "@/lib/knock/vi
 
 interface CreatorKnockGateProps {
   creator: PublicCreatorProfile;
+  /** 接案者預覽：不寫入敲門紀錄，改切換至完整預覽 */
+  previewSimulation?: boolean;
+  onPreviewReveal?: () => void;
 }
 
-export function CreatorKnockGate({ creator }: CreatorKnockGateProps) {
+export function CreatorKnockGate({
+  creator,
+  previewSimulation = false,
+  onPreviewReveal,
+}: CreatorKnockGateProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
+    if (previewSimulation) return;
     if (!isKnockUnlocked(creator.id)) return;
 
     let cancelled = false;
@@ -29,7 +37,31 @@ export function CreatorKnockGate({ creator }: CreatorKnockGateProps) {
     return () => {
       cancelled = true;
     };
-  }, [creator.id, router]);
+  }, [creator.id, router, previewSimulation]);
+
+  if (previewSimulation) {
+    return (
+      <section className="section bg-[var(--surface)]">
+        <div className="container-narrow mx-auto max-w-2xl text-center">
+          <h2 className="mb-3 text-3xl font-bold">敲門查看工作室</h2>
+          <p className="mb-4 text-[var(--text-secondary)]">
+            發案者在此按<strong className="text-[var(--text)]">敲門</strong>後，才會看到{" "}
+            {creator.studio_name} 的自介、作品與聯絡方式。
+          </p>
+          <p className="mb-8 text-sm text-[var(--text-muted)]">
+            這是預覽模擬，不會計入敲門次數。
+          </p>
+          <button
+            type="button"
+            onClick={() => onPreviewReveal?.()}
+            className="btn-primary px-10 py-3 text-lg"
+          >
+            模擬敲門成功 → 看完整內容
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   if (syncing) {
     return (

@@ -7,6 +7,7 @@ import type { PortfolioItem } from "@/types/database";
 
 interface PortfolioGridWithFilterProps {
   items: PortfolioItem[];
+  showPendingBadge?: boolean;
 }
 
 function getAvailableTags(items: PortfolioItem[]): string[] {
@@ -23,7 +24,10 @@ function getAvailableTags(items: PortfolioItem[]): string[] {
   return [...ordered, ...custom];
 }
 
-export function PortfolioGridWithFilter({ items }: PortfolioGridWithFilterProps) {
+export function PortfolioGridWithFilter({
+  items,
+  showPendingBadge = false,
+}: PortfolioGridWithFilterProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const availableTags = useMemo(() => getAvailableTags(items), [items]);
@@ -34,7 +38,7 @@ export function PortfolioGridWithFilter({ items }: PortfolioGridWithFilterProps)
   }, [items, selectedTag]);
 
   if (items.length === 0) {
-    return <PortfolioGrid items={items} />;
+    return <PortfolioGrid items={items} showPendingBadge={showPendingBadge} />;
   }
 
   return (
@@ -86,7 +90,7 @@ export function PortfolioGridWithFilter({ items }: PortfolioGridWithFilterProps)
           此風格目前沒有作品
         </p>
       ) : (
-        <PortfolioGrid items={filteredItems} />
+        <PortfolioGrid items={filteredItems} showPendingBadge={showPendingBadge} />
       )}
     </div>
   );

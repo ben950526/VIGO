@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getAuthProfile, getAuthUserId, isAdminProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import type { CreatorProfile, PortfolioItem } from "@/types/database";
+import type { CreatorProfile, CreatorWithPortfolio, PortfolioItem } from "@/types/database";
 import { parsePriceList } from "@/lib/price-list";
 import { isSupabaseConfigured } from "@/lib/utils";
 
@@ -57,4 +57,29 @@ export const getDashboardData = cache(async (): Promise<DashboardData | null> =>
 export const getDashboardProfile = cache(async (): Promise<CreatorProfile | null> => {
   const data = await getDashboardData();
   return data?.profile ?? null;
+});
+
+/** 接案者預覽公開頁：含待審作品與完整 embed 欄位 */
+export const getOwnerStudioPreview = cache(async (): Promise<CreatorWithPortfolio | null> => {
+  if (!isSupabaseConfigured()) return null;
+
+  const userId = await getAuthUserId();
+  if (!userId) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("creator_profiles")
+    .select("*, portfolio_items(*)")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) return null;
+
+  const record = data as Record<string, unknown>;
+  const profile = normalizeCreator(record);
+  const portfolio_items = ((record.portfolio_items as PortfolioItem[]) ?? [])
+    .filter((item) => item.status !== "rejected")
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  return { ...profile, portfolio_items };
 });

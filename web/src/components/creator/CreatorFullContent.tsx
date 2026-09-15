@@ -3,7 +3,7 @@ import { ContactSection } from "@/components/creator/ContactSection";
 import { CreatorPriceList } from "@/components/creator/CreatorPriceList";
 import { CreatorStudioInfo } from "@/components/creator/CreatorStudioInfo";
 import { PortfolioGridWithFilter } from "@/components/creator/PortfolioGridWithFilter";
-import { getFeaturedPortfolioItem } from "@/lib/portfolio";
+import { getFeaturedPortfolioItem, getFeaturedPortfolioItemForPreview } from "@/lib/portfolio";
 import { resolvePortfolioThumbnail } from "@/lib/embed";
 import type { CreatorWithPortfolio } from "@/types/database";
 import { UnpublishedText } from "@/components/creator/UnpublishedText";
@@ -12,10 +12,14 @@ import { isDemoCreator } from "@/lib/demo-creator";
 
 interface CreatorFullContentProps {
   creator: CreatorWithPortfolio;
+  /** 接案者預覽：含待審作品、顯示審核中標籤 */
+  previewMode?: boolean;
 }
 
-export function CreatorFullContent({ creator }: CreatorFullContentProps) {
-  const heroItem = getFeaturedPortfolioItem(creator.portfolio_items);
+export function CreatorFullContent({ creator, previewMode = false }: CreatorFullContentProps) {
+  const heroItem = previewMode
+    ? getFeaturedPortfolioItemForPreview(creator.portfolio_items)
+    : getFeaturedPortfolioItem(creator.portfolio_items);
   const price = isDemoCreator(creator)
     ? null
     : formatPriceRange(creator.price_min, creator.price_max);
@@ -56,7 +60,14 @@ export function CreatorFullContent({ creator }: CreatorFullContentProps) {
             </p>
           </div>
           <div>
-            <h2 className="mb-4 text-2xl font-bold">精選作品</h2>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-bold">精選作品</h2>
+              {previewMode && heroItem?.status === "pending" && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                  預覽 · 審核中
+                </span>
+              )}
+            </div>
             {heroItem ? (
               <ClickToPlayVideo
                 embedType={heroItem.embed_type}
@@ -79,7 +90,7 @@ export function CreatorFullContent({ creator }: CreatorFullContentProps) {
       <section className="section">
         <div className="container-narrow">
           <h2 className="mb-10 text-center text-3xl font-bold">全部作品</h2>
-          <PortfolioGridWithFilter items={creator.portfolio_items} />
+          <PortfolioGridWithFilter items={creator.portfolio_items} showPendingBadge={previewMode} />
         </div>
       </section>
 

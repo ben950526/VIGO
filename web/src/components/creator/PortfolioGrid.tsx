@@ -4,9 +4,10 @@ import { parseEmbedUrl, resolvePortfolioThumbnail } from "@/lib/embed";
 
 interface PortfolioGridProps {
   items: PortfolioItem[];
+  showPendingBadge?: boolean;
 }
 
-export function PortfolioGrid({ items }: PortfolioGridProps) {
+export function PortfolioGrid({ items, showPendingBadge = false }: PortfolioGridProps) {
   if (items.length === 0) {
     return (
       <p className="text-center text-[var(--text-muted)]">尚未公布</p>
@@ -28,9 +29,14 @@ export function PortfolioGrid({ items }: PortfolioGridProps) {
               thumbnailUrl={thumb}
             />
             <div>
-              <h3 className="mb-2 text-lg font-bold text-[var(--text)]">
-                {item.title}
-              </h3>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-bold text-[var(--text)]">{item.title}</h3>
+                {showPendingBadge && item.status === "pending" && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                    預覽 · 審核中
+                  </span>
+                )}
+              </div>
               {item.description && (
                 <p className="mb-3 text-sm text-[var(--text-secondary)]">
                   {item.description}

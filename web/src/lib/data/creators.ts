@@ -27,8 +27,21 @@ function normalizeCreator(row: Record<string, unknown>): CreatorProfile {
 function mapCreatorRow(row: Record<string, unknown>): CreatorWithPortfolio {
   return {
     ...normalizeCreator(row),
-    portfolio_items: ((row.portfolio_items as PortfolioItem[]) ?? [])
-      .filter((item) => item.status === "approved")
+    portfolio_items: filterPublicPortfolioItems(row.portfolio_items as PortfolioItem[]),
+  };
+}
+
+function filterPublicPortfolioItems(items: PortfolioItem[] | undefined): PortfolioItem[] {
+  return (items ?? [])
+    .filter((item) => item.status === "approved")
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+function mapCreatorOwnerPreviewRow(row: Record<string, unknown>): CreatorWithPortfolio {
+  return {
+    ...normalizeCreator(row),
+    portfolio_items: (row.portfolio_items as PortfolioItem[] ?? [])
+      .filter((item) => item.status !== "rejected")
       .sort((a, b) => a.sort_order - b.sort_order),
   };
 }
@@ -180,7 +193,6 @@ export const getCreatorPageBySlug = cache(
 
     const record = data as Record<string, unknown>;
     const profile = normalizeCreator(record);
-    const creator = mapCreatorRow(record);
 
     if (!userId) return null;
 
@@ -188,6 +200,10 @@ export const getCreatorPageBySlug = cache(
     if (!isOwner && !(authProfile && isAdminProfile(authProfile))) {
       return null;
     }
+
+    const creator = isOwner
+      ? mapCreatorOwnerPreviewRow(record)
+      : mapCreatorRow(record);
 
     let previewReason: StudioPreviewReason;
     if (!isOwner) previewReason = "admin";
