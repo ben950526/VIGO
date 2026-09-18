@@ -279,6 +279,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      review_submission_events: {
+        Row: {
+          id: string;
+          kind: string;
+          studio_name: string;
+          slug: string;
+          portfolio_title: string | null;
+          creator_user_id: string | null;
+          digested_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          kind: string;
+          studio_name: string;
+          slug: string;
+          portfolio_title?: string | null;
+          creator_user_id?: string | null;
+          digested_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          kind?: string;
+          studio_name?: string;
+          slug?: string;
+          portfolio_title?: string | null;
+          creator_user_id?: string | null;
+          digested_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       inquiries: {
         Row: {
           id: string;

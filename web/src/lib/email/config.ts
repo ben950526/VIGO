@@ -11,3 +11,8 @@ export function resendApiKey(): string | null {
   if (!apiKey) return null;
   return apiKey;
 }
+
+export function adminNotifyEmail(): string | null {
+  const email = process.env.ADMIN_EMAIL?.trim();
+  return email || null;
+}

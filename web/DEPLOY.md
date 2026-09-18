@@ -39,7 +39,7 @@ git push -u origin main
 
 ## 步驟 2：Vercel 環境變數
 
-在 Import 畫面的 **Environment Variables**，新增 4 個：
+在 Import 畫面的 **Environment Variables**，至少新增下列項目：
 
 | Name | Value | 哪裡找 |
 |------|-------|--------|
@@ -47,8 +47,14 @@ git push -u origin main
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbG...` | 同上 → anon public |
 | `NEXT_PUBLIC_SITE_URL` | `https://你的專案.vercel.app` | 部署後 Vercel 給的網址；不確定可先填 `https://vigo-xxx.vercel.app`，部署完再改 |
 | `ADMIN_EMAIL` | `benten950526@gmail.com` | 你的管理員信箱（**不要**加 NEXT_PUBLIC_） |
+| `RESEND_API_KEY` | `re_...` | [Resend](https://resend.com) → API Keys |
+| `EMAIL_FROM` | `Vigo <notify@mail.try-vigo.com>` | 已驗證網域的寄件人 |
+| `SUPABASE_SERVICE_ROLE_KEY` | `eyJ...` | Supabase → Settings → API → **service_role**（僅伺服器／Cron，勿公開） |
+| `CRON_SECRET` | 自訂長字串 | Vercel Cron 呼叫 `/api/cron/admin-review-digest` 時驗證用 |
 
 勾選 **Production**（Preview 也可一併勾，方便測 PR）。
+
+**審核每日摘要：** 台北時間每天 **08:00**（UTC 00:00）寄送「昨日」送審紀錄到 `ADMIN_EMAIL`。須在 Supabase 執行 `supabase/migrations/015_review_submission_events.sql`。
 
 > `NEXT_PUBLIC_*` 會暴露給瀏覽器，只能放 Supabase **anon key**，絕對不要放 service_role key。
 

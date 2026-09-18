@@ -21,6 +21,7 @@ import {
 import { formatSchemaError } from "@/lib/db-schema";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { collectTagsFromForm } from "@/lib/tags";
+import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
 
 export async function updateCreatorProfile(formData: FormData) {
   if (!isSupabaseConfigured()) {
@@ -33,7 +34,7 @@ export async function updateCreatorProfile(formData: FormData) {
 
   const { data: profile } = await supabase
     .from("creator_profiles")
-    .select("id")
+    .select("id, studio_name, slug")
     .eq("user_id", userId)
     .single();
 
@@ -128,6 +129,12 @@ export async function updateCreatorProfile(formData: FormData) {
     return { error: formatSchemaError(error.message) ?? error.message };
   }
 
+  void notifyAdminReviewPending({
+    kind: "profile_update",
+    studioName: String(formData.get("studio_name") ?? profile.studio_name).trim(),
+    slug: profile.slug,
+  });
+
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/studio");
   revalidatePath("/dashboard/profile");
@@ -146,7 +153,7 @@ export async function addPortfolioItem(formData: FormData) {
 
   const { data: profile } = await supabase
     .from("creator_profiles")
-    .select("id, subscription_tier")
+    .select("id, subscription_tier, studio_name, slug")
     .eq("user_id", userId)
     .single();
 
@@ -180,6 +187,14 @@ export async function addPortfolioItem(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  const portfolioTitle = String(formData.get("title") ?? "").trim();
+  void notifyAdminReviewPending({
+    kind: "new_portfolio",
+    studioName: profile.studio_name,
+    slug: profile.slug,
+    portfolioTitle,
+  });
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/studio");

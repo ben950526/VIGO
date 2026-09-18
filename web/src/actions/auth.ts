@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION } from "@/lib/legal";
+import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
 import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
 export type AuthFormState = { error?: string };
@@ -57,6 +58,12 @@ export async function signUp(
   });
 
   if (profileError) return { error: profileError.message };
+
+  await notifyAdminReviewPending({
+    kind: "new_creator",
+    studioName,
+    slug,
+  });
 
   redirect("/dashboard");
 }

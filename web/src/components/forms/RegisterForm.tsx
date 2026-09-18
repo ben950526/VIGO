@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { notifyAdminNewCreatorRegistration } from "@/actions/notify-admin";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
@@ -81,6 +82,8 @@ export function RegisterForm() {
         setPending(false);
         return;
       }
+
+      await notifyAdminNewCreatorRegistration(studioName, slug);
 
       router.push("/dashboard");
       router.refresh();
