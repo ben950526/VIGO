@@ -1,18 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { notifyAdminNewCreatorRegistration } from "@/actions/notify-admin";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
+const REF_STORAGE_KEY = "vigo_referral_slug";
+
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [referrerSlug, setReferrerSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("ref")?.trim();
+    if (fromUrl) {
+      sessionStorage.setItem(REF_STORAGE_KEY, fromUrl);
+      setReferrerSlug(fromUrl);
+      return;
+    }
+    const stored = sessionStorage.getItem(REF_STORAGE_KEY)?.trim();
+    if (stored) setReferrerSlug(stored);
+  }, [searchParams]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,6 +100,14 @@ export function RegisterForm() {
 
       await notifyAdminNewCreatorRegistration(studioName, slug);
 
+      if (referrerSlug) {
+        await supabase.rpc("award_referral_for_signup", {
+          p_referred_user_id: data.user.id,
+          p_referrer_slug: referrerSlug,
+        });
+        sessionStorage.removeItem(REF_STORAGE_KEY);
+      }
+
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
@@ -96,6 +119,15 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {referrerSlug ? (
+        <p className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+          您正透過接案者邀請連結註冊；對方將依{" "}
+          <Link href="/terms#promo-credits" target="_blank" className="text-[var(--accent)] hover:underline">
+            推廣折抵點規則
+          </Link>{" "}
+          獲得折抵點（不可換現，僅供未來訂閱折抵）。
+        </p>
+      ) : null}
       <input className="input" name="real_name" placeholder="真實姓名（實名驗證用）" required />
       <input className="input" name="studio_name" placeholder="工作室名稱" required />
       <input className="input" name="email" type="email" placeholder="Email" required />

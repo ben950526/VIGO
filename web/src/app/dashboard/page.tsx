@@ -2,8 +2,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
 import { SignOutButton } from "@/components/forms/SignOutButton";
+import { ReferralCreditsPanel } from "@/components/dashboard/ReferralCreditsPanel";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getCreatorKnockStats } from "@/lib/data/knocks";
+import { getReferralDashboardStats } from "@/lib/data/referral";
+import { siteUrl } from "@/lib/email/config";
+import { buildReferralRegisterUrl } from "@/lib/referral/config";
 import { isFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ListingControl } from "@/components/dashboard/ListingControl";
@@ -28,7 +32,11 @@ export default async function DashboardPage() {
   if (!data) redirect("/login");
 
   const { profile, portfolio, isAdmin } = data;
-  const knockStats = await getCreatorKnockStats(profile.id);
+  const [knockStats, referralStats] = await Promise.all([
+    getCreatorKnockStats(profile.id),
+    getReferralDashboardStats(),
+  ]);
+  const referralUrl = buildReferralRegisterUrl(siteUrl(), profile.slug);
 
   return (
     <section className="section">
@@ -44,6 +52,12 @@ export default async function DashboardPage() {
             <SignOutButton className="btn-secondary text-sm">登出</SignOutButton>
           </div>
         </div>
+
+        <ReferralCreditsPanel
+          referralUrl={referralUrl}
+          balance={profile.promo_credits_balance}
+          successfulInvites={referralStats?.successfulInvites ?? 0}
+        />
 
         <div className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
           <p className="mb-2">

@@ -67,6 +67,8 @@ export interface Database {
           typical_scope: string | null;
           website_url: string | null;
           price_list: Json;
+          referred_by_user_id: string | null;
+          promo_credits_balance: number;
           created_at: string;
           updated_at: string;
         };
@@ -103,6 +105,8 @@ export interface Database {
           typical_scope?: string | null;
           website_url?: string | null;
           price_list?: Json;
+          referred_by_user_id?: string | null;
+          promo_credits_balance?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -139,8 +143,61 @@ export interface Database {
           typical_scope?: string | null;
           website_url?: string | null;
           price_list?: Json;
+          referred_by_user_id?: string | null;
+          promo_credits_balance?: number;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      referral_signups: {
+        Row: {
+          id: string;
+          referrer_user_id: string;
+          referred_user_id: string;
+          credits_awarded: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referrer_user_id: string;
+          referred_user_id: string;
+          credits_awarded?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          referrer_user_id?: string;
+          referred_user_id?: string;
+          credits_awarded?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      promo_credit_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          reason: string;
+          related_user_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          amount: number;
+          reason: string;
+          related_user_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          amount?: number;
+          reason?: string;
+          related_user_id?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -355,6 +412,13 @@ export interface Database {
       seed_demo_accounts: {
         Args: Record<string, never>;
         Returns: string;
+      };
+      award_referral_for_signup: {
+        Args: {
+          p_referred_user_id: string;
+          p_referrer_slug: string;
+        };
+        Returns: Json;
       };
     };
     Enums: Record<string, never>;

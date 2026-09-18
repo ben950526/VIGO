@@ -124,3 +124,13 @@ npm run dev
 - [ ] `/admin/review` 管理員能進入  
 
 全部 OK → 可進行 **第三步：Vercel 部署環境變數**。
+
+---
+
+## 推廣折抵點（016，2025 起新增）
+
+若要用「專屬邀請連結 /register?ref=slug」拉新累點，請在 SQL Editor 執行：
+
+- `migrations/016_referral_credits.sql`
+
+未執行時：註冊仍可用，但發點 RPC 會失敗、儀表板可能無法顯示折抵點欄位。

@@ -110,7 +110,12 @@ export function mergeCreatorWithUnlock(
   base: PublicCreatorProfile,
   unlock: CreatorKnockUnlock,
 ): CreatorProfile & { portfolio_items: PortfolioItem[] } {
-  return { ...base, ...unlock };
+  return {
+    ...base,
+    ...unlock,
+    referred_by_user_id: null,
+    promo_credits_balance: 0,
+  };
 }
 
 /** @deprecated */

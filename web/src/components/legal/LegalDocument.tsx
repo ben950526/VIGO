@@ -36,13 +36,15 @@ export function LegalDocument({ title, children }: LegalDocumentProps) {
 
 export function LegalSection({
   title,
+  id,
   children,
 }: {
   title: string;
+  id?: string;
   children: ReactNode;
 }) {
   return (
-    <section>
+    <section id={id}>
       <h2 className="mb-3 text-xl font-bold text-[var(--text)]">{title}</h2>
       <div className="space-y-3 text-sm leading-relaxed">{children}</div>
     </section>

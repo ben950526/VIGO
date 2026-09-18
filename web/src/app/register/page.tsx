@@ -1,5 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { RegisterForm } from "@/components/forms/RegisterForm";
+
+function RegisterFormFallback() {
+  return <p className="text-center text-sm text-[var(--text-muted)]">載入表單…</p>;
+}
 
 export default function RegisterPage() {
   return (
@@ -9,7 +14,9 @@ export default function RegisterPage() {
         <p className="mb-8 text-center text-[var(--text-secondary)]">
           建立工作室頁，被動等發案者找上門。初期全免費。
         </p>
-        <RegisterForm />
+        <Suspense fallback={<RegisterFormFallback />}>
+          <RegisterForm />
+        </Suspense>
         <p className="mt-6 text-center text-sm">
           已有帳號？{" "}
           <Link href="/login" className="text-[var(--accent)] hover:underline">
