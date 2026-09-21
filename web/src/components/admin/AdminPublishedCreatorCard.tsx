@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { adminSetCreatorListing, adminSetPortfolioListing } from "@/actions/admin";
 import { AdminToggleForm } from "@/components/admin/AdminActionForm";
+import { DemoBadge } from "@/components/creator/DemoBadge";
+import { isCreatorVisibleOnExplore } from "@/lib/creator/listing";
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
 
 interface AdminPublishedCreatorCardProps {
@@ -16,23 +18,42 @@ const portfolioStatusLabel: Record<PortfolioItem["status"], string> = {
 export function AdminPublishedCreatorCard({
   creator,
 }: AdminPublishedCreatorCardProps) {
+  const visibleOnExplore = isCreatorVisibleOnExplore(creator);
+  const studioListed = creator.is_listed !== false;
+
   return (
     <li className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold">{creator.studio_name}</h3>
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-bold">{creator.studio_name}</h3>
+            <DemoBadge creator={creator} />
+          </div>
           <p className="text-sm text-[var(--text-muted)]">
             {creator.region ?? "未填地區"} · slug: {creator.slug}
           </p>
           <p className="mt-2 text-sm">
-            工作室狀態：
+            工作室上架：
             <span
               className={
-                creator.is_listed ? "font-medium text-green-700" : "font-medium text-red-600"
+                studioListed ? "font-medium text-green-700" : "font-medium text-red-600"
               }
             >
-              {creator.is_listed ? "已上架" : "已下架"}
+              {studioListed ? "是（未下架）" : "否（已下架）"}
             </span>
+          </p>
+          <p className="mt-1 text-sm">
+            探索頁：
+            <span
+              className={
+                visibleOnExplore ? "font-medium text-green-700" : "font-medium text-amber-700"
+              }
+            >
+              {visibleOnExplore ? "可見" : "不可見"}
+            </span>
+            {!visibleOnExplore && creator.verification_status !== "approved" ? (
+              <span className="text-[var(--text-muted)]">（需審核通過）</span>
+            ) : null}
           </p>
           <Link
             href={`/creator/${creator.slug}`}
@@ -45,13 +66,13 @@ export function AdminPublishedCreatorCard({
           action={adminSetCreatorListing}
           id={creator.id}
           slug={creator.slug}
-          listed={creator.is_listed}
+          listed={studioListed}
           className={
-            creator.is_listed
+            studioListed
               ? "rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
               : "btn-primary text-sm"
           }
-          pendingText={creator.is_listed ? "下架中…" : "上架中…"}
+          pendingText={studioListed ? "下架中…" : "上架中…"}
           labelWhenListed="下架工作室"
           labelWhenUnlisted="重新上架工作室"
         />

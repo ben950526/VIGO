@@ -6,7 +6,8 @@ const PENDING_CREATOR_FIELDS =
   "id, user_id, studio_name, slug, region, bio, avatar_url, service_types, style_tags, price_min, price_max, price_list, contact_email, line_id, phone, show_email, show_line, show_phone, verification_status, turnaround, revision_policy, response_time, team_size, platforms, client_types, languages, typical_scope, website_url, created_at";
 const PORTFOLIO_REVIEW_FIELDS =
   "id, title, description, embed_url, embed_type, thumbnail_url, style_tags, sort_order, status, creator_id, created_at";
-const PUBLISHED_CREATOR_FIELDS = "id, studio_name, slug, region, is_listed, updated_at";
+const PUBLISHED_CREATOR_FIELDS =
+  "id, studio_name, slug, region, is_listed, is_demo, verification_status, updated_at";
 
 export interface PendingCreator extends CreatorProfile {
   portfolio_items: PortfolioItem[];
@@ -82,6 +83,9 @@ export async function getPublishedCreators(): Promise<PublishedCreator[]> {
       ...(record as unknown as CreatorProfile),
       price_list: parsePriceList(record.price_list),
       is_listed: record.is_listed !== false,
+      is_demo: record.is_demo === true,
+      verification_status:
+        (record.verification_status as CreatorProfile["verification_status"]) ?? "approved",
       portfolio_items: ((record.portfolio_items as PortfolioItem[]) ?? []).sort(
         (a, b) => a.sort_order - b.sort_order,
       ),

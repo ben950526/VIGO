@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import type { CreatorProfile, CreatorWithPortfolio, PortfolioItem } from "@/types/database";
 import { CREATOR_LIST_TAG } from "@/lib/cache/revalidate";
 import { getAuthProfile, getAuthUserId, isAdminProfile } from "@/lib/auth/session";
+import { isCreatorVisibleOnExplore } from "@/lib/creator/listing";
 import { isDemoCreator } from "@/lib/demo-creator";
 import { parsePriceList } from "@/lib/price-list";
 import { createClient } from "@/lib/supabase/server";
@@ -109,7 +110,7 @@ async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorW
     .from("creator_profiles")
     .select(CREATOR_CARD_FIELDS)
     .eq("verification_status", "approved")
-    .eq("is_listed", true)
+    .not("is_listed", "eq", false)
     .order("featured", { ascending: false })
     .order("updated_at", { ascending: false });
 
@@ -118,7 +119,9 @@ async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorW
   const { data, error } = await query;
   if (error || !data) return [];
 
-  const creators = data.map((row) => mapCreatorListRow(row as Record<string, unknown>));
+  const creators = data
+    .map((row) => mapCreatorListRow(row as Record<string, unknown>))
+    .filter(isCreatorVisibleOnExplore);
   return applyCreatorFilters(creators, filters);
 }
 
@@ -157,12 +160,15 @@ async function fetchPublicCreatorPage(slug: string): Promise<CreatorPageData | n
     .select("*, portfolio_items(*)")
     .eq("slug", slug)
     .eq("verification_status", "approved")
-    .eq("is_listed", true)
+    .not("is_listed", "eq", false)
     .maybeSingle();
 
   if (error || !data) return null;
 
-  return { creator: mapCreatorRow(data as Record<string, unknown>) };
+  const creator = mapCreatorRow(data as Record<string, unknown>);
+  if (!isCreatorVisibleOnExplore(creator)) return null;
+
+  return { creator };
 }
 
 function getCachedPublicCreatorPage(slug: string): Promise<CreatorPageData | null> {
@@ -227,14 +233,16 @@ async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
     .from("creator_profiles")
     .select(CREATOR_CARD_FIELDS)
     .eq("verification_status", "approved")
-    .eq("is_listed", true)
+    .not("is_listed", "eq", false)
     .order("featured", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(24);
 
   if (error || !data) return [];
 
-  const creators = data.map((row) => mapCreatorListRow(row as Record<string, unknown>));
+  const creators = data
+    .map((row) => mapCreatorListRow(row as Record<string, unknown>))
+    .filter(isCreatorVisibleOnExplore);
   const featured = creators.filter((c) => c.featured);
   const rest = creators.filter((c) => !c.featured);
   const sorted = [...featured, ...rest];

@@ -36,6 +36,12 @@ export async function seedDemoAccounts(): Promise<{ ok: boolean; message: string
     return { ok: false, message: error.message };
   }
 
+  revalidateCreatorList();
+  revalidatePath("/explore");
+  for (const slug of demoPortfolioBySlug.map((g) => g.slug)) {
+    revalidatePath(`/creator/${slug}`);
+  }
+
   return { ok: true, message: String(data ?? "已建立示範帳號") };
 }
 

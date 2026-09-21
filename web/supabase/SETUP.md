@@ -138,3 +138,23 @@ npm run dev
 接著執行（每位接案者專屬 8 碼邀請碼）：
 
 - `migrations/017_invite_code.sql`
+
+若示範帳號在審核管理顯示上架但探索頁看不到，請執行：
+
+- `migrations/018_explore_listing_fix.sql`
+
+---
+
+## 單次公告信（重出江湖廣播）
+
+本機（需 `.env.local` 含 `RESEND_API_KEY`、`SUPABASE_SERVICE_ROLE_KEY`）：
+
+```bash
+cd web
+npm install
+npm run broadcast:relaunch -- --dry-run
+npm run broadcast:relaunch -- --to=你的Email --force-test-to --send
+npm run broadcast:relaunch -- --send --only-approved
+```
+
+預設 `--dry-run` 只列名單；加 `--send` 才會寄出（送出前會等待 10 秒）。
