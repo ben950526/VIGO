@@ -9,13 +9,16 @@ import {
 import type { BroadcastAudience } from "@/lib/email/broadcastRecipients";
 const initialState: BroadcastFormState = {};
 
-const DEFAULT_BODY = `Vigo 經過約一個月的內部優化，現在重新上線服務。
+const DEFAULT_BODY = `Vigo 經過約一個月的內部優化，現在重新上線，且近期將快速對外推廣 Vigo，讓更多發案者來逛創作者、找合作。
 
-這段時間我們調整了登入註冊、工作室編輯、公開頁預覽與審核流程，也上了推廣累點（儀表板可複製你的專屬邀請碼）。
+若你當初只完成註冊，工作室或作品還沒填完整，請盡快登入補齊——推廣期間，完整的工作室頁與作品集，才容易被看見、被敲門。
 
-歡迎登入查看你的工作室與邀請碼。
+建議你現在就做：
+1. 到「編輯工作室內容」補齊介紹、服務與聯絡方式
+2. 新增至少 1 支 YouTube／Reels 作品連結並送審
+3. 到儀表板複製你的專屬邀請碼，邀請同行一起進駐（推廣累點不可換現，訂閱上線後依公告折抵）
 
-感謝你早期就加入 Vigo。`;
+感謝你早期就加入 Vigo，我們很快見。`;
 
 export function BroadcastMailForm({ adminEmail }: { adminEmail: string }) {
   const [state, formAction, pending] = useActionState(sendAdminBroadcast, initialState);
