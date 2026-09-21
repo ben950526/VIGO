@@ -14,6 +14,7 @@ function normalizeCreator(row: Record<string, unknown>): CreatorProfile {
     price_list: parsePriceList(row.price_list),
     is_listed: row.is_listed !== false,
     is_demo: row.is_demo === true,
+    invite_code: typeof row.invite_code === "string" ? row.invite_code : "",
     promo_credits_balance:
       typeof row.promo_credits_balance === "number" ? row.promo_credits_balance : 0,
     referred_by_user_id: (row.referred_by_user_id as string | null) ?? null,

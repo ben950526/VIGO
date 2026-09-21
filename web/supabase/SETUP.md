@@ -134,3 +134,7 @@ npm run dev
 - `migrations/016_referral_credits.sql`
 
 未執行時：註冊仍可用，但發點 RPC 會失敗、儀表板可能無法顯示折抵點欄位。
+
+接著執行（每位接案者專屬 8 碼邀請碼）：
+
+- `migrations/017_invite_code.sql`

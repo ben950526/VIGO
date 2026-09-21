@@ -113,6 +113,7 @@ export function mergeCreatorWithUnlock(
   return {
     ...base,
     ...unlock,
+    invite_code: "",
     referred_by_user_id: null,
     promo_credits_balance: 0,
   };

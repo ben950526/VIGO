@@ -71,7 +71,7 @@ export async function signUp(
     await awardReferralSignup(data.user.id, referralSlug);
   }
 
-  redirect("/dashboard");
+  redirect("/dashboard?welcome=1#referral");
 }
 
 export async function signIn(

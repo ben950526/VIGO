@@ -9,25 +9,32 @@ import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
-const REF_STORAGE_KEY = "vigo_referral_slug";
+const REF_STORAGE_KEY = "vigo_referral_ref";
 
 export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [referrerSlug, setReferrerSlug] = useState<string | null>(null);
+  const [referrerRef, setReferrerRef] = useState("");
 
   useEffect(() => {
     const fromUrl = searchParams.get("ref")?.trim();
     if (fromUrl) {
       sessionStorage.setItem(REF_STORAGE_KEY, fromUrl);
-      setReferrerSlug(fromUrl);
+      setReferrerRef(fromUrl);
       return;
     }
     const stored = sessionStorage.getItem(REF_STORAGE_KEY)?.trim();
-    if (stored) setReferrerSlug(stored);
+    if (stored) setReferrerRef(stored);
   }, [searchParams]);
+
+  function updateReferrerRef(value: string) {
+    const trimmed = value.trim();
+    setReferrerRef(value);
+    if (trimmed) sessionStorage.setItem(REF_STORAGE_KEY, trimmed);
+    else sessionStorage.removeItem(REF_STORAGE_KEY);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,15 +107,16 @@ export function RegisterForm() {
 
       await notifyAdminNewCreatorRegistration(studioName, slug);
 
-      if (referrerSlug) {
+      const refToApply = referrerRef.trim();
+      if (refToApply) {
         await supabase.rpc("award_referral_for_signup", {
           p_referred_user_id: data.user.id,
-          p_referrer_slug: referrerSlug,
+          p_referrer_slug: refToApply,
         });
         sessionStorage.removeItem(REF_STORAGE_KEY);
       }
 
-      router.push("/dashboard");
+      router.push("/dashboard?welcome=1#referral");
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "註冊失敗，請稍後再試";
@@ -119,9 +127,9 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {referrerSlug ? (
+      {referrerRef.trim() ? (
         <p className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-          您正透過接案者邀請連結註冊；對方將依{" "}
+          已套用推薦碼「{referrerRef.trim()}」；邀請人將依{" "}
           <Link href="/terms#promo-credits" target="_blank" className="text-[var(--accent)] hover:underline">
             推廣折抵點規則
           </Link>{" "}
@@ -139,6 +147,19 @@ export function RegisterForm() {
         minLength={6}
         required
       />
+      <div>
+        <input
+          className="input"
+          name="referral_code"
+          autoComplete="off"
+          placeholder="推薦碼（選填，若有人推薦您加入）"
+          value={referrerRef}
+          onChange={(e) => updateReferrerRef(e.target.value)}
+        />
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
+          也可透過邀請連結自動帶入。註冊完成後，儀表板會顯示<strong>您自己的邀請碼</strong>供日後分享。
+        </p>
+      </div>
       <label className="flex items-start gap-2 text-sm leading-relaxed text-[var(--text-secondary)]">
         <input
           type="checkbox"

@@ -51,6 +51,7 @@ export interface CreatorProfile {
   typical_scope: string | null;
   website_url: string | null;
   price_list: PriceListItem[];
+  invite_code: string;
   referred_by_user_id: string | null;
   promo_credits_balance: number;
   created_at: string;

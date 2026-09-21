@@ -67,6 +67,7 @@ export interface Database {
           typical_scope: string | null;
           website_url: string | null;
           price_list: Json;
+          invite_code: string;
           referred_by_user_id: string | null;
           promo_credits_balance: number;
           created_at: string;
@@ -105,6 +106,7 @@ export interface Database {
           typical_scope?: string | null;
           website_url?: string | null;
           price_list?: Json;
+          invite_code?: string;
           referred_by_user_id?: string | null;
           promo_credits_balance?: number;
           created_at?: string;
@@ -115,6 +117,7 @@ export interface Database {
           user_id?: string;
           slug?: string;
           studio_name?: string;
+          invite_code?: string;
           bio?: string | null;
           region?: string | null;
           service_types?: string[];

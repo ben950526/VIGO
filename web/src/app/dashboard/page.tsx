@@ -2,16 +2,18 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
 import { SignOutButton } from "@/components/forms/SignOutButton";
+import { DashboardReferralWelcome } from "@/components/dashboard/DashboardReferralWelcome";
 import { ReferralCreditsPanel } from "@/components/dashboard/ReferralCreditsPanel";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getCreatorKnockStats } from "@/lib/data/knocks";
 import { getReferralDashboardStats } from "@/lib/data/referral";
 import { siteUrl } from "@/lib/email/config";
-import { buildReferralRegisterUrl } from "@/lib/referral/config";
+import { buildReferralRegisterUrl, resolvePublicInviteCode } from "@/lib/referral/config";
 import { isFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ListingControl } from "@/components/dashboard/ListingControl";
 import { SubmitButton } from "@/components/forms/SubmitButton";
+import { Suspense } from "react";
 
 export default async function DashboardPage() {
   if (!isSupabaseConfigured()) {
@@ -36,7 +38,8 @@ export default async function DashboardPage() {
     getCreatorKnockStats(profile.id),
     getReferralDashboardStats(),
   ]);
-  const referralUrl = buildReferralRegisterUrl(siteUrl(), profile.slug);
+  const inviteCode = resolvePublicInviteCode(profile);
+  const referralUrl = buildReferralRegisterUrl(siteUrl(), inviteCode);
 
   return (
     <section className="section">
@@ -53,7 +56,12 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        <Suspense fallback={null}>
+          <DashboardReferralWelcome />
+        </Suspense>
+
         <ReferralCreditsPanel
+          inviteCode={inviteCode}
           referralUrl={referralUrl}
           balance={profile.promo_credits_balance}
           successfulInvites={referralStats?.successfulInvites ?? 0}
