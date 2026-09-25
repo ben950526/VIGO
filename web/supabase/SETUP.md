@@ -138,6 +138,7 @@ npm run dev
 接著執行（每位接案者專屬 8 碼邀請碼）：
 
 - `migrations/017_invite_code.sql`
+- `migrations/020_promo_rules_and_social_share.sql`（拉新 +20、社群宣傳 +100 終身一次、折抵上限 300；若已跑 016／017 請補跑；**不必**再跑 019）
 
 若示範帳號在審核管理顯示上架但探索頁看不到，請執行：
 

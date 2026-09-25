@@ -3,12 +3,14 @@ import Link from "next/link";
 import { AdminPublishedCreatorCard } from "@/components/admin/AdminPublishedCreatorCard";
 import { PendingCreatorCard } from "@/components/admin/PendingCreatorCard";
 import { PendingPortfolioRow } from "@/components/admin/PendingPortfolioRow";
+import { PendingPromoShareRow } from "@/components/admin/PendingPromoShareRow";
 import { requireAdmin } from "@/lib/auth/admin";
 import {
   getPendingCreators,
   getPendingPortfolioItems,
   getPublishedCreators,
 } from "@/lib/data/admin";
+import { getPendingPromoShareSubmissions } from "@/lib/data/promo-share";
 
 export const metadata = {
   title: "審核管理",
@@ -51,9 +53,10 @@ export default async function AdminReviewPage({
   await requireAdmin();
 
   const params = await searchParams;
-  const [pendingCreators, pendingItems] = await Promise.all([
+  const [pendingCreators, pendingItems, pendingPromoShares] = await Promise.all([
     getPendingCreators(),
     getPendingPortfolioItems(),
+    getPendingPromoShareSubmissions(),
   ]);
 
   const totalPending = pendingCreators.length + pendingItems.length;
@@ -109,6 +112,24 @@ export default async function AdminReviewPage({
             撤除失敗：{decodeURIComponent(params.demoRemoveError)}
           </p>
         )}
+
+        <div className="mb-12">
+          <h2 className="mb-4 text-xl font-bold">
+            待審社群宣傳 ({pendingPromoShares.length})
+          </h2>
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
+            接案者公開貼文宣傳 Vigo 並附上邀請連結／邀請碼，通過後 +100 點（每人終身一次，上限 300 與拉新共用）。
+          </p>
+          {pendingPromoShares.length === 0 ? (
+            <p className="text-[var(--text-muted)]">目前沒有待審宣傳證明</p>
+          ) : (
+            <ul className="space-y-4">
+              {pendingPromoShares.map((item) => (
+                <PendingPromoShareRow key={item.id} item={item} />
+              ))}
+            </ul>
+          )}
+        </div>
 
         <div className="mb-12">
           <h2 className="mb-4 text-xl font-bold">

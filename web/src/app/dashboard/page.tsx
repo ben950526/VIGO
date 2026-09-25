@@ -3,9 +3,11 @@ import Link from "next/link";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
 import { SignOutButton } from "@/components/forms/SignOutButton";
 import { DashboardReferralWelcome } from "@/components/dashboard/DashboardReferralWelcome";
+import { PromoSharePanel } from "@/components/dashboard/PromoSharePanel";
 import { ReferralCreditsPanel } from "@/components/dashboard/ReferralCreditsPanel";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getCreatorKnockStats } from "@/lib/data/knocks";
+import { getMyPromoShareSubmissions } from "@/lib/data/promo-share";
 import { getReferralDashboardStats } from "@/lib/data/referral";
 import { siteUrl } from "@/lib/email/config";
 import { buildReferralRegisterUrl, resolvePublicInviteCode } from "@/lib/referral/config";
@@ -34,9 +36,10 @@ export default async function DashboardPage() {
   if (!data) redirect("/login");
 
   const { profile, portfolio, isAdmin } = data;
-  const [knockStats, referralStats] = await Promise.all([
+  const [knockStats, referralStats, promoShareSubmissions] = await Promise.all([
     getCreatorKnockStats(profile.id),
     getReferralDashboardStats(),
+    getMyPromoShareSubmissions(),
   ]);
   const inviteCode = resolvePublicInviteCode(profile);
   const referralUrl = buildReferralRegisterUrl(siteUrl(), inviteCode);
@@ -65,6 +68,12 @@ export default async function DashboardPage() {
           referralUrl={referralUrl}
           balance={profile.promo_credits_balance}
           successfulInvites={referralStats?.successfulInvites ?? 0}
+        />
+
+        <PromoSharePanel
+          inviteCode={inviteCode}
+          referralUrl={referralUrl}
+          submissions={promoShareSubmissions}
         />
 
         <div className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">

@@ -177,6 +177,42 @@ export interface Database {
         };
         Relationships: [];
       };
+      promo_share_submissions: {
+        Row: {
+          id: string;
+          user_id: string;
+          platform: string;
+          post_url: string;
+          status: string;
+          credits_awarded: number;
+          admin_note: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          platform: string;
+          post_url: string;
+          status?: string;
+          credits_awarded?: number;
+          admin_note?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          platform?: string;
+          post_url?: string;
+          status?: string;
+          credits_awarded?: number;
+          admin_note?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       promo_credit_transactions: {
         Row: {
           id: string;
@@ -421,6 +457,14 @@ export interface Database {
           p_referred_user_id: string;
           p_referrer_slug: string;
         };
+        Returns: Json;
+      };
+      admin_approve_promo_share: {
+        Args: { p_submission_id: string };
+        Returns: Json;
+      };
+      admin_reject_promo_share: {
+        Args: { p_submission_id: string; p_note?: string | null };
         Returns: Json;
       };
     };
