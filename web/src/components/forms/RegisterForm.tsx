@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { notifyAdminNewCreatorRegistration } from "@/actions/notify-admin";
+import { sendCreatorWelcomeAfterSignup } from "@/actions/welcome-email";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
@@ -105,7 +106,10 @@ export function RegisterForm() {
         return;
       }
 
-      await notifyAdminNewCreatorRegistration(studioName, slug);
+      await Promise.all([
+        notifyAdminNewCreatorRegistration(studioName, slug),
+        sendCreatorWelcomeAfterSignup({ email, studioName, slug }),
+      ]);
 
       const refToApply = referrerRef.trim();
       if (refToApply) {

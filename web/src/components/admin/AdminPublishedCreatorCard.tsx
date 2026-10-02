@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { adminSetCreatorListing, adminSetPortfolioListing } from "@/actions/admin";
 import { AdminToggleForm } from "@/components/admin/AdminActionForm";
+import { AdminPurgeAccountForm } from "@/components/admin/AdminPurgeAccountForm";
 import { DemoBadge } from "@/components/creator/DemoBadge";
 import { isCreatorVisibleOnExplore } from "@/lib/creator/listing";
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
@@ -62,7 +63,7 @@ export function AdminPublishedCreatorCard({
             查看公開頁
           </Link>
         </div>
-        <AdminToggleForm
+          <AdminToggleForm
           action={adminSetCreatorListing}
           id={creator.id}
           slug={creator.slug}
@@ -77,6 +78,14 @@ export function AdminPublishedCreatorCard({
           labelWhenUnlisted="重新上架工作室"
         />
       </div>
+
+      {!studioListed && !creator.is_demo ? (
+        <AdminPurgeAccountForm
+          creatorId={creator.id}
+          slug={creator.slug}
+          studioName={creator.studio_name}
+        />
+      ) : null}
 
       {creator.portfolio_items.length === 0 ? (
         <p className="border-t border-[var(--border)] pt-4 text-sm text-[var(--text-muted)]">

@@ -10,6 +10,7 @@ import {
 } from "@/actions/admin";
 import { AdminActionForm } from "@/components/admin/AdminActionForm";
 import { AdminPendingCreatorPreview } from "@/components/admin/AdminPendingCreatorPreview";
+import { AdminPurgeAccountForm } from "@/components/admin/AdminPurgeAccountForm";
 import type { PendingCreator } from "@/lib/data/admin";
 
 function ReviewActions({
@@ -73,6 +74,7 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
           <h3 className="text-xl font-bold">{creator.studio_name}</h3>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             {creator.contact_email ?? "未填 Email"} · slug: {creator.slug}
+            {creator.verification_status === "rejected" ? " · 已退件" : ""}
           </p>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
             待審作品 {pendingCount} 件 · 共 {creator.portfolio_items.length} 件
@@ -102,6 +104,15 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
       <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-[var(--border)] pt-4">
         <ReviewActions creatorId={creator.id} onDone={onDone} />
       </div>
+
+      {!creator.is_demo ? (
+        <AdminPurgeAccountForm
+          creatorId={creator.id}
+          slug={creator.slug}
+          studioName={creator.studio_name}
+          onPurged={onDone}
+        />
+      ) : null}
     </li>
   );
 }

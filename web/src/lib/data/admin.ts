@@ -7,7 +7,7 @@ const PENDING_CREATOR_FIELDS =
 const PORTFOLIO_REVIEW_FIELDS =
   "id, title, description, embed_url, embed_type, thumbnail_url, style_tags, sort_order, status, creator_id, created_at";
 const PUBLISHED_CREATOR_FIELDS =
-  "id, studio_name, slug, region, is_listed, is_demo, verification_status, updated_at";
+  "id, user_id, studio_name, slug, region, is_listed, is_demo, verification_status, updated_at";
 
 export interface PendingCreator extends CreatorProfile {
   portfolio_items: PortfolioItem[];
@@ -18,7 +18,7 @@ export async function getPendingCreators(): Promise<PendingCreator[]> {
   const { data, error } = await supabase
     .from("creator_profiles")
     .select(`${PENDING_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_REVIEW_FIELDS})`)
-    .eq("verification_status", "pending")
+    .in("verification_status", ["pending", "rejected"])
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];

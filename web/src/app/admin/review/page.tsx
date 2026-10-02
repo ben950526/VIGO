@@ -26,6 +26,7 @@ async function PublishedCreatorsSection() {
       </h2>
       <p className="mb-4 text-sm text-[var(--text-muted)]">
         於審核管理下架或重新上架已通過審核的工作室與作品。下架後不會出現在探索頁與公開連結。
+        已下架者可「完整註銷」刪除登入帳號（Email 可再註冊）；已上架的真實工作室必須先下架。
       </p>
       {publishedCreators.length === 0 ? (
         <p className="text-[var(--text-muted)]">目前沒有已公開的創作者</p>

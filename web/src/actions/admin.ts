@@ -9,6 +9,7 @@ import {
 import { demoPortfolioBySlug } from "@/lib/demo-portfolio-data";
 import { demoPatchToDbRow, demoStudioPatches } from "@/lib/demo-studio-data";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdmin } from "@/lib/auth/admin";
 import {
   loadCreatorApprovalSnapshot,
@@ -315,4 +316,83 @@ export async function adminSetPortfolioListing(formData: FormData): Promise<void
     .eq("id", id);
 
   revalidateAfterPublicCreatorChange(slug);
+}
+
+export type PurgeCreatorState = { error?: string; ok?: boolean; message?: string };
+
+/**
+ * 完整註銷：刪除 Auth 帳號（Email 可再註冊）。
+ * 僅限示範帳號以外，且須為「已下架」或「尚未通過審核／已退件」。
+ */
+export async function purgeCreatorAccount(
+  _prev: PurgeCreatorState | null,
+  formData: FormData,
+): Promise<PurgeCreatorState> {
+  const adminProfile = await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  const confirmSlug = String(formData.get("confirm_slug") ?? "").trim().toLowerCase();
+  if (!id) return { error: "找不到工作室" };
+
+  const service = createServiceClient();
+  if (!service) {
+    return { error: "缺少 SUPABASE_SERVICE_ROLE_KEY，無法刪除登入帳號" };
+  }
+
+  const { data: creator, error: loadError } = await service
+    .from("creator_profiles")
+    .select("id, user_id, slug, studio_name, is_listed, is_demo, verification_status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (loadError) return { error: loadError.message };
+  if (!creator) return { error: "找不到工作室" };
+
+  if (confirmSlug !== creator.slug.toLowerCase()) {
+    return { error: "請完整輸入 slug 以確認註銷（須與畫面上的 slug 完全相同）" };
+  }
+
+  if (creator.is_demo) {
+    return { error: "示範帳號請用「撤除假帳號」，不要個別註銷" };
+  }
+
+  if (creator.user_id === adminProfile.id) {
+    return { error: "不能註銷目前登入的管理員帳號" };
+  }
+
+  const approvedAndListed =
+    creator.verification_status === "approved" && creator.is_listed !== false;
+  if (approvedAndListed) {
+    return { error: "請先下架工作室，才能完整註銷帳號" };
+  }
+
+  const { data: roleRow } = await service
+    .from("profiles")
+    .select("role, email")
+    .eq("id", creator.user_id)
+    .maybeSingle();
+
+  if (roleRow?.role === "admin") {
+    return { error: "不能註銷管理員帳號" };
+  }
+
+  const folder = creator.user_id;
+  const { data: avatarFiles } = await service.storage.from("avatars").list(folder);
+  if (avatarFiles && avatarFiles.length > 0) {
+    await service.storage
+      .from("avatars")
+      .remove(avatarFiles.map((file) => `${folder}/${file.name}`));
+  }
+
+  const { error: deleteError } = await service.auth.admin.deleteUser(creator.user_id);
+  if (deleteError) {
+    return { error: deleteError.message };
+  }
+
+  revalidateAfterPublicCreatorChange(creator.slug);
+  revalidatePath("/admin/review");
+
+  return {
+    ok: true,
+    message: `已註銷「${creator.studio_name}」，Email 可重新註冊`,
+  };
 }
