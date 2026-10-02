@@ -1,10 +1,10 @@
 "use server";
 
+import { after } from "next/server";
 import { sendCreatorWelcomeEmail } from "@/lib/email/sendWelcomeEmail";
-import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-/** 註冊成功後由 client 呼叫；失敗只記 log，不影響註冊 */
+/** 立刻返回，寄信放到 after()，避免註冊畫面卡在「建立中」 */
 export async function sendCreatorWelcomeAfterSignup(params: {
   email: string;
   studioName: string;
@@ -15,47 +15,30 @@ export async function sendCreatorWelcomeAfterSignup(params: {
   const studioName = params.studioName.trim();
   if (!email || !slug || !studioName) return;
 
-  try {
-    const inviteCode = await resolveInviteCodeForWelcome({ email, slug });
-    await sendCreatorWelcomeEmail({
-      to: email,
-      studioName,
-      inviteCode,
-    });
-  } catch (err) {
-    console.error("[email] welcome after signup:", err);
-  }
+  after(async () => {
+    try {
+      const inviteCode = await resolveInviteCodeForWelcome({ email, slug });
+      await sendCreatorWelcomeEmail({
+        to: email,
+        studioName,
+        inviteCode,
+      });
+    } catch (err) {
+      console.error("[email] welcome after signup:", err);
+    }
+  });
 }
 
 async function resolveInviteCodeForWelcome(params: {
   email: string;
   slug: string;
 }): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const { data } = await supabase
-      .from("creator_profiles")
-      .select("invite_code, contact_email")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const contact = data?.contact_email?.trim().toLowerCase();
-    if (data && contact === params.email) {
-      const code = data.invite_code?.trim();
-      return code || null;
-    }
-  }
-
   const admin = createServiceClient();
   if (!admin) return null;
 
   const { data } = await admin
     .from("creator_profiles")
-    .select("invite_code, contact_email, slug")
+    .select("invite_code, contact_email")
     .eq("slug", params.slug)
     .maybeSingle();
 

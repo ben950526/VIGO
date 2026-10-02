@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION } from "@/lib/legal";
 import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
-import { sendCreatorWelcomeEmail } from "@/lib/email/sendWelcomeEmail";
+import { sendCreatorWelcomeAfterSignup } from "@/actions/welcome-email";
 import { awardReferralSignup } from "@/lib/referral/awardReferralSignup";
 import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
@@ -67,21 +67,7 @@ export async function signUp(
     slug,
   });
 
-  const { data: inviteRow } = await supabase
-    .from("creator_profiles")
-    .select("invite_code")
-    .eq("user_id", data.user.id)
-    .maybeSingle();
-
-  try {
-    await sendCreatorWelcomeEmail({
-      to: email,
-      studioName,
-      inviteCode: inviteRow?.invite_code ?? null,
-    });
-  } catch (err) {
-    console.error("[email] welcome after signup:", err);
-  }
+  void sendCreatorWelcomeAfterSignup({ email, studioName, slug });
 
   const referralSlug = String(formData.get("referral_slug") ?? "").trim();
   if (referralSlug) {

@@ -19,24 +19,29 @@ export async function sendCreatorWelcomeEmail(params: {
   const referralUrl = inviteCode ? buildReferralRegisterUrl(baseUrl, inviteCode) : null;
 
   const resend = new Resend(apiKey);
-  const { error } = await resend.emails.send({
-    from: emailFrom(),
-    to: params.to,
-    subject: WELCOME_EMAIL_SUBJECT,
-    html: buildWelcomeEmailHtml({
-      studioName: params.studioName,
-      inviteCode,
-      referralUrl,
-      studioEditUrl: `${baseUrl}/dashboard/studio`,
-      portfolioUrl: `${baseUrl}/dashboard/portfolio/new`,
-      dashboardUrl: `${baseUrl}/dashboard`,
-      termsUrl: `${baseUrl}/terms#promo-credits`,
+  const sendResult = await Promise.race([
+    resend.emails.send({
+      from: emailFrom(),
+      to: params.to,
+      subject: WELCOME_EMAIL_SUBJECT,
+      html: buildWelcomeEmailHtml({
+        studioName: params.studioName,
+        inviteCode,
+        referralUrl,
+        studioEditUrl: `${baseUrl}/dashboard/studio`,
+        portfolioUrl: `${baseUrl}/dashboard/portfolio/new`,
+        dashboardUrl: `${baseUrl}/dashboard`,
+        termsUrl: `${baseUrl}/terms#promo-credits`,
+      }),
     }),
-  });
+    new Promise<{ error: { message: string } }>((resolve) => {
+      setTimeout(() => resolve({ error: { message: "welcome email timed out" } }), 8000);
+    }),
+  ]);
 
-  if (error) {
-    console.error("[email] welcome email failed:", error);
-    return { ok: false, error: error.message };
+  if (sendResult.error) {
+    console.error("[email] welcome email failed:", sendResult.error);
+    return { ok: false, error: sendResult.error.message };
   }
 
   return { ok: true };

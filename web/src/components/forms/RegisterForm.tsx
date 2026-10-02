@@ -65,19 +65,24 @@ export function RegisterForm() {
 
     try {
       const supabase = createClient();
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            real_name: realName,
-            role: "creator",
-            terms_accepted_at: new Date().toISOString(),
-            terms_version: TERMS_VERSION,
+      const { data, error: signUpError } = await Promise.race([
+        supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              real_name: realName,
+              role: "creator",
+              terms_accepted_at: new Date().toISOString(),
+              terms_version: TERMS_VERSION,
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
+        }),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error("SIGNUP_TIMEOUT")), 15000);
+        }),
+      ]);
 
       if (signUpError) {
         setError(formatAuthError(signUpError.message));
@@ -106,10 +111,8 @@ export function RegisterForm() {
         return;
       }
 
-      await Promise.all([
-        notifyAdminNewCreatorRegistration(studioName, slug),
-        sendCreatorWelcomeAfterSignup({ email, studioName, slug }),
-      ]);
+      void sendCreatorWelcomeAfterSignup({ email, studioName, slug });
+      void notifyAdminNewCreatorRegistration(studioName, slug);
 
       const refToApply = referrerRef.trim();
       if (refToApply) {
@@ -123,8 +126,12 @@ export function RegisterForm() {
       router.push("/dashboard?welcome=1#referral");
       router.refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "註冊失敗，請稍後再試";
-      setError(formatAuthError(message));
+      const raw = err instanceof Error ? err.message : "註冊失敗，請稍後再試";
+      const message =
+        raw === "SIGNUP_TIMEOUT"
+          ? "連線逾時。若帳號已建立，請直接登入；尚未建立請再試一次。"
+          : formatAuthError(raw);
+      setError(message);
       setPending(false);
     }
   }
