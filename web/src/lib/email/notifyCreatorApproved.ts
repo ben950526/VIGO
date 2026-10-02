@@ -8,6 +8,7 @@ export type CreatorReviewSnapshot = {
   studio_name: string;
   slug: string;
   is_demo: boolean;
+  invite_code: string | null;
   profiles: { email: string } | { email: string }[] | null;
 };
 
@@ -26,7 +27,7 @@ export async function loadCreatorReviewSnapshot(
 ): Promise<CreatorReviewSnapshot | null> {
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select("verification_status, studio_name, slug, is_demo, profiles(email)")
+    .select("verification_status, studio_name, slug, is_demo, invite_code, profiles(email)")
     .eq("id", creatorId)
     .maybeSingle();
 
@@ -57,6 +58,7 @@ export async function notifyCreatorApprovedFromPending(
     to,
     studioName: before.studio_name,
     slug: before.slug,
+    inviteCode: before.invite_code,
   });
 }
 

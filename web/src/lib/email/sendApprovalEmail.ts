@@ -1,11 +1,13 @@
 import { Resend } from "resend";
 import { buildApprovalEmailHtml } from "@/lib/email/approvalEmailHtml";
 import { emailFrom, resendApiKey, siteUrl } from "@/lib/email/config";
+import { buildReferralRegisterUrl } from "@/lib/referral/config";
 
 export async function sendCreatorApprovalEmail(params: {
   to: string;
   studioName: string;
   slug: string;
+  inviteCode?: string | null;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const apiKey = resendApiKey();
   if (!apiKey) {
@@ -14,6 +16,9 @@ export async function sendCreatorApprovalEmail(params: {
   }
 
   const baseUrl = siteUrl();
+  const inviteCode = params.inviteCode?.trim() || null;
+  const referralUrl = inviteCode ? buildReferralRegisterUrl(baseUrl, inviteCode) : null;
+
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
     from: emailFrom(),
@@ -23,6 +28,11 @@ export async function sendCreatorApprovalEmail(params: {
       studioName: params.studioName,
       creatorUrl: `${baseUrl}/creator/${params.slug}`,
       dashboardUrl: `${baseUrl}/dashboard`,
+      studioEditUrl: `${baseUrl}/dashboard/studio`,
+      portfolioUrl: `${baseUrl}/dashboard/portfolio/new`,
+      termsUrl: `${baseUrl}/terms#promo-credits`,
+      inviteCode,
+      referralUrl,
     }),
   });
 
