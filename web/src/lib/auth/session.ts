@@ -5,10 +5,13 @@ import { isSupabaseConfigured } from "@/lib/utils";
 export const getAuthSession = cache(async () => {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session;
+  const result = await Promise.race([
+    supabase.auth.getSession(),
+    new Promise<{ data: { session: null }; error: null }>((resolve) => {
+      setTimeout(() => resolve({ data: { session: null }, error: null }), 5000);
+    }),
+  ]);
+  return result.data.session;
 });
 
 export const getAuthUserId = cache(async (): Promise<string | null> => {

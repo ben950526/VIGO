@@ -9,7 +9,6 @@ import { TERMS_VERSION } from "@/lib/legal";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
 const REF_STORAGE_KEY = "vigo_referral_ref";
-const DASHBOARD_AFTER_SIGNUP = "/dashboard?welcome=1#referral";
 
 function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
   return Promise.race([
@@ -20,14 +19,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<
   ]);
 }
 
-function goToDashboard() {
-  window.location.assign(DASHBOARD_AFTER_SIGNUP);
-}
-
 export function RegisterForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [pendingLabel, setPendingLabel] = useState("建立中…");
   const [referrerRef, setReferrerRef] = useState("");
 
   useEffect(() => {
@@ -72,7 +68,13 @@ export function RegisterForm() {
     }
 
     setPending(true);
+    setPendingLabel("正在建立登入帳號…");
     setError(null);
+
+    const watchdog = window.setTimeout(() => {
+      setPending(false);
+      setError("超過 8 秒沒回應。請不要再按建立，改走「登入」——帳號多半已經建好。");
+    }, 8000);
 
     try {
       const supabase = createClient();
@@ -90,17 +92,19 @@ export function RegisterForm() {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         }),
-        12000,
+        7000,
         "SIGNUP_TIMEOUT",
       );
 
       if (signUpError) {
+        window.clearTimeout(watchdog);
         setError(formatAuthError(signUpError.message));
         setPending(false);
         return;
       }
 
       if (!data.user) {
+        window.clearTimeout(watchdog);
         setError("註冊失敗，請稍後再試");
         setPending(false);
         return;
@@ -108,11 +112,13 @@ export function RegisterForm() {
 
       const alreadyRegistered = (data.user.identities?.length ?? 1) === 0;
       if (alreadyRegistered) {
+        window.clearTimeout(watchdog);
         setError("此 Email 已註冊，請直接登入。");
         setPending(false);
         return;
       }
 
+      setPendingLabel("正在建立工作室…");
       const slug = createCreatorSlug(studioName, data.user.id);
       const { error: profileError } = await withTimeout(
         supabase.from("creator_profiles").insert({
@@ -122,7 +128,7 @@ export function RegisterForm() {
           contact_email: email,
           verification_status: "pending",
         }),
-        10000,
+        6000,
         "PROFILE_TIMEOUT",
       );
 
@@ -130,13 +136,12 @@ export function RegisterForm() {
         const duplicate =
           profileError.code === "23505" ||
           profileError.message.toLowerCase().includes("duplicate");
-        if (duplicate) {
-          goToDashboard();
+        if (!duplicate) {
+          window.clearTimeout(watchdog);
+          setError(formatAuthError(profileError.message));
+          setPending(false);
           return;
         }
-        setError(formatAuthError(profileError.message));
-        setPending(false);
-        return;
       }
 
       const refToApply = referrerRef.trim();
@@ -146,27 +151,24 @@ export function RegisterForm() {
             p_referred_user_id: data.user.id,
             p_referrer_slug: refToApply,
           }),
-          5000,
+          4000,
           "REFERRAL_TIMEOUT",
         ).catch(() => null);
         sessionStorage.removeItem(REF_STORAGE_KEY);
       }
 
-      if (!data.session) {
-        window.location.assign("/login?registered=1");
-        return;
-      }
-
-      goToDashboard();
+      window.clearTimeout(watchdog);
+      window.location.replace("/login?registered=1");
     } catch (err) {
+      window.clearTimeout(watchdog);
       const raw = err instanceof Error ? err.message : "註冊失敗，請稍後再試";
       if (raw === "PROFILE_TIMEOUT" || raw === "REFERRAL_TIMEOUT") {
-        goToDashboard();
+        window.location.replace("/login?registered=1");
         return;
       }
       const message =
         raw === "SIGNUP_TIMEOUT"
-          ? "連線逾時。若帳號已建立，請直接登入；尚未建立請再試一次。"
+          ? "連線登入服務逾時。請改走「登入」；若提示沒有帳號，再回來註冊一次。"
           : formatAuthError(raw);
       setError(message);
       setPending(false);
@@ -230,7 +232,7 @@ export function RegisterForm() {
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button type="submit" disabled={pending} className="btn-primary w-full disabled:opacity-70">
-        {pending ? "建立中…" : "建立帳號"}
+        {pending ? pendingLabel : "建立帳號"}
       </button>
     </form>
   );

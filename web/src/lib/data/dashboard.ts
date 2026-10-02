@@ -39,7 +39,7 @@ export const getDashboardData = cache(async (): Promise<DashboardData | null> =>
       .from("creator_profiles")
       .select("*, portfolio_items(id, title, status, sort_order)")
       .eq("user_id", userId)
-      .single(),
+      .maybeSingle(),
     getAuthProfile(),
   ]);
 
