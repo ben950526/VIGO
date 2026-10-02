@@ -11,6 +11,7 @@ import { demoPatchToDbRow, demoStudioPatches } from "@/lib/demo-studio-data";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdmin } from "@/lib/auth/admin";
+import { sendAccountPurgedEmail } from "@/lib/email/sendAccountPurgedEmail";
 import {
   loadCreatorApprovalSnapshot,
   notifyCreatorApprovedFromPending,
@@ -340,7 +341,7 @@ export async function purgeCreatorAccount(
 
   const { data: creator, error: loadError } = await service
     .from("creator_profiles")
-    .select("id, user_id, slug, studio_name, is_listed, is_demo, verification_status")
+    .select("id, user_id, slug, studio_name, contact_email, is_listed, is_demo, verification_status")
     .eq("id", id)
     .maybeSingle();
 
@@ -373,6 +374,22 @@ export async function purgeCreatorAccount(
 
   if (roleRow?.role === "admin") {
     return { error: "不能註銷管理員帳號" };
+  }
+
+  const notifyTo = (roleRow?.email?.trim() || creator.contact_email?.trim() || "").toLowerCase();
+  const reason = String(formData.get("purge_reason") ?? "").trim() || null;
+  if (notifyTo) {
+    try {
+      await sendAccountPurgedEmail({
+        to: notifyTo,
+        studioName: creator.studio_name,
+        reason,
+      });
+    } catch (err) {
+      console.error("[email] purge notify:", err);
+    }
+  } else {
+    console.warn("[email] no email for purge:", creator.studio_name);
   }
 
   const folder = creator.user_id;

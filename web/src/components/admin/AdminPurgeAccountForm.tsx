@@ -38,13 +38,18 @@ export function AdminPurgeAccountForm({ creatorId, slug, studioName, onPurged }:
       <p className="text-sm font-medium text-red-800">完整註銷帳號（無法復原）</p>
       <p className="text-xs leading-relaxed text-red-800/90">
         會刪除「{studioName}」的登入帳號、工作室、作品、敲門紀錄與該帳號的邀請／點數資料。刪除後同一 Email 可再註冊。
-        請輸入 slug <strong className="font-mono">{slug}</strong> 確認。
+        請輸入 slug <strong className="font-mono">{slug}</strong> 確認。註銷後會寄信通知該 Email。
       </p>
       <input
         className="input w-full bg-white text-sm"
         name="confirm_slug"
         autoComplete="off"
         placeholder={`輸入 ${slug} 確認`}
+      />
+      <textarea
+        className="input min-h-[72px] w-full bg-white text-sm"
+        name="purge_reason"
+        placeholder="給對方的說明（選填，例如：測試帳號、資料不符）"
       />
       {state.error ? <p className="text-sm text-red-700">{state.error}</p> : null}
       <SubmitButton
