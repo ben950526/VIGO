@@ -2,17 +2,29 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { notifyAdminNewCreatorRegistration } from "@/actions/notify-admin";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
 const REF_STORAGE_KEY = "vigo_referral_ref";
+const DASHBOARD_AFTER_SIGNUP = "/dashboard?welcome=1#referral";
+
+function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      window.setTimeout(() => reject(new Error(code)), ms);
+    }),
+  ]);
+}
+
+function goToDashboard() {
+  window.location.assign(DASHBOARD_AFTER_SIGNUP);
+}
 
 export function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -64,7 +76,7 @@ export function RegisterForm() {
 
     try {
       const supabase = createClient();
-      const { data, error: signUpError } = await Promise.race([
+      const { data, error: signUpError } = await withTimeout(
         supabase.auth.signUp({
           email,
           password,
@@ -78,10 +90,9 @@ export function RegisterForm() {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         }),
-        new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error("SIGNUP_TIMEOUT")), 15000);
-        }),
-      ]);
+        12000,
+        "SIGNUP_TIMEOUT",
+      );
 
       if (signUpError) {
         setError(formatAuthError(signUpError.message));
@@ -95,36 +106,64 @@ export function RegisterForm() {
         return;
       }
 
+      const alreadyRegistered = (data.user.identities?.length ?? 1) === 0;
+      if (alreadyRegistered) {
+        setError("此 Email 已註冊，請直接登入。");
+        setPending(false);
+        return;
+      }
+
       const slug = createCreatorSlug(studioName, data.user.id);
-      const { error: profileError } = await supabase.from("creator_profiles").insert({
-        user_id: data.user.id,
-        slug,
-        studio_name: studioName,
-        contact_email: email,
-        verification_status: "pending",
-      });
+      const { error: profileError } = await withTimeout(
+        supabase.from("creator_profiles").insert({
+          user_id: data.user.id,
+          slug,
+          studio_name: studioName,
+          contact_email: email,
+          verification_status: "pending",
+        }),
+        10000,
+        "PROFILE_TIMEOUT",
+      );
 
       if (profileError) {
+        const duplicate =
+          profileError.code === "23505" ||
+          profileError.message.toLowerCase().includes("duplicate");
+        if (duplicate) {
+          goToDashboard();
+          return;
+        }
         setError(formatAuthError(profileError.message));
         setPending(false);
         return;
       }
 
-      void notifyAdminNewCreatorRegistration(studioName, slug);
-
       const refToApply = referrerRef.trim();
       if (refToApply) {
-        await supabase.rpc("award_referral_for_signup", {
-          p_referred_user_id: data.user.id,
-          p_referrer_slug: refToApply,
-        });
+        await withTimeout(
+          supabase.rpc("award_referral_for_signup", {
+            p_referred_user_id: data.user.id,
+            p_referrer_slug: refToApply,
+          }),
+          5000,
+          "REFERRAL_TIMEOUT",
+        ).catch(() => null);
         sessionStorage.removeItem(REF_STORAGE_KEY);
       }
 
-      router.push("/dashboard?welcome=1#referral");
-      router.refresh();
+      if (!data.session) {
+        window.location.assign("/login?registered=1");
+        return;
+      }
+
+      goToDashboard();
     } catch (err) {
       const raw = err instanceof Error ? err.message : "註冊失敗，請稍後再試";
+      if (raw === "PROFILE_TIMEOUT" || raw === "REFERRAL_TIMEOUT") {
+        goToDashboard();
+        return;
+      }
       const message =
         raw === "SIGNUP_TIMEOUT"
           ? "連線逾時。若帳號已建立，請直接登入；尚未建立請再試一次。"
