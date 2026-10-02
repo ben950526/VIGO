@@ -34,11 +34,11 @@ export function AdminActionForm({
   if (removed && removeOnSuccess) return null;
 
   async function handleSubmit(formData: FormData) {
-    onDone?.();
-    if (removeOnSuccess) setRemoved(true);
     startTransition(async () => {
       try {
         await action(formData);
+        onDone?.();
+        if (removeOnSuccess) setRemoved(true);
         if (!skipRefresh) router.refresh();
       } catch {
         if (removeOnSuccess) setRemoved(false);
