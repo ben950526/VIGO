@@ -7,7 +7,7 @@ const PENDING_CREATOR_FIELDS =
 const PORTFOLIO_REVIEW_FIELDS =
   "id, title, description, embed_url, embed_type, thumbnail_url, style_tags, sort_order, status, creator_id, created_at";
 const PUBLISHED_CREATOR_FIELDS =
-  "id, user_id, studio_name, slug, region, is_listed, is_demo, verification_status, updated_at";
+  "id, user_id, studio_name, slug, region, bio, is_listed, is_demo, verification_status, updated_at";
 
 export interface PendingCreator extends CreatorProfile {
   portfolio_items: PortfolioItem[];

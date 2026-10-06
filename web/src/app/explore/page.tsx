@@ -40,7 +40,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
 
         {creators.length === 0 ? (
           <p className="text-center text-[var(--text-muted)]">
-            沒有符合條件的創作者，試試其他篩選條件。
+            目前沒有可逛的完整工作室。接案者補上介紹與至少一支已通過的作品後，才會出現在這裡。若你有用篩選，也可以試試放寬條件。
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">

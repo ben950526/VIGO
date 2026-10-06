@@ -4,7 +4,10 @@ import { AdminToggleForm } from "@/components/admin/AdminActionForm";
 import { AdminPurgeAccountForm } from "@/components/admin/AdminPurgeAccountForm";
 import { AdminResendApprovalForm } from "@/components/admin/AdminResendApprovalForm";
 import { DemoBadge } from "@/components/creator/DemoBadge";
-import { isCreatorVisibleOnExplore } from "@/lib/creator/listing";
+import {
+  isCreatorVisibleOnExplore,
+  studioExploreContentGaps,
+} from "@/lib/creator/listing";
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
 
 interface AdminPublishedCreatorCardProps {
@@ -22,6 +25,7 @@ export function AdminPublishedCreatorCard({
 }: AdminPublishedCreatorCardProps) {
   const visibleOnExplore = isCreatorVisibleOnExplore(creator);
   const studioListed = creator.is_listed !== false;
+  const contentGaps = studioExploreContentGaps(creator);
 
   return (
     <li className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
@@ -55,6 +59,10 @@ export function AdminPublishedCreatorCard({
             </span>
             {!visibleOnExplore && creator.verification_status !== "approved" ? (
               <span className="text-[var(--text-muted)]">（需審核通過）</span>
+            ) : !visibleOnExplore && !studioListed ? (
+              <span className="text-[var(--text-muted)]">（已下架）</span>
+            ) : !visibleOnExplore && contentGaps.length > 0 ? (
+              <span className="text-[var(--text-muted)]">（{contentGaps.join("、")}）</span>
             ) : null}
           </p>
           <Link

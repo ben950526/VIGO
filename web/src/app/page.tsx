@@ -39,6 +39,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {featured.length > 0 ? (
       <section className="section">
         <div className="container-narrow">
           <h2 className="mb-3 text-center text-3xl font-bold">精選創作者</h2>
@@ -52,6 +53,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       <section className="section">
         <div className="container-narrow">

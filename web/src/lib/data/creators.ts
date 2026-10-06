@@ -12,6 +12,14 @@ import { isSupabaseConfigured, normalizeSlugParam } from "@/lib/utils";
 
 const CREATOR_CARD_FIELDS =
   "id, slug, studio_name, avatar_url, region, style_tags, service_types, bio, price_min, price_max, featured, is_demo, verification_status, is_listed";
+const CREATOR_CARD_WITH_WORKS = `${CREATOR_CARD_FIELDS}, portfolio_items(id, status)`;
+
+function rowVisibleOnExplore(row: Record<string, unknown>): boolean {
+  return isCreatorVisibleOnExplore({
+    ...normalizeCreator(row),
+    portfolio_items: (row.portfolio_items as PortfolioItem[]) ?? [],
+  });
+}
 
 function normalizeCreator(row: Record<string, unknown>): CreatorProfile {
   return {
@@ -108,7 +116,7 @@ async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorW
   const supabase = createPublicClient();
   let query = supabase
     .from("creator_profiles")
-    .select(CREATOR_CARD_FIELDS)
+    .select(CREATOR_CARD_WITH_WORKS)
     .eq("verification_status", "approved")
     .not("is_listed", "eq", false)
     .order("featured", { ascending: false })
@@ -120,8 +128,8 @@ async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorW
   if (error || !data) return [];
 
   const creators = data
-    .map((row) => mapCreatorListRow(row as Record<string, unknown>))
-    .filter(isCreatorVisibleOnExplore);
+    .filter((row) => rowVisibleOnExplore(row as Record<string, unknown>))
+    .map((row) => mapCreatorListRow(row as Record<string, unknown>));
   return applyCreatorFilters(creators, filters);
 }
 
@@ -144,7 +152,7 @@ export async function getCreatorBySlug(
   return page.creator;
 }
 
-export type StudioPreviewReason = "pending" | "unlisted" | "rejected" | "admin";
+export type StudioPreviewReason = "pending" | "unlisted" | "rejected" | "admin" | "incomplete";
 
 export interface CreatorPageData {
   creator: CreatorWithPortfolio;
@@ -219,7 +227,8 @@ export const getCreatorPageBySlug = cache(
     if (!isOwner) previewReason = "admin";
     else if (profile.verification_status === "pending") previewReason = "pending";
     else if (profile.verification_status === "rejected") previewReason = "rejected";
-    else previewReason = "unlisted";
+    else if (profile.is_listed === false) previewReason = "unlisted";
+    else previewReason = "incomplete";
 
     return { creator, previewReason };
   },
@@ -231,18 +240,17 @@ async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select(CREATOR_CARD_FIELDS)
+    .select(CREATOR_CARD_WITH_WORKS)
     .eq("verification_status", "approved")
     .not("is_listed", "eq", false)
     .order("featured", { ascending: false })
-    .order("updated_at", { ascending: false })
-    .limit(24);
+    .order("updated_at", { ascending: false });
 
   if (error || !data) return [];
 
   const creators = data
-    .map((row) => mapCreatorListRow(row as Record<string, unknown>))
-    .filter(isCreatorVisibleOnExplore);
+    .filter((row) => rowVisibleOnExplore(row as Record<string, unknown>))
+    .map((row) => mapCreatorListRow(row as Record<string, unknown>));
   const featured = creators.filter((c) => c.featured);
   const rest = creators.filter((c) => !c.featured);
   const sorted = [...featured, ...rest];

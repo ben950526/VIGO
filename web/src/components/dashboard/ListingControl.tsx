@@ -5,9 +5,13 @@ import { setCreatorListing } from "@/actions/creator";
 
 interface ListingControlProps {
   isListed: boolean;
+  visibleOnExplore: boolean;
 }
 
-export function ListingControl({ isListed: initialListed }: ListingControlProps) {
+export function ListingControl({
+  isListed: initialListed,
+  visibleOnExplore,
+}: ListingControlProps) {
   const [isListed, setIsListed] = useState(initialListed);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -41,7 +45,9 @@ export function ListingControl({ isListed: initialListed }: ListingControlProps)
       <h3 className="mb-1 text-sm font-semibold">公開上架</h3>
       <p className="mb-4 text-sm text-[var(--text-muted)]">
         {isListed
-          ? "目前工作室已上架，會出現在探索頁。"
+          ? visibleOnExplore
+            ? "目前工作室已上架，會出現在探索頁。"
+            : "你已選擇上架，但介紹或作品還沒齊，暫時不會出現在探索頁。"
           : "目前已下架。帳號與資料保留，但不會對外顯示。"}
       </p>
 

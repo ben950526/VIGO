@@ -1,5 +1,6 @@
 "use server";
 
+import { isStudioContentReadyForExplore } from "@/lib/creator/listing";
 import {
   extractKnockUnlock,
   KNOCK_UNLOCK_SELECT,
@@ -49,7 +50,16 @@ async function fetchKnockUnlock(creatorId: string): Promise<CreatorKnockUnlock |
     .maybeSingle();
 
   if (error || !data) return null;
-  return extractKnockUnlock(data as Record<string, unknown>);
+  const unlock = extractKnockUnlock(data as Record<string, unknown>);
+  if (
+    !isStudioContentReadyForExplore({
+      bio: unlock.bio,
+      portfolio_items: unlock.portfolio_items,
+    })
+  ) {
+    return null;
+  }
+  return unlock;
 }
 
 export async function knockCreator(formData: FormData): Promise<KnockResult> {
@@ -69,7 +79,7 @@ export async function knockCreator(formData: FormData): Promise<KnockResult> {
 
   const unlock = await fetchKnockUnlock(creatorId);
   if (!unlock) {
-    return { error: "此工作室目前無法敲門，可能已下架或為示範帳號" };
+    return { error: "此工作室目前無法敲門，可能尚未補齊資料、已下架或為示範帳號" };
   }
 
   const supabase = createPublicClient();

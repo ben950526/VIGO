@@ -5,6 +5,10 @@ import { SignOutButton } from "@/components/forms/SignOutButton";
 import { DashboardReferralWelcome } from "@/components/dashboard/DashboardReferralWelcome";
 import { PromoSharePanel } from "@/components/dashboard/PromoSharePanel";
 import { ReferralCreditsPanel } from "@/components/dashboard/ReferralCreditsPanel";
+import {
+  isCreatorVisibleOnExplore,
+  studioExploreContentGaps,
+} from "@/lib/creator/listing";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getCreatorKnockStats } from "@/lib/data/knocks";
 import { getMyPromoShareSubmissions } from "@/lib/data/promo-share";
@@ -36,6 +40,9 @@ export default async function DashboardPage() {
   if (!data) redirect("/login");
 
   const { profile, portfolio, isAdmin } = data;
+  const listingInput = { ...profile, portfolio_items: portfolio };
+  const visibleOnExplore = isCreatorVisibleOnExplore(listingInput);
+  const exploreGaps = studioExploreContentGaps(listingInput);
   const [knockStats, referralStats, promoShareSubmissions] = await Promise.all([
     getCreatorKnockStats(profile.id),
     getReferralDashboardStats(),
@@ -80,9 +87,11 @@ export default async function DashboardPage() {
           <p className="mb-2">
             <strong>狀態：</strong>{" "}
             {profile.verification_status === "approved"
-              ? profile.is_listed
-                ? "已公開上架"
-                : "已下架（帳號保留，不對外顯示）"
+              ? !profile.is_listed
+                ? "已下架（帳號保留，不對外顯示）"
+                : visibleOnExplore
+                  ? "已公開上架"
+                  : "已通過審核，補齊資料後才會出現在探索頁"
               : profile.verification_status === "pending"
                 ? "審核中"
                 : "未通過"}
@@ -111,8 +120,20 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
+          {profile.verification_status === "approved" && profile.is_listed && exploreGaps.length > 0 ? (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <p className="font-medium">探索頁暫時不會顯示你的工作室</p>
+              <p className="mt-1">
+                請補：{exploreGaps.join("、")}。通過後不必再審核一次，資料齊了就會出現。
+              </p>
+            </div>
+          ) : null}
+
           {profile.verification_status === "approved" && (
-            <ListingControl isListed={profile.is_listed} />
+            <ListingControl
+              isListed={profile.is_listed}
+              visibleOnExplore={visibleOnExplore}
+            />
           )}
         </div>
 
