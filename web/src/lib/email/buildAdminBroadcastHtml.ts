@@ -28,8 +28,8 @@ export function buildAdminBroadcastHtml(params: {
 }): string {
   const base = params.siteUrl.replace(/\/$/, "");
   const greeting = params.studioName?.trim()
-    ? `<p style="margin: 0 0 1em;">Hi，${escapeHtml(params.studioName.trim())}：</p>`
-    : `<p style="margin: 0 0 1em;">Hi，</p>`;
+    ? `<p style="margin: 0 0 1em;">嗨，${escapeHtml(params.studioName.trim())}：</p>`
+    : `<p style="margin: 0 0 1em;">嗨，</p>`;
 
   const bodyWithPlaceholders = applyBroadcastPlaceholders(params.bodyPlain, params.studioName);
   const bodyHtml = plainTextToBroadcastHtml(bodyWithPlaceholders);
@@ -42,10 +42,10 @@ export function buildAdminBroadcastHtml(params: {
   ${bodyHtml}
   <hr style="margin: 2em 0; border: none; border-top: 1px solid #e5e5e5;" />
   <p style="font-size: 12px; color: #666;">
-    你會收到這封信，是因為曾在 <a href="${base}">Vigo</a> 註冊帳號。
-    若不想再收到平台公告，請至 <a href="${base}/feedback">意見回饋</a> 告知我們。
+    你會收到這封信，是因為曾在 <a href="${base}">Vigo</a> 註冊。
+    如果不想再收到平台公告，到 <a href="${base}/feedback">意見回饋</a> 跟我們說一聲就好。
   </p>
-  <p style="font-size: 12px; color: #666;">— Vigo 團隊</p>
+  <p style="font-size: 12px; color: #666;">謝謝，Vigo</p>
 </body>
 </html>`;
 }

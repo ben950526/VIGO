@@ -18,7 +18,7 @@ export async function sendAccountPurgedEmail(params: {
   const { error } = await resend.emails.send({
     from: emailFrom(),
     to: params.to,
-    subject: `【Vigo】你的工作室「${params.studioName}」帳號已註銷`,
+    subject: `【Vigo】「${params.studioName}」的帳號已註銷`,
     html: buildAccountPurgedEmailHtml({
       studioName: params.studioName,
       reason: params.reason?.trim() || null,

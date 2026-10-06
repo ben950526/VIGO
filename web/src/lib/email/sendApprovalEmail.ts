@@ -15,7 +15,7 @@ export async function sendCreatorApprovalEmail(params: {
 
   return dispatchEmail({
     to: params.to,
-    subject: `【Vigo】你的工作室「${params.studioName}」已審核通過`,
+    subject: `【Vigo】恭喜，「${params.studioName}」可以上架了`,
     html: buildApprovalEmailHtml({
       studioName: params.studioName,
       creatorUrl: `${baseUrl}/creator/${params.slug}`,

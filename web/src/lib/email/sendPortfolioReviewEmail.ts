@@ -14,7 +14,7 @@ export async function sendPortfolioApprovedEmail(params: {
   const baseUrl = siteUrl();
   return dispatchEmail({
     to: params.to,
-    subject: `【Vigo】作品「${params.workTitle}」已審核通過`,
+    subject: `【Vigo】「${params.workTitle}」可以公開了`,
     html: buildPortfolioApprovedEmailHtml({
       studioName: params.studioName,
       workTitle: params.workTitle,
@@ -32,7 +32,7 @@ export async function sendPortfolioRejectedEmail(params: {
   const baseUrl = siteUrl();
   return dispatchEmail({
     to: params.to,
-    subject: `【Vigo】作品「${params.workTitle}」審核未通過`,
+    subject: `【Vigo】「${params.workTitle}」這次先沒過`,
     html: buildPortfolioRejectedEmailHtml({
       studioName: params.studioName,
       workTitle: params.workTitle,

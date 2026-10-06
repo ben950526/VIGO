@@ -9,16 +9,16 @@ import {
 import type { BroadcastAudience } from "@/lib/email/broadcastRecipients";
 const initialState: BroadcastFormState = {};
 
-const DEFAULT_BODY = `Vigo 經過約一個月的內部優化，現在重新上線，且近期將快速對外推廣 Vigo，讓更多發案者來逛創作者、找合作。
+const DEFAULT_BODY = `我們內部調整了大約一個月，現在重新上線，接下來也會比較積極讓發案者進來逛工作室、找合作。
 
-若你當初只完成註冊，工作室或作品還沒填完整，請盡快登入補齊——推廣期間，完整的工作室頁與作品集，才容易被看見、被敲門。
+如果當初只註冊、還沒把工作室或作品填完，有空補一下會差很多——頁面完整，才比較容易被看見、被敲門。
 
-建議你現在就做：
-1. 到「編輯工作室內容」補齊介紹、服務與聯絡方式
-2. 新增至少 1 支 YouTube／Reels 作品連結並送審
-3. 到儀表板複製你的專屬邀請碼，邀請同行一起進駐（推廣累點不可換現，訂閱上線後依公告折抵）
+方便的話可以先做這幾件：
+1. 到「編輯工作室內容」補介紹、服務與聯絡方式
+2. 新增至少 1 支 YouTube／Reels 並送審
+3. 到後台複製你的邀請碼，有認識的同行可以一起進來（累點不能換現，訂閱上線後依公告折抵）
 
-感謝你早期就加入 Vigo，我們很快見。`;
+謝謝你早點加入。`;
 
 export function BroadcastMailForm({ adminEmail }: { adminEmail: string }) {
   const [state, formAction, pending] = useActionState(sendAdminBroadcast, initialState);
@@ -115,7 +115,7 @@ export function BroadcastMailForm({ adminEmail }: { adminEmail: string }) {
             className="input w-full"
             name="subject"
             required
-            defaultValue="【Vigo】沉潛一個月，我們回來了——邀請你回來看看工作室"
+            defaultValue="【Vigo】回來了，想請你把工作室再看一眼"
           />
         </div>
 

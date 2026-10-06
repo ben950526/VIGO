@@ -1,4 +1,5 @@
 import { escapeHtml } from "@/lib/email/escapeHtml";
+import { emailAutoFooter, emailCta } from "@/lib/email/emailVoice";
 
 export function buildPortfolioApprovedEmailHtml(params: {
   studioName: string;
@@ -9,13 +10,13 @@ export function buildPortfolioApprovedEmailHtml(params: {
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="font-size: 22px; margin-bottom: 16px;">作品已審核通過</h1>
-  <p>你好，<strong>${escapeHtml(params.studioName)}</strong> 的作品「${escapeHtml(params.workTitle)}」已通過審核並公開。</p>
+  <h1 style="font-size: 22px; margin-bottom: 16px;">作品可以公開了</h1>
+  <p>嗨，<strong>${escapeHtml(params.studioName)}</strong> 的「${escapeHtml(params.workTitle)}」已經通過，會出現在你的公開頁上。</p>
   <p style="margin: 24px 0;">
-    <a href="${params.creatorUrl}" style="display: inline-block; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none;">查看公開頁</a>
+    ${emailCta(params.creatorUrl, "去公開頁看看")}
   </p>
-  <p><a href="${params.dashboardUrl}">前往創作者後台</a></p>
-  <p style="margin-top: 32px; font-size: 13px; color: #64748b;">此信由 Vigo 系統自動發送，請勿直接回覆。</p>
+  <p><a href="${params.dashboardUrl}">回後台</a></p>
+  ${emailAutoFooter()}
 </body>
 </html>`;
 }
@@ -28,13 +29,13 @@ export function buildPortfolioRejectedEmailHtml(params: {
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="font-size: 22px; margin-bottom: 16px;">作品審核未通過</h1>
-  <p>你好，<strong>${escapeHtml(params.studioName)}</strong> 的作品「${escapeHtml(params.workTitle)}」這次尚未通過審核，目前不會出現在公開頁。</p>
-  <p>請確認連結可播放、內容與工作室定位相符後，再到後台重新新增或調整。</p>
+  <h1 style="font-size: 22px; margin-bottom: 16px;">這支作品這次先沒過</h1>
+  <p>嗨，<strong>${escapeHtml(params.studioName)}</strong> 送審的「${escapeHtml(params.workTitle)}」這次還沒通過，所以暫時不會出現在公開頁。</p>
+  <p>麻煩看一下連結能不能播放、風格跟工作室是否接近。調好之後，再到後台重新新增或調整就可以了。</p>
   <p style="margin: 24px 0;">
-    <a href="${params.studioEditUrl}" style="display: inline-block; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none;">編輯工作室與作品</a>
+    ${emailCta(params.studioEditUrl, "去編輯工作室與作品")}
   </p>
-  <p style="margin-top: 32px; font-size: 13px; color: #64748b;">此信由 Vigo 系統自動發送，請勿直接回覆。</p>
+  ${emailAutoFooter()}
 </body>
 </html>`;
 }

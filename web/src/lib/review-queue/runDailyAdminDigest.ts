@@ -54,7 +54,7 @@ export async function runDailyAdminReviewDigest(now = new Date()): Promise<Diges
   const { error: sendError } = await resend.emails.send({
     from: emailFrom(),
     to,
-    subject: `【Vigo 審核摘要】${rangeLabel} · ${events.length} 筆`,
+    subject: `【Vigo】昨天有 ${events.length} 筆待審（${rangeLabel}）`,
     html: buildAdminReviewDigestHtml({ reviewUrl, rangeLabel, events }),
   });
 

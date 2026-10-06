@@ -14,7 +14,7 @@ export async function sendPromoShareApprovedEmail(params: {
   const baseUrl = siteUrl();
   return dispatchEmail({
     to: params.to,
-    subject: `【Vigo】社群宣傳已通過${params.creditsAwarded > 0 ? `，已發放 ${params.creditsAwarded} 點` : ""}`,
+    subject: `【Vigo】宣傳貼文通過了${params.creditsAwarded > 0 ? `，已幫你加上 ${params.creditsAwarded} 點` : ""}`,
     html: buildPromoShareApprovedEmailHtml({
       studioName: params.studioName,
       creditsAwarded: params.creditsAwarded,
@@ -33,7 +33,7 @@ export async function sendPromoShareRejectedEmail(params: {
   const baseUrl = siteUrl();
   return dispatchEmail({
     to: params.to,
-    subject: `【Vigo】社群宣傳未通過`,
+    subject: `【Vigo】宣傳貼文這次還沒過`,
     html: buildPromoShareRejectedEmailHtml({
       studioName: params.studioName,
       postUrl: params.postUrl,

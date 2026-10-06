@@ -9,7 +9,7 @@ export async function sendCreatorRejectionEmail(params: {
   const baseUrl = siteUrl();
   return dispatchEmail({
     to: params.to,
-    subject: `【Vigo】你的工作室「${params.studioName}」審核未通過`,
+    subject: `【Vigo】「${params.studioName}」這次還沒過，方便再補一下`,
     html: buildRejectionEmailHtml({
       studioName: params.studioName,
       profileUrl: `${baseUrl}/dashboard/studio`,

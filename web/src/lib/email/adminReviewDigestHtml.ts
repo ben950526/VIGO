@@ -27,9 +27,9 @@ export function buildAdminReviewDigestHtml(params: {
     return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="font-size: 20px;">Vigo 審核每日摘要</h1>
-  <p>${escapeHtml(rangeLabel)}：沒有新的送審項目。</p>
-  <p><a href="${reviewUrl}">仍可到審核後台查看</a></p>
+  <h1 style="font-size: 20px;">昨天沒有新的送審</h1>
+  <p>${escapeHtml(rangeLabel)}：目前沒有待處理的新項目。</p>
+  <p><a href="${reviewUrl}">還是可以到後台看看</a></p>
 </body>
 </html>`;
   }
@@ -51,8 +51,8 @@ export function buildAdminReviewDigestHtml(params: {
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 640px; margin: 0 auto; padding: 24px;">
-  <h1 style="font-size: 20px; margin-bottom: 8px;">Vigo 審核每日摘要</h1>
-  <p style="color:#64748b;">${escapeHtml(rangeLabel)} · 共 ${events.length} 筆</p>
+  <h1 style="font-size: 20px; margin-bottom: 8px;">昨天有 ${events.length} 筆待審</h1>
+  <p style="color:#64748b;">${escapeHtml(rangeLabel)}，有空再處理就好。</p>
   <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">
     <thead>
       <tr style="text-align:left;background:#f8fafc;">
@@ -64,13 +64,13 @@ export function buildAdminReviewDigestHtml(params: {
     <tbody>${rows}</tbody>
   </table>
   <p style="margin: 24px 0;">
-    <a href="${reviewUrl}" style="display: inline-block; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none;">前往審核後台</a>
+    <a href="${reviewUrl}" style="display: inline-block; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none;">打開審核後台</a>
   </p>
-  <p style="font-size: 13px; color: #64748b;">此信於台北時間每日早上自動寄送。</p>
+  <p style="font-size: 13px; color: #64748b;">這封信會在台北時間每天早上自動寄出。</p>
 </body>
 </html>`;
 }
 
 export function digestRangeLabel(start: Date): string {
-  return `${taipeiDateString(start)} 送審紀錄`;
+  return `${taipeiDateString(start)} 的送審`;
 }
