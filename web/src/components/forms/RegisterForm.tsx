@@ -10,9 +10,9 @@ import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
 const REF_STORAGE_KEY = "vigo_referral_ref";
 
-function withTimeout<T>(promise: Promise<T>, ms: number, code: string): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, code: string): Promise<T> {
   return Promise.race([
-    promise,
+    Promise.resolve(promise),
     new Promise<never>((_, reject) => {
       window.setTimeout(() => reject(new Error(code)), ms);
     }),
