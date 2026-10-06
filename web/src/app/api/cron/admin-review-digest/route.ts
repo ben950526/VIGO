@@ -24,6 +24,9 @@ export async function GET(request: Request) {
     ok: true,
     sent: result.sent,
     count: result.count,
+    reviewCount: result.reviewCount,
+    feedbackCount: result.feedbackCount,
+    bugCount: result.bugCount,
     reason: result.reason,
   });
 }

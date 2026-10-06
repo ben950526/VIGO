@@ -54,7 +54,7 @@ git push -u origin main
 
 勾選 **Production**（Preview 也可一併勾，方便測 PR）。
 
-**審核每日摘要：** 台北時間每天 **08:00**（UTC 00:00）寄送「昨日」送審紀錄到 `ADMIN_EMAIL`。須在 Supabase 執行 `supabase/migrations/015_review_submission_events.sql`。
+**每日摘要：** 台北時間每天 **08:00**（UTC 00:00）寄送「昨日」待審、使用者意見與問題回報到 `ADMIN_EMAIL`。須在 Supabase 執行 `supabase/migrations/015_review_submission_events.sql`。
 
 > `NEXT_PUBLIC_*` 會暴露給瀏覽器，只能放 Supabase **anon key**，絕對不要放 service_role key。
 
