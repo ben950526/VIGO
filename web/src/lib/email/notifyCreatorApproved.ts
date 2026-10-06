@@ -1,6 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendCreatorApprovalEmail } from "@/lib/email/sendApprovalEmail";
 import { sendCreatorRejectionEmail } from "@/lib/email/sendRejectionEmail";
+import {
+  sendPortfolioApprovedEmail,
+  sendPortfolioRejectedEmail,
+} from "@/lib/email/sendPortfolioReviewEmail";
+import {
+  sendPromoShareApprovedEmail,
+  sendPromoShareRejectedEmail,
+} from "@/lib/email/sendPromoShareReviewEmail";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/supabase";
 
@@ -112,4 +120,107 @@ export async function sendApprovalEmailForCreator(
     slug: snapshot.slug,
     inviteCode: snapshot.invite_code,
   });
+}
+
+export async function notifyPortfolioReviewed(
+  supabase: SupabaseClient<Database>,
+  params: {
+    creatorId: string;
+    workTitle: string;
+    approved: boolean;
+  },
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("creator_profiles")
+    .select("user_id, studio_name, slug, is_demo, contact_email")
+    .eq("id", params.creatorId)
+    .maybeSingle();
+
+  if (error || !data || data.is_demo) {
+    if (error) console.error("[email] load creator for portfolio mail:", error.message);
+    return;
+  }
+
+  const to = await resolveNotifyEmail({
+    verification_status: "approved",
+    studio_name: data.studio_name,
+    slug: data.slug,
+    is_demo: data.is_demo,
+    invite_code: null,
+    contact_email: data.contact_email,
+    user_id: data.user_id,
+  });
+  if (!to) {
+    console.warn("[email] no profile email for portfolio review:", data.studio_name);
+    return;
+  }
+
+  const result = params.approved
+    ? await sendPortfolioApprovedEmail({
+        to,
+        studioName: data.studio_name,
+        slug: data.slug,
+        workTitle: params.workTitle,
+      })
+    : await sendPortfolioRejectedEmail({
+        to,
+        studioName: data.studio_name,
+        workTitle: params.workTitle,
+      });
+  if (!result.ok) {
+    console.error("[email] portfolio review send failed:", result.error);
+  }
+}
+
+export async function notifyPromoShareReviewed(
+  supabase: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    postUrl: string;
+    approved: boolean;
+    creditsAwarded?: number;
+    adminNote?: string | null;
+  },
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("creator_profiles")
+    .select("user_id, studio_name, slug, is_demo, contact_email")
+    .eq("user_id", params.userId)
+    .maybeSingle();
+
+  if (error || !data || data.is_demo) {
+    if (error) console.error("[email] load creator for promo mail:", error.message);
+    return;
+  }
+
+  const to = await resolveNotifyEmail({
+    verification_status: "approved",
+    studio_name: data.studio_name,
+    slug: data.slug,
+    is_demo: data.is_demo,
+    invite_code: null,
+    contact_email: data.contact_email,
+    user_id: data.user_id,
+  });
+  if (!to) {
+    console.warn("[email] no profile email for promo share:", data.studio_name);
+    return;
+  }
+
+  const result = params.approved
+    ? await sendPromoShareApprovedEmail({
+        to,
+        studioName: data.studio_name,
+        creditsAwarded: params.creditsAwarded ?? 0,
+        postUrl: params.postUrl,
+      })
+    : await sendPromoShareRejectedEmail({
+        to,
+        studioName: data.studio_name,
+        postUrl: params.postUrl,
+        adminNote: params.adminNote,
+      });
+  if (!result.ok) {
+    console.error("[email] promo share send failed:", result.error);
+  }
 }

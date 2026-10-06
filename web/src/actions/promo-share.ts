@@ -5,6 +5,7 @@ import { getAuthUserId } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/admin";
 import type { PromoSharePlatform } from "@/lib/data/promo-share";
+import { notifyPromoShareReviewed } from "@/lib/email/notifyCreatorApproved";
 
 const PLATFORMS: PromoSharePlatform[] = ["threads", "facebook", "instagram", "tiktok", "other"];
 
@@ -83,14 +84,29 @@ export async function approvePromoShareSubmission(formData: FormData): Promise<v
   if (!id) return;
 
   const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("promo_share_submissions")
+    .select("id, user_id, post_url, status")
+    .eq("id", id)
+    .maybeSingle();
+
   const { data, error } = await supabase.rpc("admin_approve_promo_share", {
     p_submission_id: id,
   });
 
   if (error) throw new Error(error.message);
-  const payload = data as { ok?: boolean; reason?: string } | null;
+  const payload = data as { ok?: boolean; reason?: string; credits_awarded?: number } | null;
   if (!payload?.ok) {
     throw new Error(payload?.reason ?? "審核失敗");
+  }
+
+  if (before?.status === "pending") {
+    await notifyPromoShareReviewed(supabase, {
+      userId: before.user_id,
+      postUrl: before.post_url,
+      approved: true,
+      creditsAwarded: payload.credits_awarded ?? 0,
+    });
   }
 
   revalidatePath("/admin/review");
@@ -104,6 +120,12 @@ export async function rejectPromoShareSubmission(formData: FormData): Promise<vo
   if (!id) return;
 
   const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("promo_share_submissions")
+    .select("id, user_id, post_url, status")
+    .eq("id", id)
+    .maybeSingle();
+
   const { data, error } = await supabase.rpc("admin_reject_promo_share", {
     p_submission_id: id,
     p_note: note || null,
@@ -113,6 +135,15 @@ export async function rejectPromoShareSubmission(formData: FormData): Promise<vo
   const payload = data as { ok?: boolean; reason?: string } | null;
   if (!payload?.ok) {
     throw new Error(payload?.reason ?? "拒絕失敗");
+  }
+
+  if (before?.status === "pending") {
+    await notifyPromoShareReviewed(supabase, {
+      userId: before.user_id,
+      postUrl: before.post_url,
+      approved: false,
+      adminNote: note || null,
+    });
   }
 
   revalidatePath("/admin/review");

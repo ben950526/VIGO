@@ -17,6 +17,7 @@ import {
   loadCreatorReviewSnapshot,
   notifyCreatorApprovedFromPending,
   notifyCreatorRejectedFromPending,
+  notifyPortfolioReviewed,
   sendApprovalEmailForCreator,
 } from "@/lib/email/notifyCreatorApproved";
 
@@ -246,10 +247,24 @@ export async function approvePortfolioItem(formData: FormData): Promise<void> {
   if (!id) return;
 
   const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("portfolio_items")
+    .select("id, title, status, creator_id")
+    .eq("id", id)
+    .maybeSingle();
+
   await supabase
     .from("portfolio_items")
     .update({ status: "approved" })
     .eq("id", id);
+
+  if (before?.status === "pending" && before.creator_id) {
+    await notifyPortfolioReviewed(supabase, {
+      creatorId: before.creator_id,
+      workTitle: before.title,
+      approved: true,
+    });
+  }
 
   revalidateAfterPublicCreatorChange();
 }
@@ -260,10 +275,24 @@ export async function rejectPortfolioItem(formData: FormData): Promise<void> {
   if (!id) return;
 
   const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("portfolio_items")
+    .select("id, title, status, creator_id")
+    .eq("id", id)
+    .maybeSingle();
+
   await supabase
     .from("portfolio_items")
     .update({ status: "rejected" })
     .eq("id", id);
+
+  if (before?.status === "pending" && before.creator_id) {
+    await notifyPortfolioReviewed(supabase, {
+      creatorId: before.creator_id,
+      workTitle: before.title,
+      approved: false,
+    });
+  }
 
   revalidateAdminReviewOnly();
 }
