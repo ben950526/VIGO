@@ -1,0 +1,13 @@
+---
+description: 完成功能後直接 commit 並 push 到 main，不必再問
+alwaysApply: true
+---
+
+# 完成就 push
+
+使用者已授權：**完成實作後直接 commit 並 `git push origin HEAD`（目前追蹤 `main`），不必先問要不要 push。**
+
+- 一併 commit 本次相關檔案；不要加入 `.env`、金鑰、`docs/` 未要求的草稿、一次性本機腳本
+- commit 訊息用繁體中文、說明「為什麼」
+- 不要 force push、不要改 git config
+- 能自己做的營運動作（補寄信、改程式、部署用 push）就直接做，不要把步驟丟回給使用者

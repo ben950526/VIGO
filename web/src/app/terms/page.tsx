@@ -28,6 +28,9 @@ export default function TermsPage() {
         <p>
           本平台<strong>並非</strong>發案者與接案者間任何交易、合約、僱傭或委任關係之當事人，<strong>不參與</strong>雙方報價、簽約、付款、交付或爭議處理。所有合作條件、金流與履約，均由使用者自行於站外協商與負責。
         </p>
+        <p>
+          發案者經本平台取得接案者聯絡方式後，於站外私訊時<strong>必須在第一則訊息直接說明係透過 Vigo 發現</strong>，不得隱瞞來源。
+        </p>
       </LegalSection>
 
       <LegalSection title="3. 帳號與創作者義務">

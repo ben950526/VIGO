@@ -1,5 +1,11 @@
 import { UnpublishedText } from "@/components/creator/UnpublishedText";
 import { DEMO_WARNING, isDemoCreator } from "@/lib/demo-creator";
+import {
+  KNOCK_VIGO_ATTRIBUTION_BODY,
+  KNOCK_VIGO_ATTRIBUTION_TITLE,
+  KNOCK_VIGO_MAIL_BODY,
+  KNOCK_VIGO_MAIL_SUBJECT,
+} from "@/lib/knock/copy";
 import type { CreatorProfile } from "@/types/database";
 
 interface ContactSectionProps {
@@ -37,9 +43,13 @@ export function ContactSection({ creator }: ContactSectionProps) {
     <section className="section bg-[var(--surface)]">
       <div className="container-narrow mx-auto max-w-2xl text-center">
         <h2 className="mb-3 text-3xl font-bold">聯絡 {creator.studio_name}</h2>
-        <p className="mb-8 text-[var(--text-secondary)]">
+        <p className="mb-4 text-[var(--text-secondary)]">
           看準風格了？透過以下方式直接聯繫，後續於站外自行洽談。
         </p>
+        <div className="mb-8 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-left text-sm text-amber-950">
+          <p className="font-semibold">{KNOCK_VIGO_ATTRIBUTION_TITLE}</p>
+          <p className="mt-2">{KNOCK_VIGO_ATTRIBUTION_BODY}</p>
+        </div>
 
         {hasContact ? (
           <div className="space-y-3 text-left">
@@ -47,7 +57,7 @@ export function ContactSection({ creator }: ContactSectionProps) {
               <p>
                 <strong>Email：</strong>{" "}
                 <a
-                  href={`mailto:${creator.contact_email}`}
+                  href={`mailto:${creator.contact_email}?subject=${encodeURIComponent(KNOCK_VIGO_MAIL_SUBJECT)}&body=${encodeURIComponent(KNOCK_VIGO_MAIL_BODY)}`}
                   className="text-[var(--accent)] hover:underline"
                 >
                   {creator.contact_email}

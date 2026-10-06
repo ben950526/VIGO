@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { knockCreator, syncKnockCookie } from "@/actions/knock";
 import type { PublicCreatorProfile } from "@/lib/creator/sensitive";
+import {
+  KNOCK_VIGO_ATTRIBUTION_BODY,
+  KNOCK_VIGO_ATTRIBUTION_CHECKBOX,
+  KNOCK_VIGO_ATTRIBUTION_TITLE,
+} from "@/lib/knock/copy";
 import { getVisitorKey, isKnockUnlocked, setKnockUnlocked } from "@/lib/knock/visitor";
 
 interface CreatorKnockGateProps {
@@ -22,6 +27,7 @@ export function CreatorKnockGate({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const [agreedAttribution, setAgreedAttribution] = useState(false);
 
   useEffect(() => {
     if (previewSimulation) return;
@@ -48,13 +54,20 @@ export function CreatorKnockGate({
             發案者在此按<strong className="text-[var(--text)]">敲門</strong>後，才會看到{" "}
             {creator.studio_name} 的自介、作品與聯絡方式。
           </p>
-          <p className="mb-8 text-sm text-[var(--text-muted)]">
+          <p className="mb-6 text-sm text-[var(--text-muted)]">
             這是預覽模擬，不會計入敲門次數。
           </p>
+          <KnockAttributionNotice />
+          <KnockAttributionCheckbox
+            id="knock-attribution-preview"
+            checked={agreedAttribution}
+            onChange={setAgreedAttribution}
+          />
           <button
             type="button"
             onClick={() => onPreviewReveal?.()}
-            className="btn-primary px-10 py-3 text-lg"
+            disabled={!agreedAttribution}
+            className="btn-primary px-10 py-3 text-lg disabled:opacity-70"
           >
             模擬敲門成功 → 看完整內容
           </button>
@@ -74,6 +87,11 @@ export function CreatorKnockGate({
   }
 
   async function handleKnock() {
+    if (!agreedAttribution) {
+      setError("請先確認：私訊時會直接說明是透過 Vigo 發現的");
+      return;
+    }
+
     setPending(true);
     setError("");
 
@@ -103,13 +121,19 @@ export function CreatorKnockGate({
           按<strong className="text-[var(--text)]">敲門</strong>後，即可查看{" "}
           {creator.studio_name} 的自介、風格、作品集、價目表與聯絡方式。
         </p>
-        <p className="mb-8 text-sm text-[var(--text-muted)]">
+        <p className="mb-6 text-sm text-[var(--text-muted)]">
           創作者會在後台看到被瀏覽次數，方便了解有多少發案者感興趣。
         </p>
+        <KnockAttributionNotice />
+        <KnockAttributionCheckbox
+          id="knock-attribution"
+          checked={agreedAttribution}
+          onChange={setAgreedAttribution}
+        />
         <button
           type="button"
           onClick={handleKnock}
-          disabled={pending}
+          disabled={pending || !agreedAttribution}
           className="btn-primary px-10 py-3 text-lg disabled:opacity-70"
         >
           {pending ? "敲門中…" : "敲門"}
@@ -120,5 +144,37 @@ export function CreatorKnockGate({
         </p>
       </div>
     </section>
+  );
+}
+
+function KnockAttributionNotice() {
+  return (
+    <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-left text-sm text-amber-950">
+      <p className="font-semibold">{KNOCK_VIGO_ATTRIBUTION_TITLE}</p>
+      <p className="mt-2">{KNOCK_VIGO_ATTRIBUTION_BODY}</p>
+    </div>
+  );
+}
+
+function KnockAttributionCheckbox({
+  id,
+  checked,
+  onChange,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <label htmlFor={id} className="mb-8 flex cursor-pointer items-start gap-3 text-left text-sm text-[var(--text)]">
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 h-4 w-4 shrink-0"
+      />
+      <span>{KNOCK_VIGO_ATTRIBUTION_CHECKBOX}</span>
+    </label>
   );
 }
