@@ -11,6 +11,8 @@ const hiddenPrefixes = [
   "/admin",
   "/login",
   "/signup",
+  "/forgot-password",
+  "/auth",
 ];
 
 export function HelpFab() {

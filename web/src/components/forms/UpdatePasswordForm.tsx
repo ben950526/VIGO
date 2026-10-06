@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 
-export function LoginForm() {
+export function UpdatePasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -18,28 +17,41 @@ export function LoginForm() {
     }
 
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
+    const confirm = String(formData.get("confirm") ?? "");
+
+    if (password.length < 6) {
+      setError("密碼至少 6 碼");
+      return;
+    }
+    if (password !== confirm) {
+      setError("兩次輸入的密碼不一致");
+      return;
+    }
 
     setPending(true);
     setError(null);
 
     try {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        setError(formatAuthError(signInError.message));
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        setError("重設連結無效或已過期，請重新申請");
         setPending(false);
         return;
       }
 
-      window.location.assign("/dashboard");
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) {
+        setError(formatAuthError(updateError.message));
+        setPending(false);
+        return;
+      }
+
+      await supabase.auth.signOut();
+      window.location.replace("/login?reset=1");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "登入失敗，請稍後再試";
+      const message = err instanceof Error ? err.message : "更新失敗，請稍後再試";
       setError(formatAuthError(message));
       setPending(false);
     }
@@ -47,23 +59,27 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input className="input" name="email" type="email" placeholder="Email" required autoComplete="email" />
       <input
         className="input"
         name="password"
         type="password"
-        placeholder="密碼"
+        placeholder="新密碼（至少 6 碼）"
+        minLength={6}
         required
-        autoComplete="current-password"
+        autoComplete="new-password"
       />
-      <p className="text-right text-sm">
-        <Link href="/forgot-password" className="text-[var(--accent)] hover:underline">
-          忘記密碼？
-        </Link>
-      </p>
+      <input
+        className="input"
+        name="confirm"
+        type="password"
+        placeholder="再輸入一次新密碼"
+        minLength={6}
+        required
+        autoComplete="new-password"
+      />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button type="submit" disabled={pending} className="btn-primary w-full disabled:opacity-70">
-        {pending ? "登入中…" : "登入"}
+        {pending ? "更新中…" : "設定新密碼"}
       </button>
     </form>
   );

@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/forms/LoginForm";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ registered?: string; error?: string }>;
+  searchParams: Promise<{ registered?: string; error?: string; reset?: string }>;
 }) {
   const params = await searchParams;
 
@@ -19,6 +19,16 @@ export default async function LoginPage({
         {params.registered === "1" ? (
           <p className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             帳號已建立。請用剛才的 Email 與密碼登入（不必再註冊一次）。
+          </p>
+        ) : null}
+        {params.reset === "1" ? (
+          <p className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            密碼已更新，請用新密碼登入。
+          </p>
+        ) : null}
+        {params.error === "auth" ? (
+          <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            登入連結無效或已過期，請重新登入或再申請一次忘記密碼。
           </p>
         ) : null}
         <Suspense fallback={null}>
