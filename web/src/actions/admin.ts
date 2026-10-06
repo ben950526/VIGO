@@ -14,8 +14,10 @@ import { requireAdmin } from "@/lib/auth/admin";
 import { sendAccountPurgedEmail } from "@/lib/email/sendAccountPurgedEmail";
 import {
   loadCreatorApprovalSnapshot,
+  loadCreatorReviewSnapshot,
   notifyCreatorApprovedFromPending,
   notifyCreatorRejectedFromPending,
+  sendApprovalEmailForCreator,
 } from "@/lib/email/notifyCreatorApproved";
 
 export async function seedDemoAccounts(): Promise<{ ok: boolean; message: string }> {
@@ -317,6 +319,25 @@ export async function adminSetPortfolioListing(formData: FormData): Promise<void
     .eq("id", id);
 
   revalidateAfterPublicCreatorChange(slug);
+}
+
+export type ResendApprovalState = { error?: string; ok?: boolean; message?: string };
+
+export async function resendCreatorApprovalEmail(
+  _prev: ResendApprovalState | null,
+  formData: FormData,
+): Promise<ResendApprovalState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { error: "找不到工作室" };
+
+  const supabase = await createClient();
+  const snapshot = await loadCreatorReviewSnapshot(supabase, id);
+  if (!snapshot) return { error: "找不到工作室" };
+
+  const result = await sendApprovalEmailForCreator(snapshot);
+  if (!result.ok) return { error: result.error };
+  return { ok: true, message: "已補寄通過信，請查收件匣與垃圾郵件" };
 }
 
 export type PurgeCreatorState = { error?: string; ok?: boolean; message?: string };

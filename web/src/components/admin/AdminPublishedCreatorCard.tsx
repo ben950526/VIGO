@@ -2,6 +2,7 @@ import Link from "next/link";
 import { adminSetCreatorListing, adminSetPortfolioListing } from "@/actions/admin";
 import { AdminToggleForm } from "@/components/admin/AdminActionForm";
 import { AdminPurgeAccountForm } from "@/components/admin/AdminPurgeAccountForm";
+import { AdminResendApprovalForm } from "@/components/admin/AdminResendApprovalForm";
 import { DemoBadge } from "@/components/creator/DemoBadge";
 import { isCreatorVisibleOnExplore } from "@/lib/creator/listing";
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
@@ -62,6 +63,7 @@ export function AdminPublishedCreatorCard({
           >
             查看公開頁
           </Link>
+          {!creator.is_demo ? <AdminResendApprovalForm creatorId={creator.id} /> : null}
         </div>
           <AdminToggleForm
           action={adminSetCreatorListing}
