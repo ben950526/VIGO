@@ -6,7 +6,7 @@ export type StudioSubmitInput = Pick<
   "studio_name" | "bio" | "region" | "service_types" | "style_tags" | "contact_email" | "line_id" | "phone"
 >;
 
-/** 送審必填：工作室頁要讓發案者看得懂。作品集不擋送審，可之後再補。 */
+/** 引導用：還缺哪些工作室欄位。不擋註冊、也不擋審核。 */
 export function studioSubmitGaps(input: StudioSubmitInput): string[] {
   const gaps: string[] = [];
   if (!input.studio_name.trim()) gaps.push("工作室名稱");
@@ -21,8 +21,4 @@ export function studioSubmitGaps(input: StudioSubmitInput): string[] {
   );
   if (!hasContact) gaps.push("至少一種聯絡方式（Email、LINE 或電話）");
   return gaps;
-}
-
-export function isStudioReadyToSubmit(input: StudioSubmitInput): boolean {
-  return studioSubmitGaps(input).length === 0;
 }

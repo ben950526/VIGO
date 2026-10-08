@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
 import { SignOutButton } from "@/components/forms/SignOutButton";
+import { DashboardOnboarding } from "@/components/dashboard/DashboardOnboarding";
 import { DashboardReferralWelcome } from "@/components/dashboard/DashboardReferralWelcome";
 import { PromoSharePanel } from "@/components/dashboard/PromoSharePanel";
 import { ReferralCreditsPanel } from "@/components/dashboard/ReferralCreditsPanel";
@@ -45,8 +46,7 @@ export default async function DashboardPage() {
   const visibleOnExplore = isCreatorVisibleOnExplore(listingInput);
   const exploreGaps = studioExploreContentGaps(listingInput);
   const submitGaps = studioSubmitGaps(profile);
-  const awaitingFirstSubmit =
-    profile.verification_status === "draft" || profile.verification_status === "rejected";
+  const hasWork = portfolio.some((item) => item.status !== "rejected");
   const [knockStats, referralStats, promoShareSubmissions] = await Promise.all([
     getCreatorKnockStats(profile.id),
     getReferralDashboardStats(),
@@ -74,22 +74,11 @@ export default async function DashboardPage() {
           <DashboardReferralWelcome />
         </Suspense>
 
-        {awaitingFirstSubmit ? (
-          <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
-            <h2 className="mb-2 text-xl font-bold">先填齊工作室，才能送審</h2>
-            <p className="mb-3 text-sm">
-              註冊只是建立帳號。送審前請一次填好介紹、地區、服務、風格與聯絡方式。作品集可以之後再補。
-            </p>
-            {submitGaps.length > 0 ? (
-              <p className="mb-4 text-sm">目前還差：{submitGaps.join("、")}。</p>
-            ) : (
-              <p className="mb-4 text-sm">資料看起來齊了，到編輯頁按「送出審核」即可。</p>
-            )}
-            <Link href="/dashboard/studio" className="btn-primary text-sm">
-              去填工作室資料
-            </Link>
-          </div>
-        ) : null}
+        <DashboardOnboarding
+          missingStudio={submitGaps}
+          hasWork={hasWork}
+          reviewStatus={profile.verification_status}
+        />
 
         <div className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
           <p className="mb-2">
@@ -100,11 +89,9 @@ export default async function DashboardPage() {
                 : visibleOnExplore
                   ? "已公開上架"
                   : "已通過審核，補作品後才會出現在探索頁"
-              : profile.verification_status === "pending"
-                ? "審核中"
-                : profile.verification_status === "draft"
-                  ? "草稿（尚未送審）"
-                  : "未通過"}
+              : profile.verification_status === "rejected"
+                ? "未通過"
+                : "審核中"}
           </p>
           <p className="mb-4 text-[var(--text-secondary)]">
             <Link href={`/creator/${profile.slug}`} className="text-[var(--accent)] hover:underline">
@@ -112,7 +99,6 @@ export default async function DashboardPage() {
             </Link>
             {" "}· /creator/{profile.slug}
           </p>
-          {profile.verification_status !== "draft" ? (
           <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm">
             <p className="font-medium text-[var(--text)]">敲門統計</p>
             <p className="mt-1 text-[var(--text-secondary)]">
@@ -122,7 +108,6 @@ export default async function DashboardPage() {
               發案者敲門後才會看到完整工作室內容；每次敲門都會計入次數。
             </p>
           </div>
-          ) : null}
           <div className="flex flex-wrap gap-3">
             <Link href="/dashboard/studio" className="btn-primary">
               編輯工作室內容
@@ -164,7 +149,7 @@ export default async function DashboardPage() {
 
         <h2 className="mb-2 text-xl font-bold">我的作品 ({portfolio.length})</h2>
         <p className="mb-4 text-sm text-[var(--text-muted)]">
-          作品可慢慢補。公開後至少 1 支已通過的作品，才會出現在探索頁。按「設為精選」可更換精選。
+          建議至少加 1 支。通過審核後，有已公開作品才會出現在探索頁。按「設為精選」可更換精選。
         </p>
         {portfolio.length === 0 ? (
           <p className="text-[var(--text-muted)]">

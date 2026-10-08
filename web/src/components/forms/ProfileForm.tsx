@@ -4,8 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { submitStudioForReview, updateCreatorProfile } from "@/actions/creator";
-import { studioSubmitGaps } from "@/lib/creator/studioSubmit";
+import { updateCreatorProfile } from "@/actions/creator";
 import { PriceListEditor } from "@/components/forms/PriceListEditor";
 import { TagCheckboxGroup } from "@/components/forms/TagCheckboxGroup";
 import {
@@ -48,30 +47,15 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
     if (file) setPreview(URL.createObjectURL(file));
   }
 
-  const canSubmitReview =
-    profile.verification_status === "draft" || profile.verification_status === "rejected";
-  const submitGaps = studioSubmitGaps(profile);
-
   async function handleSubmit(formData: FormData) {
     setSuccess(false);
     setPending(true);
     setError("");
     formData.set("price_list_json", JSON.stringify(parsePriceList(priceList)));
-    const intent = String(formData.get("intent") ?? "save");
     try {
       const result = await updateCreatorProfile(formData);
       if (result.error) {
         setError(result.error);
-        return;
-      }
-      if (intent === "submit") {
-        const submitted = await submitStudioForReview();
-        if (submitted.error) {
-          setError(submitted.error);
-          return;
-        }
-        setSuccess(true);
-        router.refresh();
         return;
       }
       setSuccess(true);
@@ -133,7 +117,7 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
               <input className="input" name="studio_name" placeholder="例如：Reel Lab 短影工作室" defaultValue={profile.studio_name} required />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">自我介紹（送審必填）</label>
+              <label className="mb-1 block text-sm font-medium">自我介紹（建議填，發案者會先看這段）</label>
               <textarea
                 className="input min-h-28"
                 name="bio"
@@ -142,7 +126,7 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">地區（送審必填）</label>
+              <label className="mb-1 block text-sm font-medium">地區（建議填）</label>
               <select className="input" name="region" defaultValue={profile.region ?? ""}>
                 <option value="">請選擇</option>
                 {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -156,7 +140,7 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
 
           <div className="space-y-4">
             <SectionTitle>價目表（選填）</SectionTitle>
-            <p className="text-sm text-[var(--text-muted)]">沒有價目也可以先送審。</p>
+            <p className="text-sm text-[var(--text-muted)]">有再填，之後對外介紹會比較順。</p>
             <PriceListEditor items={priceList} onChange={setPriceList} />
           </div>
 
@@ -185,14 +169,14 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
               selectedValues={profile.languages ?? []}
             />
             <TagCheckboxGroup
-              legend="風格標籤（送審必填，至少 1 個）"
+              legend="風格標籤（建議至少 1 個）"
               options={STYLE_TAGS}
               checkboxNamePrefix="tag_"
               customFieldName="style_tags_custom"
               selectedValues={profile.style_tags}
             />
             <TagCheckboxGroup
-              legend="服務項目（送審必填，至少 1 項）"
+              legend="服務項目（建議至少 1 項）"
               options={SERVICE_TYPES}
               checkboxNamePrefix="service_"
               customFieldName="service_types_custom"
@@ -202,7 +186,7 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
 
           {/* 聯絡 */}
           <div className="space-y-4">
-            <SectionTitle>聯絡方式（送審必填，至少一種）</SectionTitle>
+            <SectionTitle>聯絡方式（建議至少一種）</SectionTitle>
             <input className="input" name="contact_email" type="email" placeholder="聯絡 Email" defaultValue={profile.contact_email ?? ""} />
             <div>
               <label className="mb-1 block text-sm font-medium">LINE ID</label>
@@ -217,30 +201,10 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {success && (
-            <p className="text-sm text-green-700">
-              {profile.verification_status === "pending"
-                ? "已儲存。審核進行中，通過後會寄信通知你。"
-                : profile.verification_status === "approved"
-                  ? "已儲存。"
-                  : "已儲存草稿。"}
-            </p>
-          )}
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <button type="submit" name="intent" value="save" disabled={pending} className="btn-secondary disabled:opacity-70">
-              {pending ? "處理中…" : profile.verification_status === "approved" ? "儲存資料" : "儲存草稿"}
-            </button>
-            {canSubmitReview ? (
-              <button type="submit" name="intent" value="submit" disabled={pending} className="btn-primary disabled:opacity-70">
-                {pending ? "處理中…" : "送出審核"}
-              </button>
-            ) : null}
-          </div>
-          {canSubmitReview && submitGaps.length > 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">
-              送審前還差：{submitGaps.join("、")}。作品集可之後再補，不擋送審。
-            </p>
-          ) : null}
+          {success && <p className="text-sm text-green-700">已儲存。</p>}
+          <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
+            {pending ? "儲存中…" : "儲存資料"}
+          </button>
         </form>
   );
 

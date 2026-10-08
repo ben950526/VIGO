@@ -22,7 +22,6 @@ import { formatSchemaError } from "@/lib/db-schema";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { collectTagsFromForm } from "@/lib/tags";
 import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
-import { studioSubmitGaps } from "@/lib/creator/studioSubmit";
 
 export async function updateCreatorProfile(formData: FormData) {
   if (!isSupabaseConfigured()) {
@@ -122,8 +121,8 @@ export async function updateCreatorProfile(formData: FormData) {
       website_url: String(formData.get("website_url") ?? "").trim() || null,
       price_list: priceList as unknown as Json,
       ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
-      ...(profile.verification_status === "rejected"
-        ? { verification_status: "draft" }
+      ...(profile.verification_status === "rejected" || profile.verification_status === "draft"
+        ? { verification_status: "pending" }
         : {}),
     })
     .eq("id", profile.id);
@@ -132,78 +131,19 @@ export async function updateCreatorProfile(formData: FormData) {
     return { error: formatSchemaError(error.message) ?? error.message };
   }
 
+  if (profile.verification_status === "rejected" || profile.verification_status === "draft") {
+    void notifyAdminReviewPending({
+      kind: "profile_update",
+      studioName: String(formData.get("studio_name") ?? profile.studio_name).trim(),
+      slug: profile.slug,
+    });
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/studio");
   revalidatePath("/dashboard/profile");
   revalidateCreatorList();
   return { success: true };
-}
-
-export async function submitStudioForReview() {
-  if (!isSupabaseConfigured()) {
-    return { error: "請先設定 Supabase" };
-  }
-
-  const supabase = await createClient();
-  const userId = await getAuthUserId();
-  if (!userId) return { error: "請先登入" };
-
-  const { data: profile } = await supabase
-    .from("creator_profiles")
-    .select(
-      "id, slug, studio_name, bio, region, service_types, style_tags, contact_email, line_id, phone, verification_status, is_demo",
-    )
-    .eq("user_id", userId)
-    .single();
-
-  if (!profile) return { error: "找不到創作者資料" };
-  if (profile.is_demo) return { error: "示範帳號不必送審" };
-  if (profile.verification_status === "approved") {
-    return { error: "工作室已通過審核" };
-  }
-  if (profile.verification_status === "pending") {
-    return { success: true, message: "已在審核中，請稍候。" };
-  }
-
-  const gaps = studioSubmitGaps({
-    studio_name: profile.studio_name,
-    bio: profile.bio,
-    region: profile.region,
-    service_types: profile.service_types ?? [],
-    style_tags: profile.style_tags ?? [],
-    contact_email: profile.contact_email,
-    line_id: profile.line_id,
-    phone: profile.phone,
-  });
-  if (gaps.length > 0) {
-    return { error: `還差這些才能送審：${gaps.join("、")}` };
-  }
-
-  const { error } = await supabase
-    .from("creator_profiles")
-    .update({ verification_status: "pending" })
-    .eq("id", profile.id);
-
-  if (error) {
-    if (error.message.includes("verification_status") || error.message.includes("check")) {
-      return {
-        error:
-          "草稿狀態尚未啟用。請到 Supabase SQL Editor 執行 supabase/migrations/021_draft_verification_status.sql。",
-      };
-    }
-    return { error: formatSchemaError(error.message) ?? error.message };
-  }
-
-  void notifyAdminReviewPending({
-    kind: "new_creator",
-    studioName: profile.studio_name,
-    slug: profile.slug,
-  });
-
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/studio");
-  revalidateCreatorList();
-  return { success: true, message: "已送出審核。通過後會再寄信通知你。" };
 }
 
 export async function addPortfolioItem(formData: FormData) {

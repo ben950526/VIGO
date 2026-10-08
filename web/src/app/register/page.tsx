@@ -11,9 +11,14 @@ export default function RegisterPage() {
     <section className="section">
       <div className="container-narrow mx-auto max-w-md">
         <h1 className="mb-2 text-center text-3xl font-bold">接案者加入 Vigo</h1>
-        <p className="mb-8 text-center text-[var(--text-secondary)]">
-          先建立帳號，接著填齊工作室資料再送審。作品集可以之後再慢慢補。初期全免費。
+        <p className="mb-4 text-center text-[var(--text-secondary)]">
+          免費加入。註冊後登入，依序補資料即可。
         </p>
+        <ol className="mb-8 space-y-1 text-left text-sm text-[var(--text-secondary)]">
+          <li>1. 填工作室介紹、地區、服務、聯絡方式</li>
+          <li>2. 貼至少 1 支 YouTube／Reels</li>
+          <li>3. 審核通過後出現在探索頁；邀請同行還可累積折抵點（不能換現）</li>
+        </ol>
         <Suspense fallback={<RegisterFormFallback />}>
           <RegisterForm />
         </Suspense>
