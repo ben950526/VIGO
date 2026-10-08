@@ -1,11 +1,12 @@
 interface StudioPreviewBannerProps {
-  reason: "pending" | "unlisted" | "rejected" | "admin" | "incomplete";
+  reason: "draft" | "pending" | "unlisted" | "rejected" | "admin" | "incomplete";
 }
 
 const messages: Record<StudioPreviewBannerProps["reason"], string> = {
+  draft: "這還是草稿，僅您可預覽。填齊工作室資料並送出審核、通過後才會對外顯示。",
   pending: "工作室審核中，目前僅您可預覽此頁。通過審核後才會出現在探索頁。",
   unlisted: "工作室已下架，目前僅您可預覽此頁。重新上架後才會對外顯示。",
-  rejected: "工作室未通過審核，目前僅您可預覽此頁。請修改資料後等待重新審核。",
+  rejected: "工作室未通過審核，目前僅您可預覽此頁。請修改資料後再按「送出審核」。",
   incomplete:
     "目前僅您可預覽。補上一段介紹，並至少有 1 支已通過的作品後，才會出現在探索頁。",
   admin: "管理員預覽模式：此工作室尚未對外公開，或目前未上架。",

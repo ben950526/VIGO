@@ -1,5 +1,5 @@
 export type UserRole = "creator" | "client" | "admin";
-export type VerificationStatus = "pending" | "approved" | "rejected";
+export type VerificationStatus = "draft" | "pending" | "approved" | "rejected";
 export type SubscriptionTier = "free" | "pro" | "studio";
 export type EmbedType = "youtube" | "vimeo" | "instagram" | "other";
 export type PortfolioStatus = "pending" | "approved" | "rejected";

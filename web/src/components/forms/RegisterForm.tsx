@@ -126,7 +126,7 @@ export function RegisterForm() {
           slug,
           studio_name: studioName,
           contact_email: email,
-          verification_status: "pending",
+          verification_status: "draft",
         }),
         6000,
         "PROFILE_TIMEOUT",
@@ -138,7 +138,14 @@ export function RegisterForm() {
           profileError.message.toLowerCase().includes("duplicate");
         if (!duplicate) {
           window.clearTimeout(watchdog);
-          setError(formatAuthError(profileError.message));
+          const draftBlocked =
+            profileError.message.includes("verification_status") ||
+            profileError.message.toLowerCase().includes("check");
+          setError(
+            draftBlocked
+              ? "資料庫尚未支援草稿狀態。請先在 Supabase SQL Editor 執行 supabase/migrations/021_draft_verification_status.sql。"
+              : formatAuthError(profileError.message),
+          );
           setPending(false);
           return;
         }
@@ -158,12 +165,12 @@ export function RegisterForm() {
       }
 
       window.clearTimeout(watchdog);
-      window.location.replace("/login?registered=1");
+      window.location.replace("/login?registered=1&next=/dashboard/studio");
     } catch (err) {
       window.clearTimeout(watchdog);
       const raw = err instanceof Error ? err.message : "註冊失敗，請稍後再試";
       if (raw === "PROFILE_TIMEOUT" || raw === "REFERRAL_TIMEOUT") {
-        window.location.replace("/login?registered=1");
+        window.location.replace("/login?registered=1&next=/dashboard/studio");
         return;
       }
       const message =

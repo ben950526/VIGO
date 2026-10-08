@@ -18,7 +18,7 @@ export default async function LoginPage({
         </p>
         {params.registered === "1" ? (
           <p className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            帳號已建立。請用剛才的 Email 與密碼登入（不必再註冊一次）。
+            帳號已建立。請用剛才的 Email 與密碼登入，接著填齊工作室資料再送審（作品可之後再補）。
           </p>
         ) : null}
         {params.reset === "1" ? (

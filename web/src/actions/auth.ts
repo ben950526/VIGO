@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION } from "@/lib/legal";
-import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
 import { awardReferralSignup } from "@/lib/referral/awardReferralSignup";
 import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
@@ -55,23 +54,17 @@ export async function signUp(
     slug,
     studio_name: studioName,
     contact_email: email,
-    verification_status: "pending",
+    verification_status: "draft",
   });
 
   if (profileError) return { error: profileError.message };
-
-  await notifyAdminReviewPending({
-    kind: "new_creator",
-    studioName,
-    slug,
-  });
 
   const referralSlug = String(formData.get("referral_slug") ?? "").trim();
   if (referralSlug) {
     await awardReferralSignup(data.user.id, referralSlug);
   }
 
-  redirect("/dashboard?welcome=1#referral");
+  redirect("/dashboard/studio");
 }
 
 export async function signIn(

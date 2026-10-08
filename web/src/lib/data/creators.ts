@@ -152,7 +152,7 @@ export async function getCreatorBySlug(
   return page.creator;
 }
 
-export type StudioPreviewReason = "pending" | "unlisted" | "rejected" | "admin" | "incomplete";
+export type StudioPreviewReason = "draft" | "pending" | "unlisted" | "rejected" | "admin" | "incomplete";
 
 export interface CreatorPageData {
   creator: CreatorWithPortfolio;
@@ -225,6 +225,7 @@ export const getCreatorPageBySlug = cache(
 
     let previewReason: StudioPreviewReason;
     if (!isOwner) previewReason = "admin";
+    else if (profile.verification_status === "draft") previewReason = "draft";
     else if (profile.verification_status === "pending") previewReason = "pending";
     else if (profile.verification_status === "rejected") previewReason = "rejected";
     else if (profile.is_listed === false) previewReason = "unlisted";

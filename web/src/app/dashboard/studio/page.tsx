@@ -29,11 +29,12 @@ export default async function StudioContentPage() {
           </Link>
           <h1 className="mb-2 text-3xl font-bold">編輯工作室內容</h1>
           <p className="mb-4 text-sm text-[var(--text-secondary)]">
-            更新工作室資料與作品集。資料與作品分開儲存，各自送出後才會生效。
+            介紹、地區、服務、風格與聯絡方式填齊後，才能送出工作室審核。作品集可慢慢補，不擋送審。
           </p>
           <p className="mb-6 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-            工作室資料按 <strong className="text-[var(--text)]">儲存資料</strong>；新作品按{" "}
-            <strong className="text-[var(--text)]">新增作品</strong>，送出後需等待審核。
+            工作室資料按 <strong className="text-[var(--text)]">儲存草稿</strong> 或{" "}
+            <strong className="text-[var(--text)]">送出審核</strong>。新作品按{" "}
+            <strong className="text-[var(--text)]">新增作品</strong>，送出後需等待作品審核。
           </p>
 
           <StudioPreviewBar slug={profile.slug} />

@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 
+function safeNextPath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
 export function LoginForm() {
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -37,7 +44,7 @@ export function LoginForm() {
         return;
       }
 
-      window.location.assign("/dashboard");
+      window.location.assign(safeNextPath(searchParams.get("next")));
     } catch (err) {
       const message = err instanceof Error ? err.message : "登入失敗，請稍後再試";
       setError(formatAuthError(message));

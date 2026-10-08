@@ -12,7 +12,7 @@ interface AdminReviewNotifyHtmlParams {
 }
 
 const kindLabels: Record<AdminReviewNotifyKind, string> = {
-  new_creator: "新接案者註冊",
+  new_creator: "新工作室送審",
   profile_update: "工作室資料更新（待審）",
   new_portfolio: "新作品待審",
 };

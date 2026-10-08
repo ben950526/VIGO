@@ -12,7 +12,7 @@ export default function RegisterPage() {
       <div className="container-narrow mx-auto max-w-md">
         <h1 className="mb-2 text-center text-3xl font-bold">接案者加入 Vigo</h1>
         <p className="mb-8 text-center text-[var(--text-secondary)]">
-          建立工作室頁，被動等發案者找上門。初期全免費。
+          先建立帳號，接著填齊工作室資料再送審。作品集可以之後再慢慢補。初期全免費。
         </p>
         <Suspense fallback={<RegisterFormFallback />}>
           <RegisterForm />

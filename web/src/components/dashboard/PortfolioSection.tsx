@@ -22,7 +22,7 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
       <div>
         <SectionTitle>作品集</SectionTitle>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          公開頁的「精選作品」= 排序第一且已審核通過的作品。審核通過後可在下方設為精選。
+          作品可慢慢補，不擋工作室送審。公開後至少 1 支已通過的作品，才會出現在探索頁。精選作品 = 排序第一且已審核通過的作品。
         </p>
       </div>
 
