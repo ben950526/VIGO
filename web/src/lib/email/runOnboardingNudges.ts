@@ -9,7 +9,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { startOfTaipeiDay, taipeiDateString } from "@/lib/time/taipei";
 import { Resend } from "resend";
 
-const LOOKBACK_DAYS = 14;
+/** 只掃最近註冊者；第 7 天信最多延一天補寄，不會撈很久以前的舊帳 */
+const LOOKBACK_DAYS = 8;
 
 export type OnboardingNudgeResult = {
   ok: boolean;
@@ -31,6 +32,7 @@ function taipeiCalendarAgeDays(createdAt: string, now: Date): number {
   return Math.floor((today.getTime() - createdDay.getTime()) / (24 * 60 * 60 * 1000));
 }
 
+/** 只在剛好滿 1／3／7 天寄（隔天可補一次，避免 Cron 漏跑）。舊用戶不會收到。 */
 function nextNudgeDay(params: {
   ageDays: number;
   sent1: string | null;
@@ -38,9 +40,9 @@ function nextNudgeDay(params: {
   sent7: string | null;
 }): OnboardingNudgeDay | null {
   const { ageDays, sent1, sent3, sent7 } = params;
-  if (ageDays >= 1 && !sent1) return 1;
-  if (ageDays >= 3 && !sent3) return 3;
-  if (ageDays >= 7 && !sent7) return 7;
+  if ((ageDays === 1 || ageDays === 2) && !sent1) return 1;
+  if ((ageDays === 3 || ageDays === 4) && !sent3) return 3;
+  if ((ageDays === 7 || ageDays === 8) && !sent7) return 7;
   return null;
 }
 

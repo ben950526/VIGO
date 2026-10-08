@@ -1,4 +1,4 @@
--- 註冊後第 1、3、7 天各一封提醒（僅不完善工作室），每人每封只寄一次
+-- 新用戶註冊後第 1、3、7 天各一封提醒（僅不完善工作室；不補寄舊帳）
 
 alter table public.creator_profiles
   add column if not exists onboarding_nudge_1d_sent_at timestamptz;
