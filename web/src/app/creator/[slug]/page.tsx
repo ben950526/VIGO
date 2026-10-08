@@ -4,6 +4,7 @@ import { CreatorFullContent } from "@/components/creator/CreatorFullContent";
 import { CreatorKnockGate } from "@/components/creator/CreatorKnockGate";
 import { DemoAccountBanner } from "@/components/creator/DemoAccountBanner";
 import { DemoBadge } from "@/components/creator/DemoBadge";
+import { RecordStudioPageView } from "@/components/creator/RecordStudioPageView";
 import { StudioPreviewBanner } from "@/components/creator/StudioPreviewBanner";
 import { isDemoCreator } from "@/lib/demo-creator";
 import { toPublicCreatorProfile } from "@/lib/creator/sensitive";
@@ -40,6 +41,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   return (
     <>
       {previewReason && <StudioPreviewBanner reason={previewReason} />}
+      {!isPreview && !isDemo ? <RecordStudioPageView creatorId={creator.id} /> : null}
       {isDemo && <DemoAccountBanner />}
       <section className="relative flex min-h-[50vh] items-end px-6 pb-16 pt-32 md:px-12">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-100 via-slate-200 to-blue-100" aria-hidden />

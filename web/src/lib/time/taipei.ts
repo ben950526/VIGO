@@ -18,6 +18,26 @@ export function getYesterdayRangeInTaipei(now = new Date()): { start: Date; end:
   return { start: yesterdayStart, end: todayStart };
 }
 
+/** 台北週一 00:00（週一為一週之始） */
+export function startOfTaipeiWeek(now = new Date()): Date {
+  const todayStart = startOfTaipeiDay(taipeiDateString(now));
+  const short = now.toLocaleDateString("en-US", {
+    timeZone: "Asia/Taipei",
+    weekday: "short",
+  });
+  const mondayOffset: Record<string, number> = {
+    Mon: 0,
+    Tue: 1,
+    Wed: 2,
+    Thu: 3,
+    Fri: 4,
+    Sat: 5,
+    Sun: 6,
+  };
+  const daysFromMonday = mondayOffset[short] ?? 0;
+  return new Date(todayStart.getTime() - daysFromMonday * 24 * 60 * 60 * 1000);
+}
+
 export function formatTaipeiDateTime(iso: string): string {
   return new Date(iso).toLocaleString("zh-TW", {
     timeZone: "Asia/Taipei",

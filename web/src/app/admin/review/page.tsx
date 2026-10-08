@@ -10,7 +10,9 @@ import {
   getPendingPortfolioItems,
   getPublishedCreators,
 } from "@/lib/data/admin";
+import { getAdminHealthStats } from "@/lib/data/adminHealth";
 import { getPendingPromoShareSubmissions } from "@/lib/data/promo-share";
+import { AdminHealthSnapshot } from "@/components/admin/AdminHealthSnapshot";
 
 export const metadata = {
   title: "審核管理",
@@ -54,10 +56,11 @@ export default async function AdminReviewPage({
   await requireAdmin();
 
   const params = await searchParams;
-  const [pendingCreators, pendingItems, pendingPromoShares] = await Promise.all([
+  const [pendingCreators, pendingItems, pendingPromoShares, health] = await Promise.all([
     getPendingCreators(),
     getPendingPortfolioItems(),
     getPendingPromoShareSubmissions(),
+    getAdminHealthStats(),
   ]);
 
   const totalPending = pendingCreators.length + pendingItems.length;
@@ -91,6 +94,8 @@ export default async function AdminReviewPage({
             群發 Email
           </Link>
         </div>
+
+        <AdminHealthSnapshot stats={health} />
 
         {params.demoSeeded === "1" && (
           <p className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">

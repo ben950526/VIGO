@@ -360,6 +360,27 @@ export interface Database {
         };
         Relationships: [];
       };
+      studio_page_views: {
+        Row: {
+          id: string;
+          creator_id: string;
+          visitor_key: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          creator_id: string;
+          visitor_key: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          creator_id?: string;
+          visitor_key?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       knocks: {
         Row: {
           id: string;

@@ -13,6 +13,7 @@ import {
 import { studioSubmitGaps } from "@/lib/creator/studioSubmit";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getCreatorKnockStats } from "@/lib/data/knocks";
+import { getCreatorViewStats } from "@/lib/data/page-views";
 import { getMyPromoShareSubmissions } from "@/lib/data/promo-share";
 import { getReferralDashboardStats } from "@/lib/data/referral";
 import { siteUrl } from "@/lib/email/config";
@@ -47,8 +48,9 @@ export default async function DashboardPage() {
   const exploreGaps = studioExploreContentGaps(listingInput);
   const submitGaps = studioSubmitGaps(profile);
   const hasWork = portfolio.some((item) => item.status !== "rejected");
-  const [knockStats, referralStats, promoShareSubmissions] = await Promise.all([
+  const [knockStats, viewStats, referralStats, promoShareSubmissions] = await Promise.all([
     getCreatorKnockStats(profile.id),
+    getCreatorViewStats(profile.id),
     getReferralDashboardStats(),
     getMyPromoShareSubmissions(),
   ]);
@@ -100,12 +102,20 @@ export default async function DashboardPage() {
             {" "}· /creator/{profile.slug}
           </p>
           <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm">
-            <p className="font-medium text-[var(--text)]">敲門統計</p>
+            <p className="font-medium text-[var(--text)]">被瀏覽</p>
+            <p className="mt-1 text-[var(--text-secondary)]">
+              累計 {viewStats.uniqueTotal} 人看過 · 本週 {viewStats.uniqueThisWeek} 人 · 本月{" "}
+              {viewStats.uniqueThisMonth} 人
+            </p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              公開頁被打開即計算（同一人同一天只算一次）。自己預覽不算。
+            </p>
+            <p className="mt-3 font-medium text-[var(--text)]">敲門</p>
             <p className="mt-1 text-[var(--text-secondary)]">
               累計 {knockStats.total} 次 · 本週 {knockStats.thisWeek} 次 · 本月 {knockStats.thisMonth} 次
             </p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">
-              發案者敲門後才會看到完整工作室內容；每次敲門都會計入次數。
+              發案者按敲門後才看得到完整內容與聯絡方式。
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
