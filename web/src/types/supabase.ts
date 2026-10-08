@@ -70,6 +70,7 @@ export interface Database {
           invite_code: string;
           referred_by_user_id: string | null;
           promo_credits_balance: number;
+          onboarding_day3_sent_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -109,6 +110,7 @@ export interface Database {
           invite_code?: string;
           referred_by_user_id?: string | null;
           promo_credits_balance?: number;
+          onboarding_day3_sent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -148,6 +150,7 @@ export interface Database {
           price_list?: Json;
           referred_by_user_id?: string | null;
           promo_credits_balance?: number;
+          onboarding_day3_sent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
