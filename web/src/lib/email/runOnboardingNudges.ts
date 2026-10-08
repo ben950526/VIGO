@@ -1,17 +1,17 @@
 import { studioSubmitGaps } from "@/lib/creator/studioSubmit";
 import { adminNotifyEmail, emailFrom, resendApiKey, siteUrl } from "@/lib/email/config";
 import {
-  DAY3_ONBOARDING_SUBJECT,
-  buildDay3OnboardingReminderHtml,
-} from "@/lib/email/day3OnboardingReminderHtml";
+  buildOnboardingNudgeHtml,
+  onboardingNudgeSubject,
+  type OnboardingNudgeDay,
+} from "@/lib/email/onboardingNudgeHtml";
 import { createServiceClient } from "@/lib/supabase/service";
 import { startOfTaipeiDay, taipeiDateString } from "@/lib/time/taipei";
 import { Resend } from "resend";
 
-const MIN_AGE_DAYS = 3;
-const MAX_AGE_DAYS = 7;
+const LOOKBACK_DAYS = 14;
 
-export type Day3ReminderResult = {
+export type OnboardingNudgeResult = {
   ok: boolean;
   scanned: number;
   sent: number;
@@ -25,13 +25,35 @@ function startOfTaipeiDaysAgo(days: number, now: Date): Date {
   return new Date(todayStart.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
+function taipeiCalendarAgeDays(createdAt: string, now: Date): number {
+  const createdDay = startOfTaipeiDay(taipeiDateString(new Date(createdAt)));
+  const today = startOfTaipeiDay(taipeiDateString(now));
+  return Math.floor((today.getTime() - createdDay.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+function nextNudgeDay(params: {
+  ageDays: number;
+  sent1: string | null;
+  sent3: string | null;
+  sent7: string | null;
+}): OnboardingNudgeDay | null {
+  const { ageDays, sent1, sent3, sent7 } = params;
+  if (ageDays >= 1 && !sent1) return 1;
+  if (ageDays >= 3 && !sent3) return 3;
+  if (ageDays >= 7 && !sent7) return 7;
+  return null;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function runDay3OnboardingReminders(
-  now = new Date(),
-): Promise<Day3ReminderResult> {
+/** 與舊 Cron 呼叫相容 */
+export async function runDay3OnboardingReminders(now = new Date()) {
+  return runOnboardingNudges(now);
+}
+
+export async function runOnboardingNudges(now = new Date()): Promise<OnboardingNudgeResult> {
   const supabase = createServiceClient();
   if (!supabase) {
     return {
@@ -56,24 +78,19 @@ export async function runDay3OnboardingReminders(
     };
   }
 
-  // 台北日曆：註冊滿第 3 天起可寄，最晚第 7 天（Cron 漏跑仍補得上），每人只寄一次
-  const olderThan = startOfTaipeiDaysAgo(MIN_AGE_DAYS - 1, now);
-  const newerThan = startOfTaipeiDaysAgo(MAX_AGE_DAYS, now);
+  const since = startOfTaipeiDaysAgo(LOOKBACK_DAYS, now);
 
   const { data: creators, error } = await supabase
     .from("creator_profiles")
     .select(
-      "id, user_id, slug, studio_name, bio, region, service_types, style_tags, contact_email, line_id, phone, is_demo, created_at, onboarding_day3_sent_at",
+      "id, user_id, slug, studio_name, bio, region, service_types, style_tags, contact_email, line_id, phone, is_demo, created_at, onboarding_nudge_1d_sent_at, onboarding_nudge_3d_sent_at, onboarding_nudge_7d_sent_at",
     )
     .eq("is_demo", false)
-    .is("onboarding_day3_sent_at", null)
-    .gte("created_at", newerThan.toISOString())
-    .lt("created_at", olderThan.toISOString());
+    .gte("created_at", since.toISOString());
 
   if (error) {
     const missingCol =
-      error.message.includes("onboarding_day3_sent_at") ||
-      error.message.includes("schema cache");
+      error.message.includes("onboarding_nudge_") || error.message.includes("schema cache");
     return {
       ok: false,
       scanned: 0,
@@ -81,7 +98,7 @@ export async function runDay3OnboardingReminders(
       skipped: 0,
       failed: 0,
       error: missingCol
-        ? "請先在 Supabase SQL Editor 執行 supabase/migrations/023_onboarding_day3_sent.sql"
+        ? "請先在 Supabase SQL Editor 執行 supabase/migrations/024_onboarding_nudges_1_3_7.sql"
         : error.message,
     };
   }
@@ -136,6 +153,18 @@ export async function runDay3OnboardingReminders(
       continue;
     }
 
+    const ageDays = taipeiCalendarAgeDays(row.created_at, now);
+    const day = nextNudgeDay({
+      ageDays,
+      sent1: row.onboarding_nudge_1d_sent_at,
+      sent3: row.onboarding_nudge_3d_sent_at,
+      sent7: row.onboarding_nudge_7d_sent_at,
+    });
+    if (!day) {
+      skipped += 1;
+      continue;
+    }
+
     const email = (row.contact_email?.trim() || emailByUser.get(row.user_id) || "").toLowerCase();
     if (!email || email.endsWith("@vigo.local") || email.startsWith("demo-") || email === admin) {
       skipped += 1;
@@ -145,8 +174,9 @@ export async function runDay3OnboardingReminders(
     const { error: sendError } = await resend.emails.send({
       from,
       to: email,
-      subject: DAY3_ONBOARDING_SUBJECT,
-      html: buildDay3OnboardingReminderHtml({
+      subject: onboardingNudgeSubject(day),
+      html: buildOnboardingNudgeHtml({
+        day,
         studioName: row.studio_name,
         missing,
         studioEditUrl: `${baseUrl}/dashboard/studio`,
@@ -155,18 +185,25 @@ export async function runDay3OnboardingReminders(
     });
 
     if (sendError) {
-      console.error("[day3-onboarding] send failed", email, sendError.message);
+      console.error("[onboarding-nudge] send failed", email, sendError.message);
       failed += 1;
       continue;
     }
 
+    const stampedAt = new Date().toISOString();
+    const stamp =
+      day === 1
+        ? { onboarding_nudge_1d_sent_at: stampedAt }
+        : day === 3
+          ? { onboarding_nudge_3d_sent_at: stampedAt }
+          : { onboarding_nudge_7d_sent_at: stampedAt };
     const { error: stampError } = await supabase
       .from("creator_profiles")
-      .update({ onboarding_day3_sent_at: new Date().toISOString() })
+      .update(stamp)
       .eq("id", row.id);
 
     if (stampError) {
-      console.error("[day3-onboarding] stamp failed", row.id, stampError.message);
+      console.error("[onboarding-nudge] stamp failed", row.id, stampError.message);
     }
 
     sent += 1;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runDay3OnboardingReminders } from "@/lib/email/runDay3OnboardingReminders";
+import { runOnboardingNudges } from "@/lib/email/runOnboardingNudges";
 import { runDailyAdminReviewDigest } from "@/lib/review-queue/runDailyAdminDigest";
 
 export const dynamic = "force-dynamic";
@@ -16,33 +16,33 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [digest, day3] = await Promise.all([
+  const [digest, nudges] = await Promise.all([
     runDailyAdminReviewDigest(),
-    runDay3OnboardingReminders(),
+    runOnboardingNudges(),
   ]);
 
-  if (!digest.ok && !day3.ok) {
+  if (!digest.ok && !nudges.ok) {
     return NextResponse.json(
-      { error: digest.error, day3Error: day3.error },
+      { error: digest.error, nudgeError: nudges.error },
       { status: 500 },
     );
   }
 
   return NextResponse.json({
-    ok: digest.ok && day3.ok,
+    ok: digest.ok && nudges.ok,
     sent: digest.ok ? digest.sent : false,
     count: digest.ok ? digest.count : 0,
     reviewCount: digest.ok ? digest.reviewCount : 0,
     feedbackCount: digest.ok ? digest.feedbackCount : 0,
     bugCount: digest.ok ? digest.bugCount : 0,
     reason: digest.ok ? digest.reason : digest.error,
-    day3: {
-      ok: day3.ok,
-      scanned: day3.scanned,
-      sent: day3.sent,
-      skipped: day3.skipped,
-      failed: day3.failed,
-      error: day3.error,
+    onboardingNudges: {
+      ok: nudges.ok,
+      scanned: nudges.scanned,
+      sent: nudges.sent,
+      skipped: nudges.skipped,
+      failed: nudges.failed,
+      error: nudges.error,
     },
   });
 }

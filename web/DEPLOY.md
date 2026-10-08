@@ -54,7 +54,7 @@ git push -u origin main
 
 勾選 **Production**（Preview 也可一併勾，方便測 PR）。
 
-**每日摘要：** 台北時間每天 **08:00**（UTC 00:00）寄送「昨日」待審、使用者意見與問題回報到 `ADMIN_EMAIL`。須在 Supabase 執行 `supabase/migrations/015_review_submission_events.sql`。同一支 Cron 也會對「註冊已滿 3 天、尚未補齊工作室或作品」的接案者寄一次提醒（每人一次，見 `023_onboarding_day3_sent.sql`）。
+**每日摘要：** 台北時間每天 **08:00**（UTC 00:00）寄送「昨日」待審、使用者意見與問題回報到 `ADMIN_EMAIL`。須在 Supabase 執行 `supabase/migrations/015_review_submission_events.sql`。同一支 Cron 也會對「工作室尚未完善」的接案者，在註冊後第 1、3、7 天各寄一封提醒（見 `024_onboarding_nudges_1_3_7.sql`）。
 
 > `NEXT_PUBLIC_*` 會暴露給瀏覽器，只能放 Supabase **anon key**，絕對不要放 service_role key。
 

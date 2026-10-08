@@ -55,6 +55,9 @@ export interface CreatorProfile {
   referred_by_user_id: string | null;
   promo_credits_balance: number;
   onboarding_day3_sent_at?: string | null;
+  onboarding_nudge_1d_sent_at?: string | null;
+  onboarding_nudge_3d_sent_at?: string | null;
+  onboarding_nudge_7d_sent_at?: string | null;
   created_at: string;
   updated_at: string;
 }
