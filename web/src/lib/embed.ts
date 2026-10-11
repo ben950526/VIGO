@@ -10,20 +10,63 @@ function siteOrigin(): string {
   return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://vigo-woad.vercel.app";
 }
 
+function isYoutubeVideoId(id: string): boolean {
+  return /^[\w-]{11}$/.test(id);
+}
+
+function youtubeHost(hostname: string): boolean {
+  return (
+    hostname === "youtu.be" ||
+    hostname === "m.youtube.com" ||
+    hostname === "music.youtube.com" ||
+    hostname === "www.youtube.com" ||
+    hostname === "youtube.com" ||
+    hostname === "www.youtube-nocookie.com" ||
+    hostname === "youtube-nocookie.com"
+  );
+}
+
+function parseYoutubeVideoId(url: URL): string | null {
+  if (!youtubeHost(url.hostname)) return null;
+
+  if (url.hostname === "youtu.be") {
+    const id = url.pathname.split("/").filter(Boolean)[0] ?? "";
+    return isYoutubeVideoId(id) ? id : null;
+  }
+
+  const fromQuery = url.searchParams.get("v")?.trim() ?? "";
+  if (isYoutubeVideoId(fromQuery)) return fromQuery;
+
+  const parts = url.pathname.split("/").filter(Boolean);
+  const kind = parts[0];
+  const id = parts[1] ?? "";
+  if ((kind === "embed" || kind === "shorts" || kind === "live") && isYoutubeVideoId(id)) {
+    return id;
+  }
+  return null;
+}
+
 export function parseEmbedUrl(url: string): ParsedEmbed | null {
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  const youtubeMatch = trimmed.match(
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&?/]+)/,
-  );
-  if (youtubeMatch) {
-    const id = youtubeMatch[1];
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(trimmed);
+  } catch {
+    return null;
+  }
+
+  const youtubeId = parseYoutubeVideoId(parsedUrl);
+  if (youtubeId) {
     return {
       type: "youtube",
-      embedId: id,
-      thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+      embedId: youtubeId,
+      thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
     };
+  }
+  if (youtubeHost(parsedUrl.hostname)) {
+    return null;
   }
 
   const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/);
@@ -35,32 +78,34 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
     };
   }
 
-  if (/instagram\.com\/(reel|p|tv)\//.test(trimmed)) {
+  if (/instagram\.com\/(reel|p|tv)\//i.test(trimmed)) {
     return {
       type: "instagram",
       embedId: trimmed,
       thumbnailUrl: null,
     };
   }
-
-  if (/douyin\.com|iesdouyin\.com|tiktok\.com|xiaohongshu\.com|xhslink\.com|facebook\.com|fb\.watch/i.test(trimmed)) {
-    return {
-      type: "other",
-      embedId: trimmed,
-      thumbnailUrl: null,
-    };
-  }
-
-  try {
-    new URL(trimmed);
-    return {
-      type: "other",
-      embedId: trimmed,
-      thumbnailUrl: null,
-    };
-  } catch {
+  if (/instagram\.com/i.test(parsedUrl.hostname)) {
     return null;
   }
+
+  if (/tiktok\.com\/@[^/]+\/video\//i.test(trimmed) || /vt\.tiktok\.com\//i.test(trimmed)) {
+    return {
+      type: "other",
+      embedId: trimmed,
+      thumbnailUrl: null,
+    };
+  }
+
+  if (/douyin\.com|iesdouyin\.com|xiaohongshu\.com|xhslink\.com|facebook\.com\/(reel|watch|share)|fb\.watch/i.test(trimmed)) {
+    return {
+      type: "other",
+      embedId: trimmed,
+      thumbnailUrl: null,
+    };
+  }
+
+  return null;
 }
 
 export function getEmbedSrc(type: EmbedType, embedId: string): string {
@@ -76,9 +121,9 @@ export function getEmbedSrc(type: EmbedType, embedId: string): string {
   }
 }
 
-export function getWatchUrl(embedUrl: string, parsed?: ParsedEmbed | null): string {
+export function getWatchUrl(embedUrl: string, parsed?: ParsedEmbed | null): string | null {
   const info = parsed ?? parseEmbedUrl(embedUrl);
-  if (!info) return embedUrl;
+  if (!info) return null;
   if (info.type === "youtube") {
     return `https://www.youtube.com/watch?v=${info.embedId}`;
   }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { parseEmbedUrl, resolvePortfolioThumbnail } from "@/lib/embed";
+import { getWatchUrl, parseEmbedUrl, resolvePortfolioThumbnail } from "@/lib/embed";
 import type { EmbedType } from "@/types/database";
 
 interface AdminPortfolioPreviewProps {
@@ -18,6 +18,7 @@ export function AdminPortfolioPreview({
   creatorSlug,
 }: AdminPortfolioPreviewProps) {
   const parsed = parseEmbedUrl(embedUrl);
+  const watchUrl = getWatchUrl(embedUrl, parsed);
   const thumb = resolvePortfolioThumbnail(embedUrl, thumbnailUrl);
 
   return (
@@ -38,14 +39,20 @@ export function AdminPortfolioPreview({
         )}
         <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">
           <div className="flex flex-wrap gap-2">
-            <a
-              href={embedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-[var(--text)] shadow hover:bg-slate-100"
-            >
-              在新分頁預覽作品
-            </a>
+            {watchUrl ? (
+              <a
+                href={watchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-[var(--text)] shadow hover:bg-slate-100"
+              >
+                在新分頁預覽作品
+              </a>
+            ) : (
+              <span className="rounded-lg bg-white/90 px-4 py-2 text-sm font-medium text-red-800">
+                連結不是單支影片
+              </span>
+            )}
             {creatorSlug && (
               <Link
                 href={`/creator/${creatorSlug}`}
@@ -61,7 +68,7 @@ export function AdminPortfolioPreview({
       </div>
       <p className="px-4 py-2 text-xs text-[var(--text-muted)]">
         審核用預覽 · {embedType}
-        {!parsed && " · 連結格式無法解析，請用新分頁確認"}
+        {!parsed && " · 不是單支影片連結（例如頻道主頁），請請對方重貼"}
       </p>
     </div>
   );

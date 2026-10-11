@@ -176,7 +176,12 @@ export async function addPortfolioItem(formData: FormData) {
 
   const embedUrl = String(formData.get("embed_url") ?? "").trim();
   const parsed = parseEmbedUrl(embedUrl);
-  if (!parsed) return { error: "請輸入有效的 YouTube / Vimeo / Instagram 連結" };
+  if (!parsed) {
+    return {
+      error:
+        "請貼單支影片連結：YouTube 觀看頁或 Shorts、Vimeo、Instagram 單則 Reels。頻道主頁、個人檔案或「你的內容」頁沒辦法當作品。",
+    };
+  }
 
   const { error } = await supabase.from("portfolio_items").insert({
     creator_id: profile.id,

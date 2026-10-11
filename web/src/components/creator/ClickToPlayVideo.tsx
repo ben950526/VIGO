@@ -29,7 +29,20 @@ export function ClickToPlayVideo({
   const thumb = resolvePortfolioThumbnail(embedUrl, thumbnailUrl);
   const canInline = supportsInlineEmbed(parsed);
 
-  if (!parsed || !canInline) {
+  if (!parsed || !watchUrl) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
+        <div className="relative flex aspect-video items-center justify-center bg-slate-900 px-6 text-center text-sm text-slate-300">
+          這則不是單支影片連結（例如頻道主頁），所以無法在這裡播放。
+        </div>
+        <p className="p-4 text-sm text-[var(--text-muted)]">
+          請改貼 YouTube 單支影片／Shorts、Vimeo，或 Instagram 單則 Reels。
+        </p>
+      </div>
+    );
+  }
+
+  if (!canInline) {
     return (
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
         <div className="relative aspect-video bg-slate-900">
@@ -44,7 +57,7 @@ export function ClickToPlayVideo({
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-slate-300">
-              此平台請在新分頁觀看
+              此平台請到原出處觀看
             </div>
           )}
         </div>
@@ -55,7 +68,7 @@ export function ClickToPlayVideo({
             rel="noopener noreferrer"
             className="btn-primary inline-flex w-full justify-center py-2.5 text-sm"
           >
-            在新分頁觀看「{title}」
+            觀看「{title}」
           </a>
         </div>
       </div>
@@ -118,9 +131,9 @@ export function ClickToPlayVideo({
           href={watchUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`btn-secondary py-2 text-center text-sm ${playing ? "flex-1" : "flex-1"}`}
+          className="btn-secondary flex-1 py-2 text-center text-sm"
         >
-          新分頁觀看（較穩定）
+          到 YouTube／Vimeo 開啟
         </a>
       </div>
     </div>
