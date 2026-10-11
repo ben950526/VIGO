@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { afterCreatorSignup } from "@/actions/signup-complete";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
@@ -73,8 +74,8 @@ export function RegisterForm() {
 
     const watchdog = window.setTimeout(() => {
       setPending(false);
-      setError("超過 8 秒沒回應。請不要再按建立，改走「登入」——帳號多半已經建好。");
-    }, 8000);
+      setError("超過 16 秒沒回應。請不要再按建立，改走「登入」——帳號多半已經建好。");
+    }, 16000);
 
     try {
       const supabase = createClient();
@@ -157,12 +158,19 @@ export function RegisterForm() {
         sessionStorage.removeItem(REF_STORAGE_KEY);
       }
 
+      setPendingLabel("正在寄註冊信…");
+      await withTimeout(
+        afterCreatorSignup({ email, studioName, slug }),
+        4000,
+        "WELCOME_MAIL_TIMEOUT",
+      ).catch(() => null);
+
       window.clearTimeout(watchdog);
       window.location.replace("/login?registered=1&next=/dashboard");
     } catch (err) {
       window.clearTimeout(watchdog);
       const raw = err instanceof Error ? err.message : "註冊失敗，請稍後再試";
-      if (raw === "PROFILE_TIMEOUT" || raw === "REFERRAL_TIMEOUT") {
+      if (raw === "PROFILE_TIMEOUT" || raw === "REFERRAL_TIMEOUT" || raw === "WELCOME_MAIL_TIMEOUT") {
         window.location.replace("/login?registered=1&next=/dashboard");
         return;
       }

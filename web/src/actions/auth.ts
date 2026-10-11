@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION } from "@/lib/legal";
 import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
+import { sendSignupWelcomeEmail } from "@/lib/email/sendWelcomeEmail";
 import { awardReferralSignup } from "@/lib/referral/awardReferralSignup";
 import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
@@ -60,11 +61,14 @@ export async function signUp(
 
   if (profileError) return { error: profileError.message };
 
-  await notifyAdminReviewPending({
-    kind: "new_creator",
-    studioName,
-    slug,
-  });
+  await Promise.allSettled([
+    sendSignupWelcomeEmail({ to: email, studioName }),
+    notifyAdminReviewPending({
+      kind: "new_creator",
+      studioName,
+      slug,
+    }),
+  ]);
 
   const referralSlug = String(formData.get("referral_slug") ?? "").trim();
   if (referralSlug) {
