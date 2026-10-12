@@ -178,8 +178,7 @@ export async function addPortfolioItem(formData: FormData) {
   const parsed = parseEmbedUrl(embedUrl);
   if (!parsed) {
     return {
-      error:
-        "請貼單支影片連結：YouTube 觀看頁或 Shorts、Vimeo、Instagram 單則 Reels。頻道主頁、個人檔案或「你的內容」頁沒辦法當作品。",
+      error: "請貼有效連結。不要貼 YouTube「你」或「訂閱內容」這類會開到自己帳號的頁面。",
     };
   }
 

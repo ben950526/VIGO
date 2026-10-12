@@ -7,6 +7,7 @@ import {
   parseEmbedUrl,
   resolvePortfolioThumbnail,
   supportsInlineEmbed,
+  watchDestinationLabel,
 } from "@/lib/embed";
 import type { EmbedType } from "@/types/database";
 
@@ -29,14 +30,14 @@ export function ClickToPlayVideo({
   const thumb = resolvePortfolioThumbnail(embedUrl, thumbnailUrl);
   const canInline = supportsInlineEmbed(parsed);
 
-  if (!parsed || !watchUrl) {
+  if (!watchUrl) {
     return (
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
         <div className="relative flex aspect-video items-center justify-center bg-slate-900 px-6 text-center text-sm text-slate-300">
-          這則不是單支影片連結（例如頻道主頁），所以無法在這裡播放。
+          這則連結會開到你自己的 YouTube，不是對方的作品，所以沒有提供點擊。
         </div>
         <p className="p-4 text-sm text-[var(--text-muted)]">
-          請改貼 YouTube 單支影片／Shorts、Vimeo，或 Instagram 單則 Reels。
+          請改貼單支影片或對方的 Instagram／頻道頁。
         </p>
       </div>
     );
@@ -57,7 +58,7 @@ export function ClickToPlayVideo({
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-slate-300">
-              此平台請到原出處觀看
+              點下方到原出處觀看
             </div>
           )}
         </div>
@@ -68,7 +69,7 @@ export function ClickToPlayVideo({
             rel="noopener noreferrer"
             className="btn-primary inline-flex w-full justify-center py-2.5 text-sm"
           >
-            觀看「{title}」
+            {watchDestinationLabel(watchUrl)}
           </a>
         </div>
       </div>
@@ -133,7 +134,7 @@ export function ClickToPlayVideo({
           rel="noopener noreferrer"
           className="btn-secondary flex-1 py-2 text-center text-sm"
         >
-          到 YouTube／Vimeo 開啟
+          {watchDestinationLabel(watchUrl)}
         </a>
       </div>
     </div>

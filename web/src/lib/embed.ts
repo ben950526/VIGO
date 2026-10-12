@@ -11,7 +11,7 @@ function siteOrigin(): string {
 }
 
 function isYoutubeVideoId(id: string): boolean {
-  return /^[\w-]{11}$/.test(id);
+  return /^[\w-]{8,15}$/.test(id);
 }
 
 function youtubeHost(hostname: string): boolean {
@@ -24,6 +24,24 @@ function youtubeHost(hostname: string): boolean {
     hostname === "www.youtube-nocookie.com" ||
     hostname === "youtube-nocookie.com"
   );
+}
+
+/** 會依「點擊者登入帳號」顯示的 YouTube 頁，不能當作品連結 */
+export function isPersonalizedYoutubeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url.trim());
+    if (!youtubeHost(parsed.hostname)) return false;
+    const path = parsed.pathname.replace(/\/+$/, "") || "/";
+    if (path === "/feed" || path.startsWith("/feed/")) return true;
+    if (path.startsWith("/account") || path.startsWith("/signed_out")) return true;
+    if (path === "/" && !parsed.searchParams.get("v")) return true;
+    if (path === "/watch" && !parsed.searchParams.get("v") && !parsed.searchParams.get("list")) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 function parseYoutubeVideoId(url: URL): string | null {
@@ -39,8 +57,8 @@ function parseYoutubeVideoId(url: URL): string | null {
 
   const parts = url.pathname.split("/").filter(Boolean);
   const kind = parts[0];
-  const id = parts[1] ?? "";
-  if ((kind === "embed" || kind === "shorts" || kind === "live") && isYoutubeVideoId(id)) {
+  const id = (parts[1] ?? "").split("&")[0];
+  if ((kind === "embed" || kind === "shorts" || kind === "live" || kind === "clip") && isYoutubeVideoId(id)) {
     return id;
   }
   return null;
@@ -57,6 +75,9 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
     return null;
   }
 
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") return null;
+  if (isPersonalizedYoutubeUrl(trimmed)) return null;
+
   const youtubeId = parseYoutubeVideoId(parsedUrl);
   if (youtubeId) {
     return {
@@ -64,9 +85,6 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
       embedId: youtubeId,
       thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
     };
-  }
-  if (youtubeHost(parsedUrl.hostname)) {
-    return null;
   }
 
   const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/);
@@ -78,34 +96,19 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
     };
   }
 
-  if (/instagram\.com\/(reel|p|tv)\//i.test(trimmed)) {
+  if (/instagram\.com\/(reels?|p|tv)\//i.test(trimmed)) {
     return {
       type: "instagram",
       embedId: trimmed,
       thumbnailUrl: null,
     };
   }
-  if (/instagram\.com/i.test(parsedUrl.hostname)) {
-    return null;
-  }
 
-  if (/tiktok\.com\/@[^/]+\/video\//i.test(trimmed) || /vt\.tiktok\.com\//i.test(trimmed)) {
-    return {
-      type: "other",
-      embedId: trimmed,
-      thumbnailUrl: null,
-    };
-  }
-
-  if (/douyin\.com|iesdouyin\.com|xiaohongshu\.com|xhslink\.com|facebook\.com\/(reel|watch|share)|fb\.watch/i.test(trimmed)) {
-    return {
-      type: "other",
-      embedId: trimmed,
-      thumbnailUrl: null,
-    };
-  }
-
-  return null;
+  return {
+    type: "other",
+    embedId: trimmed,
+    thumbnailUrl: null,
+  };
 }
 
 export function getEmbedSrc(type: EmbedType, embedId: string): string {
@@ -122,6 +125,7 @@ export function getEmbedSrc(type: EmbedType, embedId: string): string {
 }
 
 export function getWatchUrl(embedUrl: string, parsed?: ParsedEmbed | null): string | null {
+  if (isPersonalizedYoutubeUrl(embedUrl)) return null;
   const info = parsed ?? parseEmbedUrl(embedUrl);
   if (!info) return null;
   if (info.type === "youtube") {
@@ -131,6 +135,22 @@ export function getWatchUrl(embedUrl: string, parsed?: ParsedEmbed | null): stri
     return `https://vimeo.com/${info.embedId}`;
   }
   return embedUrl;
+}
+
+export function watchDestinationLabel(watchUrl: string): string {
+  try {
+    const host = new URL(watchUrl).hostname.replace(/^www\./, "");
+    if (host.includes("instagram")) return "到 Instagram 觀看";
+    if (host.includes("youtu")) return "到 YouTube 觀看";
+    if (host.includes("vimeo")) return "到 Vimeo 觀看";
+    if (host.includes("tiktok")) return "到 TikTok 觀看";
+    if (host.includes("facebook") || host === "fb.watch") return "到 Facebook 觀看";
+    if (host.includes("xiaohongshu") || host.includes("xhslink")) return "到小紅書觀看";
+    if (host.includes("douyin")) return "到抖音觀看";
+    return "到原出處觀看";
+  } catch {
+    return "觀看作品";
+  }
 }
 
 export function resolvePortfolioThumbnail(
