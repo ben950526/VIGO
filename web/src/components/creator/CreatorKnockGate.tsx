@@ -88,7 +88,7 @@ export function CreatorKnockGate({
 
   async function handleKnock() {
     if (!agreedAttribution) {
-      setError("請先勾一下：私訊時會說是在 Vigo 看到的");
+      setError("敲門前請先答應：第一則私訊會說是在 Vigo 看到的");
       return;
     }
 
