@@ -18,6 +18,14 @@ interface ClickToPlayVideoProps {
   thumbnailUrl?: string | null;
 }
 
+function PlayMark() {
+  return (
+    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--btn)] text-lg text-white shadow-[var(--shadow)] transition-transform group-hover:scale-105">
+      ▶
+    </span>
+  );
+}
+
 export function ClickToPlayVideo({
   embedUrl,
   title,
@@ -29,55 +37,53 @@ export function ClickToPlayVideo({
   const watchUrl = getWatchUrl(embedUrl, parsed);
   const thumb = resolvePortfolioThumbnail(embedUrl, thumbnailUrl);
   const canInline = supportsInlineEmbed(parsed);
+  const destination = watchUrl ? watchDestinationLabel(watchUrl) : "觀看作品";
 
   if (!watchUrl) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
-        <div className="relative flex aspect-video items-center justify-center bg-slate-900 px-6 text-center text-sm text-slate-300">
-          這則作品連結無法開啟。
-        </div>
-        <p className="p-4 text-sm text-[var(--text-muted)]">請改貼有效的影片或作品網址。</p>
+      <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 text-center">
+        <p className="text-sm text-[var(--text-muted)]">這則作品連結無法開啟</p>
       </div>
     );
   }
 
   if (!canInline) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
-        <div className="relative aspect-video bg-slate-900">
-          {thumb && !thumbError ? (
-            // eslint-disable-next-line @next/next/no-img-element
+      <a
+        href={watchUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group card block"
+      >
+        {thumb && !thumbError ? (
+          <div className="relative aspect-video bg-[var(--bg)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={thumb}
               alt={title}
-              className="h-full w-full object-cover opacity-80"
+              className="h-full w-full object-cover"
               loading="lazy"
               onError={() => setThumbError(true)}
             />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-slate-300">
-              點下方到原出處觀看
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/30">
+              <PlayMark />
             </div>
-          )}
-        </div>
-        <div className="p-4">
-          <a
-            href={watchUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary inline-flex w-full justify-center py-2.5 text-sm"
-          >
-            {watchDestinationLabel(watchUrl)}
-          </a>
-        </div>
-      </div>
+          </div>
+        ) : (
+          <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-[var(--bg)] px-6 text-center">
+            <PlayMark />
+            <p className="text-sm font-semibold text-[var(--text)]">{destination}</p>
+            <p className="text-xs text-[var(--text-muted)]">於新分頁開啟</p>
+          </div>
+        )}
+      </a>
     );
   }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
       {playing ? (
-        <div className="aspect-video bg-black">
+        <div className="aspect-video bg-[var(--bg)]">
           <iframe
             src={getInlineEmbedSrc(parsed.type, parsed.embedId)}
             title={title}
@@ -91,7 +97,7 @@ export function ClickToPlayVideo({
         <button
           type="button"
           onClick={() => setPlaying(true)}
-          className="group relative aspect-video w-full bg-slate-900 text-left"
+          className="group relative aspect-video w-full bg-[var(--bg)] text-left"
           aria-label={`站內播放 ${title}`}
         >
           {thumb && !thumbError ? (
@@ -103,15 +109,18 @@ export function ClickToPlayVideo({
               loading="lazy"
               onError={() => setThumbError(true)}
             />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-300">
-              點擊站內播放
-            </div>
-          )}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/35 transition-colors group-hover:bg-black/45">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/95 text-2xl text-[var(--text)] shadow-lg">
-              ▶
-            </span>
+          ) : null}
+          <div
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-3 ${
+              thumb && !thumbError
+                ? "bg-black/20 transition-colors group-hover:bg-black/30"
+                : ""
+            }`}
+          >
+            <PlayMark />
+            {!thumb || thumbError ? (
+              <p className="text-sm font-semibold text-[var(--text)]">站內播放</p>
+            ) : null}
           </div>
         </button>
       )}
@@ -132,7 +141,7 @@ export function ClickToPlayVideo({
           rel="noopener noreferrer"
           className="btn-secondary flex-1 py-2 text-center text-sm"
         >
-          {watchDestinationLabel(watchUrl)}
+          {destination}
         </a>
       </div>
     </div>
