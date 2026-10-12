@@ -88,7 +88,7 @@ export function CreatorKnockGate({
 
   async function handleKnock() {
     if (!agreedAttribution) {
-      setError("請先確認：私訊時會直接說明是透過 Vigo 發現的");
+      setError("請先勾一下：私訊時會說是在 Vigo 看到的");
       return;
     }
 
@@ -149,8 +149,8 @@ export function CreatorKnockGate({
 
 function KnockAttributionNotice() {
   return (
-    <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-left text-sm text-amber-950">
-      <p className="font-semibold">{KNOCK_VIGO_ATTRIBUTION_TITLE}</p>
+    <div className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-4 py-4 text-left text-sm text-[var(--text-secondary)]">
+      <p className="font-semibold text-[var(--text)]">{KNOCK_VIGO_ATTRIBUTION_TITLE}</p>
       <p className="mt-2">{KNOCK_VIGO_ATTRIBUTION_BODY}</p>
     </div>
   );
