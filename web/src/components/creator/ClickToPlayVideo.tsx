@@ -34,11 +34,9 @@ export function ClickToPlayVideo({
     return (
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
         <div className="relative flex aspect-video items-center justify-center bg-slate-900 px-6 text-center text-sm text-slate-300">
-          這則連結會開到你自己的 YouTube，不是對方的作品，所以沒有提供點擊。
+          這則作品連結無法開啟。
         </div>
-        <p className="p-4 text-sm text-[var(--text-muted)]">
-          請改貼單支影片或對方的 Instagram／頻道頁。
-        </p>
+        <p className="p-4 text-sm text-[var(--text-muted)]">請改貼有效的影片或作品網址。</p>
       </div>
     );
   }

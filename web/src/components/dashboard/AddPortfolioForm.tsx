@@ -34,7 +34,7 @@ export function AddPortfolioForm() {
     <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg)] p-6">
       <h3 className="mb-1 text-base font-bold">新增作品</h3>
       <p className="mb-4 text-sm text-[var(--text-muted)]">
-        貼上 YouTube、Vimeo、Instagram 或 TikTok 連結（不需上傳影片檔）。請貼單支影片或對方主頁，不要貼 YouTube「你」頁。
+        貼上 YouTube、Vimeo 或 Instagram Reels 連結（不需上傳影片檔）。
       </p>
       <form action={handleSubmit} className="space-y-4">
         <input className="input" name="title" placeholder="作品標題" required />

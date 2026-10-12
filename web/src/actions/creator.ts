@@ -178,7 +178,7 @@ export async function addPortfolioItem(formData: FormData) {
   const parsed = parseEmbedUrl(embedUrl);
   if (!parsed) {
     return {
-      error: "請貼有效連結。不要貼 YouTube「你」或「訂閱內容」這類會開到自己帳號的頁面。",
+      error: "請輸入有效的 YouTube / Vimeo / Instagram 連結",
     };
   }
 

@@ -26,24 +26,6 @@ function youtubeHost(hostname: string): boolean {
   );
 }
 
-/** 會依「點擊者登入帳號」顯示的 YouTube 頁，不能當作品連結 */
-export function isPersonalizedYoutubeUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url.trim());
-    if (!youtubeHost(parsed.hostname)) return false;
-    const path = parsed.pathname.replace(/\/+$/, "") || "/";
-    if (path === "/feed" || path.startsWith("/feed/")) return true;
-    if (path.startsWith("/account") || path.startsWith("/signed_out")) return true;
-    if (path === "/" && !parsed.searchParams.get("v")) return true;
-    if (path === "/watch" && !parsed.searchParams.get("v") && !parsed.searchParams.get("list")) {
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
 function parseYoutubeVideoId(url: URL): string | null {
   if (!youtubeHost(url.hostname)) return null;
 
@@ -76,7 +58,6 @@ export function parseEmbedUrl(url: string): ParsedEmbed | null {
   }
 
   if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") return null;
-  if (isPersonalizedYoutubeUrl(trimmed)) return null;
 
   const youtubeId = parseYoutubeVideoId(parsedUrl);
   if (youtubeId) {
@@ -125,9 +106,8 @@ export function getEmbedSrc(type: EmbedType, embedId: string): string {
 }
 
 export function getWatchUrl(embedUrl: string, parsed?: ParsedEmbed | null): string | null {
-  if (isPersonalizedYoutubeUrl(embedUrl)) return null;
   const info = parsed ?? parseEmbedUrl(embedUrl);
-  if (!info) return null;
+  if (!info) return embedUrl.trim() || null;
   if (info.type === "youtube") {
     return `https://www.youtube.com/watch?v=${info.embedId}`;
   }

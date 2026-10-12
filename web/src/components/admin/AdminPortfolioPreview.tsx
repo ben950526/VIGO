@@ -50,7 +50,7 @@ export function AdminPortfolioPreview({
               </a>
             ) : (
               <span className="rounded-lg bg-white/90 px-4 py-2 text-sm font-medium text-red-800">
-                此連結會開到訪客自己的 YouTube
+                連結無法解析
               </span>
             )}
             {creatorSlug && (
@@ -68,7 +68,7 @@ export function AdminPortfolioPreview({
       </div>
       <p className="px-4 py-2 text-xs text-[var(--text-muted)]">
         審核用預覽 · {embedType}
-        {!parsed && " · 連結會開到訪客自己的 YouTube，請請對方重貼"}
+        {!parsed && " · 連結格式無法解析，請用新分頁確認"}
       </p>
     </div>
   );
