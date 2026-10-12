@@ -7,6 +7,7 @@ import {
   type CreatorKnockUnlock,
 } from "@/lib/creator/sensitive";
 import { createPublicClient } from "@/lib/supabase/public";
+import { getAuthProfile, isAdminProfile } from "@/lib/auth/session";
 import { setCreatorKnockUnlocked } from "@/lib/knock/cookie";
 import { isSupabaseConfigured } from "@/lib/utils";
 
@@ -80,6 +81,12 @@ export async function knockCreator(formData: FormData): Promise<KnockResult> {
   const unlock = await fetchKnockUnlock(creatorId);
   if (!unlock) {
     return { error: "此工作室目前無法敲門，可能尚未補齊資料、已下架或為示範帳號" };
+  }
+
+  const profile = await getAuthProfile();
+  if (profile && isAdminProfile(profile)) {
+    await setCreatorKnockUnlocked(creatorId);
+    return { success: true, unlock };
   }
 
   const supabase = createPublicClient();
