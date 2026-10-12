@@ -15,7 +15,7 @@ export function AdminHealthSnapshot({ stats }: { stats: AdminHealthStats }) {
     <div className="mb-10 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <h2 className="mb-1 text-xl font-bold">本週狀況</h2>
       <p className="mb-4 text-sm text-[var(--text-muted)]">
-        台北時間週一 {stats.weekLabel} 起至今。被瀏覽以各工作室不重複訪客合計；敲門不含管理員帳號的測試。
+        台北時間週一 {stats.weekLabel} 起至今。被瀏覽以各工作室不重複訪客合計；本週敲門不含管理員測試，對方後台仍會計算。
       </p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <Stat label="本週新註冊" value={stats.registrationsThisWeek} />

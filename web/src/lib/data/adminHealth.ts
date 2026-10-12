@@ -58,7 +58,10 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
       .select("id", { count: "exact", head: true })
       .eq("is_demo", false)
       .gte("created_at", weekIso),
-    supabase.from("knocks").select("id", { count: "exact", head: true }).gte("created_at", weekIso),
+    supabase
+      .from("knocks")
+      .select("id, from_admin, user_agent")
+      .gte("created_at", weekIso),
     supabase.from("studio_page_views").select("creator_id, visitor_key").gte("created_at", weekIso),
     supabase
       .from("creator_profiles")
@@ -80,6 +83,14 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
     supabase.from("bug_reports").select("id", { count: "exact", head: true }).gte("created_at", weekIso),
   ]);
 
+  let knockRows = knockRes.data;
+  let knockError = knockRes.error;
+  if (knockError?.message.includes("from_admin")) {
+    const fallback = await supabase.from("knocks").select("id, user_agent").gte("created_at", weekIso);
+    knockRows = fallback.data;
+    knockError = fallback.error;
+  }
+
   const uniqueViews = new Set(
     (viewRes.data ?? []).map((row) => `${row.creator_id}:${row.visitor_key}`),
   ).size;
@@ -87,7 +98,7 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
   return {
     weekLabel,
     registrationsThisWeek: regRes.count ?? 0,
-    knocksThisWeek: knockRes.count ?? 0,
+    knocksThisWeek: countPublicKnocks(knockRows, knockError),
     uniqueViewsThisWeek: viewRes.error ? 0 : uniqueViews,
     pendingCreators: pendingCreatorRes.count ?? 0,
     pendingWorks: pendingWorkRes.count ?? 0,
@@ -96,4 +107,16 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
     feedbackThisWeek: feedbackRes.count ?? 0,
     bugsThisWeek: bugRes.count ?? 0,
   };
+}
+
+function countPublicKnocks(
+  rows: { from_admin?: boolean | null; user_agent?: string | null }[] | null,
+  error: { message: string } | null,
+): number {
+  if (error || !rows) return 0;
+  return rows.filter((row) => {
+    if (row.from_admin === true) return false;
+    if (String(row.user_agent ?? "").startsWith("vigo-admin|")) return false;
+    return true;
+  }).length;
 }

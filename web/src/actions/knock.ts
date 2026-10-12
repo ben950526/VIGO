@@ -84,18 +84,27 @@ export async function knockCreator(formData: FormData): Promise<KnockResult> {
   }
 
   const profile = await getAuthProfile();
-  if (profile && isAdminProfile(profile)) {
-    await setCreatorKnockUnlocked(creatorId);
-    return { success: true, unlock };
-  }
+  const fromAdmin = Boolean(profile && isAdminProfile(profile));
 
   const supabase = createPublicClient();
-  const { error } = await supabase.from("knocks").insert({
+  const payload = {
     creator_id: creatorId,
     visitor_key: visitorKey,
     page_url: pageUrl,
     user_agent: userAgent,
-  });
+    from_admin: fromAdmin,
+  };
+  let { error } = await supabase.from("knocks").insert(payload);
+
+  if (error && (error.message.includes("from_admin") || error.message.includes("schema cache"))) {
+    const retry = await supabase.from("knocks").insert({
+      creator_id: creatorId,
+      visitor_key: visitorKey,
+      page_url: pageUrl,
+      user_agent: fromAdmin ? `vigo-admin|${userAgent ?? ""}` : userAgent,
+    });
+    error = retry.error;
+  }
 
   if (error) {
     if (error.message.includes("knocks") || error.message.includes("schema cache")) {

@@ -388,6 +388,7 @@ export interface Database {
           visitor_key: string;
           page_url: string | null;
           user_agent: string | null;
+          from_admin: boolean;
           created_at: string;
         };
         Insert: {
@@ -396,6 +397,7 @@ export interface Database {
           visitor_key: string;
           page_url?: string | null;
           user_agent?: string | null;
+          from_admin?: boolean;
           created_at?: string;
         };
         Update: {
@@ -404,6 +406,7 @@ export interface Database {
           visitor_key?: string;
           page_url?: string | null;
           user_agent?: string | null;
+          from_admin?: boolean;
           created_at?: string;
         };
         Relationships: [];
