@@ -98,6 +98,10 @@ export interface BugReportItem {
   viewport: string | null;
   status: BugReportStatus;
   admin_note: string | null;
+  reporter_id?: string | null;
+  contact_email?: string | null;
+  user_reply?: string | null;
+  notified_at?: string | null;
   created_at: string;
   updated_at: string;
 }

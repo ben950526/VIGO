@@ -33,7 +33,11 @@ export default async function StudioContentPage() {
           </p>
           <p className="mb-6 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
             工作室資料按 <strong className="text-[var(--text)]">儲存資料</strong>；新作品按{" "}
-            <strong className="text-[var(--text)]">新增作品</strong>。
+            <strong className="text-[var(--text)]">新增作品</strong>。功能有問題可以{" "}
+            <Link href="/report-bug?page=/dashboard/studio" className="text-[var(--accent)] hover:underline">
+              回報 BUG
+            </Link>
+            ，修好會寄信跟你說怎麼再試。
           </p>
 
           <StudioPreviewBar slug={profile.slug} />

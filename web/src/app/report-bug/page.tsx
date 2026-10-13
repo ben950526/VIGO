@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { BugReportForm } from "@/components/forms/BugReportForm";
+import { getAuthProfile } from "@/lib/auth/session";
 import { SITE_NAME } from "@/lib/constants";
 
 export const metadata = {
@@ -8,7 +9,9 @@ export const metadata = {
   description: `向 ${SITE_NAME} 回報問題，我們會專人排查並盡快修復。`,
 };
 
-export default function ReportBugPage() {
+export default async function ReportBugPage() {
+  const profile = await getAuthProfile();
+
   return (
     <section className="section">
       <div className="container-narrow max-w-xl">
@@ -21,11 +24,11 @@ export default function ReportBugPage() {
           遇到問題了嗎？<strong className="text-[var(--text)]">我們會專人排查並盡快修復</strong>，你的回報不會石沉大海。
         </p>
         <p className="mb-8 text-sm text-[var(--text-muted)]">
-          簡單描述狀況即可，若記得操作步驟也請一併告訴我們。
+          簡單描述狀況即可。建議留下 Email，修好後我們會寄信告訴你怎麼再試一次。
         </p>
 
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-[var(--border)]" />}>
-          <BugReportForm />
+          <BugReportForm defaultEmail={profile?.email ?? null} />
         </Suspense>
       </div>
     </section>

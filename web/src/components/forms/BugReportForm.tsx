@@ -6,9 +6,10 @@ import { submitBugReport } from "@/actions/bug-report";
 
 interface BugReportFormProps {
   defaultPageUrl?: string | null;
+  defaultEmail?: string | null;
 }
 
-export function BugReportForm({ defaultPageUrl }: BugReportFormProps) {
+export function BugReportForm({ defaultPageUrl, defaultEmail }: BugReportFormProps) {
   const searchParams = useSearchParams();
   const pageFromQuery = searchParams.get("page");
   const pageUrl = defaultPageUrl ?? pageFromQuery ?? null;
@@ -48,7 +49,7 @@ export function BugReportForm({ defaultPageUrl }: BugReportFormProps) {
       <div className="rounded-2xl border border-green-200 bg-green-50 px-6 py-10 text-center">
         <p className="text-lg font-semibold text-green-900">已收到，我們會盡快處理</p>
         <p className="mt-2 text-sm text-green-800">
-          感謝回報！我們會專人排查這個問題，修復後會持續改善平台。
+          感謝回報。修好後若你有留下 Email，我們會寄信告訴你，並附上怎麼再試一次。
         </p>
       </div>
     );
@@ -81,8 +82,23 @@ export function BugReportForm({ defaultPageUrl }: BugReportFormProps) {
           maxLength={2000}
           placeholder="例如：改完價目表 → 捲到底 → 按儲存"
         />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium" htmlFor="bug-email">
+          修好後通知你的 Email（建議填）
+        </label>
+        <input
+          id="bug-email"
+          className="input"
+          type="email"
+          name="contact_email"
+          defaultValue={defaultEmail ?? ""}
+          autoComplete="email"
+          placeholder="you@example.com"
+        />
         <p className="mt-1 text-xs text-[var(--text-muted)]">
-          無需登入或留聯絡方式。我們會自動記錄頁面與裝置資訊，方便排查。送出即表示您同意我們依{" "}
+          沒留信箱的話，修好後我們沒辦法主動跟你說。已登入會預填帳號信箱。送出即表示您同意我們依{" "}
           <a href="/privacy" className="text-[var(--accent)] hover:underline">
             隱私權政策
           </a>{" "}

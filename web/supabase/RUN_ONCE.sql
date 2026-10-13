@@ -100,6 +100,12 @@ create policy "Admins update bug reports"
     )
   );
 
+alter table public.bug_reports
+  add column if not exists reporter_id uuid references auth.users (id) on delete set null,
+  add column if not exists contact_email text,
+  add column if not exists user_reply text,
+  add column if not exists notified_at timestamptz;
+
 -- 後台一鍵撤除假帳號
 create or replace function public.remove_demo_accounts()
 returns text

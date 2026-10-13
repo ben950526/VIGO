@@ -24,17 +24,24 @@ interface BugReportCardProps {
 
 export function BugReportCard({ item }: BugReportCardProps) {
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [saved, setSaved] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setSaved(false);
     setError("");
+    setNotice("");
     const result = await updateBugReport(formData);
     if (result.error) {
       setError(result.error);
       return;
     }
     setSaved(true);
+    if (result.notified) {
+      setNotice("已寄信告訴對方，並附上重試步驟");
+    } else if (result.notifyError) {
+      setNotice(result.notifyError);
+    }
   }
 
   return (
@@ -48,6 +55,11 @@ export function BugReportCard({ item }: BugReportCardProps) {
         <span className="text-xs text-[var(--text-muted)]">
           {new Date(item.created_at).toLocaleString("zh-TW")}
         </span>
+        {item.notified_at && (
+          <span className="text-xs text-green-700">
+            已通知 {new Date(item.notified_at).toLocaleString("zh-TW")}
+          </span>
+        )}
       </div>
 
       <p className="whitespace-pre-wrap font-medium text-[var(--text)]">{item.message}</p>
@@ -63,6 +75,9 @@ export function BugReportCard({ item }: BugReportCardProps) {
         {item.page_url && <p>頁面：{item.page_url}</p>}
         {item.viewport && <p>視窗：{item.viewport}</p>}
         {item.user_agent && <p className="break-all">裝置：{item.user_agent}</p>}
+        <p>
+          信箱：{item.contact_email || (item.reporter_id ? "已登入（可從帳號查出信箱）" : "未留下")}
+        </p>
       </div>
 
       <form action={handleSubmit} className="mt-4 space-y-3 border-t border-[var(--border)] pt-4">
@@ -84,8 +99,48 @@ export function BugReportCard({ item }: BugReportCardProps) {
           name="admin_note"
           className="input min-h-16 text-sm"
           defaultValue={item.admin_note ?? ""}
-          placeholder="內部備註（選填）"
+          placeholder="內部備註（不會寄給對方）"
         />
+        <div>
+          <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+            通知對方的 Email
+          </label>
+          <input
+            type="email"
+            name="contact_email"
+            className="input text-sm"
+            defaultValue={item.contact_email ?? ""}
+            placeholder="舊回報沒留信箱時可手動填"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+            給對方的重試步驟（會寫進信裡）
+          </label>
+          <textarea
+            name="user_reply"
+            className="input min-h-24 text-sm"
+            defaultValue={item.user_reply ?? ""}
+            maxLength={4000}
+            placeholder={
+              "例如：\n1. 重新整理或登出再登入\n2. 打開「編輯工作室內容」\n3. 依你當時卡住的動作再做一次"
+            }
+          />
+        </div>
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="notify_reporter"
+            value="1"
+            className="mt-1"
+            defaultChecked={item.status === "fixed" && !item.notified_at}
+          />
+          <span>
+            標成已修復時，寄信告訴對方已修好，並附上上面的重試步驟
+            {item.notified_at ? "（已寄過，勾選會再寄一次）" : ""}
+          </span>
+        </label>
+        {notice && <p className="text-sm text-[var(--text-secondary)]">{notice}</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
       </form>
     </li>

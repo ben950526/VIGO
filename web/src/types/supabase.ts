@@ -304,6 +304,10 @@ export interface Database {
           viewport: string | null;
           status: string;
           admin_note: string | null;
+          reporter_id: string | null;
+          contact_email: string | null;
+          user_reply: string | null;
+          notified_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -316,6 +320,10 @@ export interface Database {
           viewport?: string | null;
           status?: string;
           admin_note?: string | null;
+          reporter_id?: string | null;
+          contact_email?: string | null;
+          user_reply?: string | null;
+          notified_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -328,6 +336,10 @@ export interface Database {
           viewport?: string | null;
           status?: string;
           admin_note?: string | null;
+          reporter_id?: string | null;
+          contact_email?: string | null;
+          user_reply?: string | null;
+          notified_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

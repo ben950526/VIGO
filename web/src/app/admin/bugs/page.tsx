@@ -46,6 +46,9 @@ export default async function AdminBugsPage({
             <p className="mt-2 text-[var(--text-secondary)]">
               {tabs.find((t) => t.value === statusFilter)?.label}：{items.length} 則
             </p>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              標成已修復後，寫「給對方的重試步驟」並勾選寄信。舊回報若沒留信箱，請手動填 Email。
+            </p>
           </div>
           <Link href="/admin/review" className="btn-secondary text-sm">
             返回審核管理
