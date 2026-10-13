@@ -9,7 +9,7 @@ import {
   sendPromoShareApprovedEmail,
   sendPromoShareRejectedEmail,
 } from "@/lib/email/sendPromoShareReviewEmail";
-import { createServiceClient } from "@/lib/supabase/service";
+import { resolveUserNotifyEmail } from "@/lib/email/resolveUserNotifyEmail";
 import type { Database } from "@/types/supabase";
 
 export type CreatorReviewSnapshot = {
@@ -26,17 +26,10 @@ export type CreatorReviewSnapshot = {
 export type CreatorApprovalSnapshot = CreatorReviewSnapshot;
 
 async function resolveNotifyEmail(snapshot: CreatorReviewSnapshot): Promise<string | null> {
-  const contact = snapshot.contact_email?.trim();
-  if (contact) return contact;
-
-  const service = createServiceClient();
-  if (!service) return null;
-  const { data, error } = await service.auth.admin.getUserById(snapshot.user_id);
-  if (error) {
-    console.error("[email] getUserById failed:", error.message);
-    return null;
-  }
-  return data.user?.email?.trim() || null;
+  return resolveUserNotifyEmail({
+    userId: snapshot.user_id,
+    contactEmail: snapshot.contact_email,
+  });
 }
 
 export async function loadCreatorReviewSnapshot(

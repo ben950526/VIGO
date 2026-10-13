@@ -167,7 +167,7 @@ export async function runOnboardingNudges(now = new Date()): Promise<OnboardingN
       continue;
     }
 
-    const email = (row.contact_email?.trim() || emailByUser.get(row.user_id) || "").toLowerCase();
+    const email = (emailByUser.get(row.user_id) || row.contact_email?.trim() || "").toLowerCase();
     if (!email || email.endsWith("@vigo.local") || email.startsWith("demo-") || email === admin) {
       skipped += 1;
       continue;

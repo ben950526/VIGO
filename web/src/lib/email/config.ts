@@ -16,11 +16,3 @@ export function adminNotifyEmail(): string | null {
   const email = process.env.ADMIN_EMAIL?.trim();
   return email || null;
 }
-
-/** 與收件人相同時不密件副本，避免管理員自己審自己的測試帳重複收信 */
-export function adminBccFor(to: string): string | undefined {
-  const admin = adminNotifyEmail();
-  if (!admin) return undefined;
-  if (admin.toLowerCase() === to.trim().toLowerCase()) return undefined;
-  return admin;
-}

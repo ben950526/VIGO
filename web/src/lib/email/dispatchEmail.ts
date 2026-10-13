@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { adminBccFor, emailFrom, resendApiKey } from "@/lib/email/config";
+import { emailFrom, resendApiKey } from "@/lib/email/config";
 
 export async function dispatchEmail(params: {
   to: string;
@@ -17,14 +17,12 @@ export async function dispatchEmail(params: {
     return { ok: false, error: "找不到收件 Email" };
   }
 
-  const bcc = adminBccFor(to);
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
     from: emailFrom(),
     to,
     subject: params.subject,
     html: params.html,
-    ...(bcc ? { bcc } : {}),
   });
 
   if (error) {

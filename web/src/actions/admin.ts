@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdmin } from "@/lib/auth/admin";
 import { sendAccountPurgedEmail } from "@/lib/email/sendAccountPurgedEmail";
+import { resolveUserNotifyEmail } from "@/lib/email/resolveUserNotifyEmail";
 import {
   loadCreatorApprovalSnapshot,
   loadCreatorReviewSnapshot,
@@ -426,7 +427,11 @@ export async function purgeCreatorAccount(
     return { error: "不能註銷管理員帳號" };
   }
 
-  const notifyTo = (roleRow?.email?.trim() || creator.contact_email?.trim() || "").toLowerCase();
+  const notifyTo =
+    (await resolveUserNotifyEmail({
+      userId: creator.user_id,
+      contactEmail: creator.contact_email,
+    })) || "";
   const reason = String(formData.get("purge_reason") ?? "").trim() || null;
   if (notifyTo) {
     try {
