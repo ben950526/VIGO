@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { updateCreatorProfile } from "@/actions/creator";
 import { PriceListEditor } from "@/components/forms/PriceListEditor";
 import { TagCheckboxGroup } from "@/components/forms/TagCheckboxGroup";
@@ -47,10 +46,12 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
     if (file) setPreview(URL.createObjectURL(file));
   }
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setSuccess(false);
     setPending(true);
     setError("");
+    const formData = new FormData(event.currentTarget);
     formData.set("price_list_json", JSON.stringify(parsePriceList(priceList)));
     try {
       const result = await updateCreatorProfile(formData);
@@ -66,7 +67,7 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
   }
 
   const form = (
-        <form action={handleSubmit} className="space-y-10">
+        <form onSubmit={handleSubmit} className="space-y-10">
           {/* 基本 */}
           <div className="space-y-4">
             <SectionTitle>基本資料</SectionTitle>
@@ -80,7 +81,8 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
                   aria-label="上傳自介照片"
                 >
                   {preview ? (
-                    <Image src={preview} alt="預覽" fill className="object-cover" unoptimized />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={preview} alt="預覽" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-slate-400">
                       {profile.studio_name.charAt(0)}

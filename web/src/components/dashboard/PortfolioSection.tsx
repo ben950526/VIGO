@@ -1,7 +1,5 @@
-import { setFeaturedPortfolioItem } from "@/actions/creator";
 import { AddPortfolioForm } from "@/components/dashboard/AddPortfolioForm";
-import { SubmitButton } from "@/components/forms/SubmitButton";
-import { isFeaturedPortfolioItem } from "@/lib/portfolio";
+import { PortfolioItemEditor } from "@/components/dashboard/PortfolioItemEditor";
 import type { PortfolioItem } from "@/types/database";
 
 interface PortfolioSectionProps {
@@ -22,7 +20,7 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
       <div>
         <SectionTitle>作品集</SectionTitle>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          建議至少加 1 支。通過審核後，有已公開作品才會出現在探索頁。精選 = 排序第一且已通過的作品。
+          建議至少加 1 支。公開頁只顯示已通過的作品；預覽會連審核中的一起看。已通過的連結可在這裡修改或移除。
         </p>
       </div>
 
@@ -30,40 +28,9 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
         <p className="text-sm text-[var(--text-muted)]">尚無作品，請在下方新增 YouTube / Reels 連結。</p>
       ) : (
         <ul className="space-y-3">
-          {portfolio.map((item) => {
-            const isFeatured = isFeaturedPortfolioItem(item, portfolio);
-            return (
-              <li
-                key={item.id}
-                className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
-              >
-                <div>
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <p className="font-medium">{item.title}</p>
-                    {isFeatured && item.status === "approved" && (
-                      <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
-                        精選作品
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-[var(--text-muted)]">
-                    狀態：
-                    {item.status === "approved"
-                      ? "已公開"
-                      : item.status === "pending"
-                        ? "審核中"
-                        : "未通過"}
-                  </p>
-                </div>
-                {!isFeatured && item.status === "approved" && (
-                  <form action={setFeaturedPortfolioItem}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <SubmitButton className="btn-secondary text-sm">設為精選</SubmitButton>
-                  </form>
-                )}
-              </li>
-            );
-          })}
+          {portfolio.map((item) => (
+            <PortfolioItemEditor key={item.id} item={item} portfolio={portfolio} />
+          ))}
         </ul>
       )}
 

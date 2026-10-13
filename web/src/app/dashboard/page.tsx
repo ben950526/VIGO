@@ -159,7 +159,7 @@ export default async function DashboardPage() {
 
         <h2 className="mb-2 text-xl font-bold">我的作品 ({portfolio.length})</h2>
         <p className="mb-4 text-sm text-[var(--text-muted)]">
-          建議至少加 1 支。通過審核後，有已公開作品才會出現在探索頁。按「設為精選」可更換精選。
+          建議至少加 1 支。公開頁只顯示已通過的作品；預覽會連審核中的一起看。要改連結或移除，到編輯工作室。
         </p>
         {portfolio.length === 0 ? (
           <p className="text-[var(--text-muted)]">
@@ -190,6 +190,12 @@ export default async function DashboardPage() {
                     <p className="text-sm text-[var(--text-muted)]">
                       狀態：{item.status === "approved" ? "已公開" : item.status === "pending" ? "審核中" : "未通過"}
                     </p>
+                    <Link
+                      href="/dashboard/studio#portfolio"
+                      className="mt-1 inline-block text-xs text-[var(--accent)] hover:underline"
+                    >
+                      修改或移除連結
+                    </Link>
                   </div>
                   {!isFeatured && item.status === "approved" && (
                     <form action={setFeaturedPortfolioItem}>

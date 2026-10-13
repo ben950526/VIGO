@@ -23,6 +23,54 @@ import { isSupabaseConfigured } from "@/lib/utils";
 import { collectTagsFromForm } from "@/lib/tags";
 import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
 
+type AuthedClient = Awaited<ReturnType<typeof createClient>>;
+
+function inferImageContentType(file: File): string | null {
+  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (allowed.includes(file.type)) return file.type;
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".webp")) return "image/webp";
+  if (name.endsWith(".gif")) return "image/gif";
+  return null;
+}
+
+async function uploadCreatorAvatar(
+  supabase: AuthedClient,
+  userId: string,
+  profileId: string,
+  avatarFile: File,
+): Promise<string | null> {
+  const contentType = inferImageContentType(avatarFile);
+  if (!contentType) return "請上傳 JPG、PNG、WebP 或 GIF，檔案需小於 5MB";
+  if (avatarFile.size > 5 * 1024 * 1024) return "圖片需小於 5MB";
+
+  const ext = contentType === "image/jpeg" ? "jpg" : contentType.replace("image/", "");
+  const path = `${userId}/avatar.${ext}`;
+  const buffer = Buffer.from(await avatarFile.arrayBuffer());
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, buffer, { contentType, upsert: true });
+
+  if (uploadError) {
+    if (uploadError.message.includes("Bucket not found")) {
+      return "儲存空間尚未建立。請到 Supabase → SQL Editor 執行 supabase/migrations/003_avatar_storage.sql";
+    }
+    return uploadError.message;
+  }
+
+  const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+  const { error: urlError } = await supabase
+    .from("creator_profiles")
+    .update({ avatar_url: `${urlData.publicUrl}?v=${Date.now()}` })
+    .eq("id", profileId);
+
+  if (urlError) return urlError.message;
+  return null;
+}
+
 export async function updateCreatorProfile(formData: FormData) {
   if (!isSupabaseConfigured()) {
     return { error: "請先設定 Supabase" };
@@ -61,42 +109,6 @@ export async function updateCreatorProfile(formData: FormData) {
     return { error: "無效的地區" };
   }
 
-  let avatarUrl: string | undefined;
-  const avatarFile = formData.get("avatar");
-  if (avatarFile instanceof File && avatarFile.size > 0) {
-    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowed.includes(avatarFile.type)) {
-      return { error: "請上傳 JPG、PNG 或 WebP 圖片" };
-    }
-    if (avatarFile.size > 5 * 1024 * 1024) {
-      return { error: "圖片需小於 5MB" };
-    }
-
-    const ext =
-      avatarFile.type === "image/jpeg"
-        ? "jpg"
-        : avatarFile.type.replace("image/", "");
-    const path = `${userId}/avatar.${ext}`;
-    const buffer = Buffer.from(await avatarFile.arrayBuffer());
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, buffer, { contentType: avatarFile.type, upsert: true });
-
-    if (uploadError) {
-      if (uploadError.message.includes("Bucket not found")) {
-        return {
-          error:
-            "儲存空間尚未建立。請到 Supabase → SQL Editor 執行 supabase/migrations/003_avatar_storage.sql，或到 Storage 手動新增名為 avatars 的 Public bucket。",
-        };
-      }
-      return { error: `上傳失敗：${uploadError.message}` };
-    }
-
-    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    avatarUrl = `${urlData.publicUrl}?v=${Date.now()}`;
-  }
-
   const priceList = parsePriceList(
     JSON.parse(String(formData.get("price_list_json") ?? "[]")),
   );
@@ -120,7 +132,6 @@ export async function updateCreatorProfile(formData: FormData) {
       languages,
       website_url: String(formData.get("website_url") ?? "").trim() || null,
       price_list: priceList as unknown as Json,
-      ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       ...(profile.verification_status === "rejected" || profile.verification_status === "draft"
         ? { verification_status: "pending" }
         : {}),
@@ -129,6 +140,14 @@ export async function updateCreatorProfile(formData: FormData) {
 
   if (error) {
     return { error: formatSchemaError(error.message) ?? error.message };
+  }
+
+  const avatarFile = formData.get("avatar");
+  if (avatarFile instanceof File && avatarFile.size > 0) {
+    const avatarError = await uploadCreatorAvatar(supabase, userId, profile.id, avatarFile);
+    if (avatarError) {
+      return { error: `文字資料已儲存，但照片沒放上去：${avatarError}` };
+    }
   }
 
   if (profile.verification_status === "rejected" || profile.verification_status === "draft") {
@@ -206,6 +225,103 @@ export async function addPortfolioItem(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/studio");
+  return { success: true };
+}
+
+export async function updatePortfolioItem(formData: FormData) {
+  if (!isSupabaseConfigured()) return { error: "請先設定 Supabase" };
+
+  const itemId = String(formData.get("id") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const embedUrl = String(formData.get("embed_url") ?? "").trim();
+  if (!itemId || !title || !embedUrl) return { error: "請填寫標題與作品連結" };
+
+  const parsed = parseEmbedUrl(embedUrl);
+  if (!parsed) {
+    return { error: "請輸入有效的 YouTube / Vimeo / Instagram 連結" };
+  }
+
+  const supabase = await createClient();
+  const userId = await getAuthUserId();
+  if (!userId) return { error: "請先登入" };
+
+  const { data: profile } = await supabase
+    .from("creator_profiles")
+    .select("id, studio_name, slug")
+    .eq("user_id", userId)
+    .single();
+  if (!profile) return { error: "找不到工作室" };
+
+  const { data: item } = await supabase
+    .from("portfolio_items")
+    .select("id, embed_url, status")
+    .eq("id", itemId)
+    .eq("creator_id", profile.id)
+    .maybeSingle();
+  if (!item) return { error: "找不到這則作品" };
+
+  const urlChanged = item.embed_url.trim() !== embedUrl;
+  const { error } = await supabase
+    .from("portfolio_items")
+    .update({
+      title,
+      description,
+      embed_url: embedUrl,
+      embed_type: parsed.type,
+      thumbnail_url: parsed.thumbnailUrl,
+      ...(urlChanged ? { status: "pending" as const } : {}),
+    })
+    .eq("id", itemId)
+    .eq("creator_id", profile.id);
+
+  if (error) return { error: error.message };
+
+  if (urlChanged) {
+    void notifyAdminReviewPending({
+      kind: "new_portfolio",
+      studioName: profile.studio_name,
+      slug: profile.slug,
+      portfolioTitle: title,
+    });
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/studio");
+  revalidatePath(`/creator/${profile.slug}`);
+  revalidateCreatorList();
+  return { success: true, pendingAgain: urlChanged };
+}
+
+export async function deletePortfolioItem(formData: FormData) {
+  if (!isSupabaseConfigured()) return { error: "請先設定 Supabase" };
+
+  const itemId = String(formData.get("id") ?? "").trim();
+  if (!itemId) return { error: "缺少作品 ID" };
+
+  const supabase = await createClient();
+  const userId = await getAuthUserId();
+  if (!userId) return { error: "請先登入" };
+
+  const { data: profile } = await supabase
+    .from("creator_profiles")
+    .select("id, slug")
+    .eq("user_id", userId)
+    .single();
+  if (!profile) return { error: "找不到工作室" };
+
+  const { error } = await supabase
+    .from("portfolio_items")
+    .delete()
+    .eq("id", itemId)
+    .eq("creator_id", profile.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/studio");
+  revalidatePath(`/creator/${profile.slug}`);
+  revalidateCreatorList();
   return { success: true };
 }
 

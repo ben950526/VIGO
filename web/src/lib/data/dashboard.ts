@@ -37,7 +37,7 @@ export const getDashboardData = cache(async (): Promise<DashboardData | null> =>
   const [{ data: row }, authProfile] = await Promise.all([
     supabase
       .from("creator_profiles")
-      .select("*, portfolio_items(id, title, status, sort_order)")
+      .select("*, portfolio_items(id, title, description, status, sort_order, embed_url, embed_type)")
       .eq("user_id", userId)
       .maybeSingle(),
     getAuthProfile(),

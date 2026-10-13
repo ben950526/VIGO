@@ -83,7 +83,8 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
     supabase.from("bug_reports").select("id", { count: "exact", head: true }).gte("created_at", weekIso),
   ]);
 
-  let knockRows = knockRes.data;
+  let knockRows: { from_admin?: boolean | null; user_agent?: string | null }[] | null =
+    knockRes.data;
   let knockError = knockRes.error;
   if (knockError?.message.includes("from_admin")) {
     const fallback = await supabase.from("knocks").select("id, user_agent").gte("created_at", weekIso);
