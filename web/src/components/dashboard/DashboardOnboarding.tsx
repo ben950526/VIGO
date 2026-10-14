@@ -9,17 +9,29 @@ type Props = {
   missingStudio: string[];
   hasWork: boolean;
   reviewStatus: "draft" | "pending" | "approved" | "rejected";
+  visibleOnExplore: boolean;
+  exploreGaps: string[];
 };
 
-export function DashboardOnboarding({ missingStudio, hasWork, reviewStatus }: Props) {
+export function DashboardOnboarding({
+  missingStudio,
+  hasWork,
+  reviewStatus,
+  visibleOnExplore,
+  exploreGaps,
+}: Props) {
   const studioDone = missingStudio.length === 0;
-  if (studioDone && hasWork) return null;
+  if (visibleOnExplore) return null;
 
   return (
     <div className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-      <h2 className="mb-1 text-xl font-bold">接下來請做這兩件事</h2>
+      <h2 className="mb-1 text-xl font-bold">現在補齊，發案者才找得到你</h2>
       <p className="mb-4 text-sm text-[var(--text-secondary)]">
-        註冊只是有帳號。補上工作室和作品，發案者才知道找你做什麼。
+        目前有發案者在找固定配合的剪輯，人都還沒選定。探索頁只顯示介紹夠、且有已通過作品的工作室。
+        {exploreGaps.length > 0 ? ` 你還差：${exploreGaps.join("、")}。` : ""}
+        {studioDone && hasWork && reviewStatus !== "approved"
+          ? " 資料已齊，通過審核後就會出現。"
+          : ""}
       </p>
 
       <ol className="mb-5 space-y-3 text-sm">

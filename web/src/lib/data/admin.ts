@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
 import { parsePriceList } from "@/lib/price-list";
 import { createClient } from "@/lib/supabase/server";
@@ -68,7 +69,7 @@ export interface PublishedCreator extends CreatorProfile {
   portfolio_items: PortfolioItem[];
 }
 
-export async function getPublishedCreators(): Promise<PublishedCreator[]> {
+export const getPublishedCreators = cache(async (): Promise<PublishedCreator[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("creator_profiles")
@@ -94,4 +95,4 @@ export async function getPublishedCreators(): Promise<PublishedCreator[]> {
       };
     })
     .filter((creator) => creator.is_demo !== true && !creator.slug.endsWith("-demo"));
-}
+});

@@ -13,6 +13,7 @@ import {
 import { getAdminHealthStats } from "@/lib/data/adminHealth";
 import { getPendingPromoShareSubmissions } from "@/lib/data/promo-share";
 import { AdminHealthSnapshot } from "@/components/admin/AdminHealthSnapshot";
+import { ExploreUnblockQueue } from "@/components/admin/ExploreUnblockQueue";
 
 export const metadata = {
   title: "審核管理",
@@ -56,12 +57,14 @@ export default async function AdminReviewPage({
   await requireAdmin();
 
   const params = await searchParams;
-  const [pendingCreators, pendingItems, pendingPromoShares, health] = await Promise.all([
-    getPendingCreators(),
-    getPendingPortfolioItems(),
-    getPendingPromoShareSubmissions(),
-    getAdminHealthStats(),
-  ]);
+  const [pendingCreators, pendingItems, pendingPromoShares, health, publishedCreators] =
+    await Promise.all([
+      getPendingCreators(),
+      getPendingPortfolioItems(),
+      getPendingPromoShareSubmissions(),
+      getAdminHealthStats(),
+      getPublishedCreators(),
+    ]);
 
   const totalPending = pendingCreators.length + pendingItems.length;
 
@@ -100,6 +103,11 @@ export default async function AdminReviewPage({
         </div>
 
         <AdminHealthSnapshot stats={health} />
+
+        <ExploreUnblockQueue
+          pendingCreators={pendingCreators}
+          publishedCreators={publishedCreators}
+        />
 
         {params.demoSeeded === "1" && (
           <p className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">

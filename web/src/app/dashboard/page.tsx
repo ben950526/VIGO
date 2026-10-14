@@ -3,6 +3,7 @@ import Link from "next/link";
 import { setFeaturedPortfolioItem } from "@/actions/creator";
 import { SignOutButton } from "@/components/forms/SignOutButton";
 import { DashboardOnboarding } from "@/components/dashboard/DashboardOnboarding";
+import { LiveBriefsBanner } from "@/components/LiveBriefsBanner";
 import { DashboardReferralWelcome } from "@/components/dashboard/DashboardReferralWelcome";
 import { PromoSharePanel } from "@/components/dashboard/PromoSharePanel";
 import { ReferralCreditsPanel } from "@/components/dashboard/ReferralCreditsPanel";
@@ -76,10 +77,14 @@ export default async function DashboardPage() {
           <DashboardReferralWelcome />
         </Suspense>
 
+        {!visibleOnExplore ? <LiveBriefsBanner audience="creator" /> : null}
+
         <DashboardOnboarding
           missingStudio={submitGaps}
           hasWork={hasWork}
           reviewStatus={profile.verification_status}
+          visibleOnExplore={visibleOnExplore}
+          exploreGaps={exploreGaps}
         />
 
         <div className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">

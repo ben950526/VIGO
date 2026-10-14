@@ -57,3 +57,14 @@ export function isCreatorVisibleOnExplore(creator: ExploreListingInput): boolean
     isStudioContentReadyForExplore(creator)
   );
 }
+
+/** 介紹已夠、且有待審或已通過作品：審核通過後就能上探索頁 */
+export function isReadyForPriorityReview(input: {
+  bio?: string | null;
+  portfolio_items?: Pick<PortfolioItem, "status">[] | null;
+}): boolean {
+  if ((input.bio?.trim().length ?? 0) < MIN_PUBLIC_BIO_CHARS) return false;
+  return (input.portfolio_items ?? []).some(
+    (item) => item.status === "approved" || item.status === "pending",
+  );
+}

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { CreatorCard } from "@/components/creator/CreatorCard";
 import { ExploreFilters } from "@/components/explore/ExploreFilters";
+import { LiveBriefsBanner } from "@/components/LiveBriefsBanner";
 import { getApprovedCreators } from "@/lib/data/creators";
 
 export const revalidate = 120;
@@ -27,9 +28,10 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     <section className="section">
       <div className="container-narrow">
         <h1 className="mb-3 text-center text-4xl font-bold">探索短影音創作者</h1>
-        <p className="mx-auto mb-10 max-w-xl text-center text-[var(--text-secondary)]">
+        <p className="mx-auto mb-6 max-w-xl text-center text-[var(--text-secondary)]">
           瀏覽作品集、比較風格，找到適合的接案者後再聯絡。
         </p>
+        <LiveBriefsBanner audience="client" />
 
         <Suspense fallback={<div className="mb-10 h-32 animate-pulse rounded-2xl bg-[var(--border)]" />}>
           <ExploreFilters />
