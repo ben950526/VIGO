@@ -118,6 +118,7 @@ async function fetchApprovedCreators(filters?: CreatorFilters): Promise<CreatorW
     .from("creator_profiles")
     .select(CREATOR_CARD_WITH_WORKS)
     .eq("verification_status", "approved")
+    .eq("is_demo", false)
     .not("is_listed", "eq", false)
     .order("featured", { ascending: false })
     .order("updated_at", { ascending: false });
@@ -243,6 +244,7 @@ async function fetchFeaturedCreators(): Promise<CreatorWithPortfolio[]> {
     .from("creator_profiles")
     .select(CREATOR_CARD_WITH_WORKS)
     .eq("verification_status", "approved")
+    .eq("is_demo", false)
     .not("is_listed", "eq", false)
     .order("featured", { ascending: false })
     .order("updated_at", { ascending: false });

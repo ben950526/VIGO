@@ -106,43 +106,56 @@ alter table public.bug_reports
   add column if not exists user_reply text,
   add column if not exists notified_at timestamptz;
 
--- 後台一鍵撤除假帳號
+-- 後台一鍵撤除假帳號（完整版見 migrations/028_remove_demo_accounts_harder.sql）
 create or replace function public.remove_demo_accounts()
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, auth
 as $$
+declare
+  demo_ids uuid[];
+  demo_users uuid[];
+  removed int;
 begin
   if auth.uid() is null then
     raise exception '未登入';
   end if;
 
   if not exists (
-    select 1 from public.profiles
-    where id = auth.uid() and role = 'admin'
+    select 1 from public.profiles where id = auth.uid() and role = 'admin'
   ) then
     raise exception '需要管理員權限';
   end if;
 
-  delete from public.portfolio_items
-  where creator_id in (
-    select id from public.creator_profiles where slug like '%-demo'
-  );
+  select coalesce(array_agg(id), '{}') into demo_ids
+  from public.creator_profiles
+  where is_demo = true or slug like '%-demo';
 
-  delete from public.creator_profiles where slug like '%-demo';
+  select coalesce(array_agg(user_id), '{}') into demo_users
+  from public.creator_profiles
+  where id = any (demo_ids);
+
+  delete from public.knocks where creator_id = any (demo_ids);
+  delete from public.inquiries where creator_id = any (demo_ids);
+  delete from public.portfolio_items where creator_id = any (demo_ids);
+
+  delete from public.creator_profiles
+  where is_demo = true or slug like '%-demo';
+  get diagnostics removed = row_count;
 
   delete from public.profiles
-  where email like 'demo-%@vigo.local';
+  where email like 'demo-%@vigo.local' or id = any (demo_users);
 
   delete from auth.identities
   where user_id in (
     select id from auth.users where email like 'demo-%@vigo.local'
-  );
+  ) or user_id = any (demo_users);
 
-  delete from auth.users where email like 'demo-%@vigo.local';
+  delete from auth.users
+  where email like 'demo-%@vigo.local' or id = any (demo_users);
 
-  return '已撤除假帳號';
+  return '已撤除假帳號（' || removed || ' 間工作室）';
 end;
 $$;
 

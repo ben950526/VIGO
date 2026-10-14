@@ -27,11 +27,8 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     <section className="section">
       <div className="container-narrow">
         <h1 className="mb-3 text-center text-4xl font-bold">探索短影音創作者</h1>
-        <p className="mx-auto mb-4 max-w-xl text-center text-[var(--text-secondary)]">
+        <p className="mx-auto mb-10 max-w-xl text-center text-[var(--text-secondary)]">
           瀏覽作品集、比較風格，找到適合的接案者後再聯絡。
-        </p>
-        <p className="mx-auto mb-10 max-w-xl text-center text-xs text-amber-800">
-          標示「示範帳號」者為平台範例，並非真實接案創作者，請勿委託或匯款。
         </p>
 
         <Suspense fallback={<div className="mb-10 h-32 animate-pulse rounded-2xl bg-[var(--border)]" />}>

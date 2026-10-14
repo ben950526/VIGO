@@ -1,4 +1,5 @@
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
+import { isDemoCreator } from "@/lib/demo-creator";
 
 /** 探索頁／公開工作室：擋掉「無」「F」這類空殼，示範帳號的短介紹仍可過 */
 export const MIN_PUBLIC_BIO_CHARS = 20;
@@ -10,6 +11,8 @@ export type ExploreListingInput = Pick<
   "verification_status" | "is_listed"
 > & {
   bio?: string | null;
+  slug?: string;
+  is_demo?: boolean;
   portfolio_items?: Pick<PortfolioItem, "status">[] | null;
   approvedWorkCount?: number;
 };
@@ -45,8 +48,9 @@ export function isStudioContentReadyForExplore(input: {
   return studioExploreContentGaps(input).length === 0;
 }
 
-/** 與探索頁／公開頁／敲門一致：已審核、未主動下架，且介紹與作品已達門檻 */
+/** 與探索頁／公開頁／敲門一致：真實接案者、已審核、未下架，且介紹與作品已達門檻 */
 export function isCreatorVisibleOnExplore(creator: ExploreListingInput): boolean {
+  if (isDemoCreator(creator)) return false;
   return (
     creator.verification_status === "approved" &&
     creator.is_listed !== false &&

@@ -78,12 +78,16 @@ export default async function AdminReviewPage({
           <Link href="/dashboard" className="btn-secondary text-sm">
             返回我的工作室
           </Link>
-          <Link href="/admin/seed-demo" className="btn-secondary text-sm">
-            建立示範帳號
-          </Link>
-          <Link href="/admin/remove-demo" className="btn-secondary text-sm">
-            撤除假帳號
-          </Link>
+          <form action="/admin/seed-demo" method="post">
+            <button type="submit" className="btn-secondary text-sm">
+              建立示範帳號
+            </button>
+          </form>
+          <form action="/admin/remove-demo" method="post">
+            <button type="submit" className="btn-secondary text-sm">
+              撤除假帳號
+            </button>
+          </form>
           <Link href="/admin/feedback" className="btn-secondary text-sm">
             使用者意見
           </Link>

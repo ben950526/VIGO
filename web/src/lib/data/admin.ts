@@ -19,6 +19,7 @@ export async function getPendingCreators(): Promise<PendingCreator[]> {
     .from("creator_profiles")
     .select(`${PENDING_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_REVIEW_FIELDS})`)
     .in("verification_status", ["pending", "rejected"])
+    .eq("is_demo", false)
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
@@ -77,18 +78,20 @@ export async function getPublishedCreators(): Promise<PublishedCreator[]> {
 
   if (error || !data) return [];
 
-  return data.map((row) => {
-    const record = row as Record<string, unknown>;
-    return {
-      ...(record as unknown as CreatorProfile),
-      price_list: parsePriceList(record.price_list),
-      is_listed: record.is_listed !== false,
-      is_demo: record.is_demo === true,
-      verification_status:
-        (record.verification_status as CreatorProfile["verification_status"]) ?? "approved",
-      portfolio_items: ((record.portfolio_items as PortfolioItem[]) ?? []).sort(
-        (a, b) => a.sort_order - b.sort_order,
-      ),
-    };
-  });
+  return data
+    .map((row) => {
+      const record = row as Record<string, unknown>;
+      return {
+        ...(record as unknown as CreatorProfile),
+        price_list: parsePriceList(record.price_list),
+        is_listed: record.is_listed !== false,
+        is_demo: record.is_demo === true,
+        verification_status:
+          (record.verification_status as CreatorProfile["verification_status"]) ?? "approved",
+        portfolio_items: ((record.portfolio_items as PortfolioItem[]) ?? []).sort(
+          (a, b) => a.sort_order - b.sort_order,
+        ),
+      };
+    })
+    .filter((creator) => creator.is_demo !== true && !creator.slug.endsWith("-demo"));
 }

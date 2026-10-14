@@ -204,6 +204,11 @@ export async function removeAllDemoAccounts(): Promise<{ ok: boolean; message: s
 
   revalidateCreatorList();
   revalidatePath("/admin/review");
+  revalidatePath("/explore");
+  revalidatePath("/");
+  for (const slug of demoStudioPatches.map((p) => p.slug)) {
+    revalidatePath(`/creator/${slug}`);
+  }
 
   return { ok: true, message: String(data ?? "已撤除所有假帳號") };
 }
