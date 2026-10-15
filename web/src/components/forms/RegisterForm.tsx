@@ -7,6 +7,10 @@ import { afterCreatorSignup } from "@/actions/signup-complete";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
+import {
+  isPlaceholderStudioName,
+  PLACEHOLDER_STUDIO_NAME_ERROR,
+} from "@/lib/creator/studioName";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
 const REF_STORAGE_KEY = "vigo_referral_ref";
@@ -63,6 +67,11 @@ export function RegisterForm() {
       return;
     }
 
+    if (isPlaceholderStudioName(studioName)) {
+      setError(PLACEHOLDER_STUDIO_NAME_ERROR);
+      return;
+    }
+
     if (formData.get("accept_terms") !== "yes") {
       setError("請先閱讀並同意使用條款與隱私權政策");
       return;
@@ -86,6 +95,7 @@ export function RegisterForm() {
           options: {
             data: {
               real_name: realName,
+              studio_name: studioName,
               role: "creator",
               terms_accepted_at: new Date().toISOString(),
               terms_version: TERMS_VERSION,
@@ -143,6 +153,18 @@ export function RegisterForm() {
           setPending(false);
           return;
         }
+        await withTimeout(
+          supabase
+            .from("creator_profiles")
+            .update({
+              studio_name: studioName,
+              contact_email: email,
+              verification_status: "pending",
+            })
+            .eq("user_id", data.user.id),
+          6000,
+          "PROFILE_TIMEOUT",
+        ).catch(() => null);
       }
 
       const refToApply = referrerRef.trim();
@@ -195,7 +217,13 @@ export function RegisterForm() {
         </p>
       ) : null}
       <input className="input" name="real_name" placeholder="真實姓名（實名驗證用）" required />
-      <input className="input" name="studio_name" placeholder="工作室名稱" required />
+      <input
+        className="input"
+        name="studio_name"
+        placeholder="工作室或品牌名稱（沒有店名就填你的名字）"
+        required
+        minLength={2}
+      />
       <input className="input" name="email" type="email" placeholder="Email" required />
       <input
         className="input"

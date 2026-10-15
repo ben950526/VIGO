@@ -1,5 +1,6 @@
 import type { CreatorProfile, PortfolioItem } from "@/types/database";
 import { isDemoCreator } from "@/lib/demo-creator";
+import { isPlaceholderStudioName } from "@/lib/creator/studioName";
 
 /** 探索頁／公開工作室：擋掉「無」「F」這類空殼，示範帳號的短介紹仍可過 */
 export const MIN_PUBLIC_BIO_CHARS = 20;
@@ -10,6 +11,7 @@ export type ExploreListingInput = Pick<
   CreatorProfile,
   "verification_status" | "is_listed"
 > & {
+  studio_name?: string | null;
   bio?: string | null;
   slug?: string;
   is_demo?: boolean;
@@ -24,11 +26,15 @@ export function countApprovedPortfolioItems(
 }
 
 export function studioExploreContentGaps(input: {
+  studio_name?: string | null;
   bio?: string | null;
   portfolio_items?: Pick<PortfolioItem, "status">[] | null;
   approvedWorkCount?: number;
 }): string[] {
   const gaps: string[] = [];
+  if (isPlaceholderStudioName(input.studio_name ?? "")) {
+    gaps.push("真實工作室名稱（不要填「無」）");
+  }
   if ((input.bio?.trim().length ?? 0) < MIN_PUBLIC_BIO_CHARS) {
     gaps.push("介紹至少約 20 字");
   }
@@ -41,6 +47,7 @@ export function studioExploreContentGaps(input: {
 }
 
 export function isStudioContentReadyForExplore(input: {
+  studio_name?: string | null;
   bio?: string | null;
   portfolio_items?: Pick<PortfolioItem, "status">[] | null;
   approvedWorkCount?: number;
@@ -60,9 +67,11 @@ export function isCreatorVisibleOnExplore(creator: ExploreListingInput): boolean
 
 /** 介紹已夠、且有待審或已通過作品：審核通過後就能上探索頁 */
 export function isReadyForPriorityReview(input: {
+  studio_name?: string | null;
   bio?: string | null;
   portfolio_items?: Pick<PortfolioItem, "status">[] | null;
 }): boolean {
+  if (isPlaceholderStudioName(input.studio_name ?? "")) return false;
   if ((input.bio?.trim().length ?? 0) < MIN_PUBLIC_BIO_CHARS) return false;
   return (input.portfolio_items ?? []).some(
     (item) => item.status === "approved" || item.status === "pending",

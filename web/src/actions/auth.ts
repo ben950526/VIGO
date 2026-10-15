@@ -6,6 +6,10 @@ import { TERMS_VERSION } from "@/lib/legal";
 import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
 import { sendSignupWelcomeEmail } from "@/lib/email/sendWelcomeEmail";
 import { awardReferralSignup } from "@/lib/referral/awardReferralSignup";
+import {
+  isPlaceholderStudioName,
+  PLACEHOLDER_STUDIO_NAME_ERROR,
+} from "@/lib/creator/studioName";
 import { isSupabaseConfigured, createCreatorSlug } from "@/lib/utils";
 
 export type AuthFormState = { error?: string };
@@ -27,6 +31,10 @@ export async function signUp(
     return { error: "請填寫所有必填欄位" };
   }
 
+  if (isPlaceholderStudioName(studioName)) {
+    return { error: PLACEHOLDER_STUDIO_NAME_ERROR };
+  }
+
   if (formData.get("accept_terms") !== "yes") {
     return { error: "請先閱讀並同意使用條款與隱私權政策" };
   }
@@ -38,6 +46,7 @@ export async function signUp(
     options: {
       data: {
         real_name: realName,
+        studio_name: studioName,
         role: "creator",
         terms_accepted_at: new Date().toISOString(),
         terms_version: TERMS_VERSION,
