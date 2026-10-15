@@ -109,9 +109,20 @@ export async function updateCreatorProfile(formData: FormData) {
     return { error: "無效的地區" };
   }
 
-  const priceList = parsePriceList(
-    JSON.parse(String(formData.get("price_list_json") ?? "[]")),
-  );
+  let priceListRaw: unknown = [];
+  try {
+    priceListRaw = JSON.parse(String(formData.get("price_list_json") ?? "[]"));
+  } catch {
+    priceListRaw = [];
+  }
+  const priceList = parsePriceList(priceListRaw);
+
+  const websiteRaw = String(formData.get("website_url") ?? "").trim();
+  const websiteUrl = websiteRaw
+    ? /^https?:\/\//i.test(websiteRaw)
+      ? websiteRaw
+      : `https://${websiteRaw}`
+    : null;
 
   const { error } = await supabase
     .from("creator_profiles")
@@ -130,7 +141,7 @@ export async function updateCreatorProfile(formData: FormData) {
       platforms,
       client_types: clientTypes,
       languages,
-      website_url: String(formData.get("website_url") ?? "").trim() || null,
+      website_url: websiteUrl,
       price_list: priceList as unknown as Json,
       ...(profile.verification_status === "rejected" || profile.verification_status === "draft"
         ? { verification_status: "pending" }

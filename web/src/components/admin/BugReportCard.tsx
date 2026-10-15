@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { updateBugReport } from "@/actions/admin-bugs";
 import type { BugReportItem, BugReportStatus } from "@/types/database";
 
@@ -23,9 +24,11 @@ interface BugReportCardProps {
 }
 
 export function BugReportCard({ item }: BugReportCardProps) {
+  const router = useRouter();
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [saved, setSaved] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setSaved(false);
@@ -36,13 +39,22 @@ export function BugReportCard({ item }: BugReportCardProps) {
       setError(result.error);
       return;
     }
+    const nextStatus = String(formData.get("status") ?? "");
+    if (nextStatus === "fixed" || nextStatus === "wont_fix") {
+      setHidden(true);
+      router.refresh();
+      return;
+    }
     setSaved(true);
+    router.refresh();
     if (result.notified) {
       setNotice("已寄信告訴對方，並附上重試步驟");
     } else if (result.notifyError) {
       setNotice(result.notifyError);
     }
   }
+
+  if (hidden) return null;
 
   return (
     <li className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">

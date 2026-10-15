@@ -61,6 +61,8 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
       }
       setSuccess(true);
       router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "儲存失敗，請再試一次");
     } finally {
       setPending(false);
     }
@@ -136,7 +138,14 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">作品集 / 官網連結（選填）</label>
-              <input className="input" name="website_url" type="url" placeholder="https://" defaultValue={profile.website_url ?? ""} />
+              <input
+                className="input"
+                name="website_url"
+                type="text"
+                inputMode="url"
+                placeholder="https:// 或 Instagram／官網網址"
+                defaultValue={profile.website_url ?? ""}
+              />
             </div>
           </div>
 

@@ -9,7 +9,7 @@ const tabs: { value: BugReportStatus | "all"; label: string }[] = [
   { value: "investigating", label: "處理中" },
   { value: "fixed", label: "已修復" },
   { value: "wont_fix", label: "無法重現" },
-  { value: "all", label: "全部" },
+  { value: "all", label: "未結案" },
 ];
 
 export default async function AdminBugsPage({
@@ -30,7 +30,9 @@ export default async function AdminBugsPage({
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (statusFilter !== "all") {
+  if (statusFilter === "all") {
+    query = query.in("status", ["open", "investigating"]);
+  } else {
     query = query.eq("status", statusFilter);
   }
 

@@ -80,7 +80,11 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
       .eq("is_demo", false)
       .eq("is_listed", true),
     supabase.from("feedback").select("id", { count: "exact", head: true }).gte("created_at", weekIso),
-    supabase.from("bug_reports").select("id", { count: "exact", head: true }).gte("created_at", weekIso),
+    supabase
+      .from("bug_reports")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", weekIso)
+      .in("status", ["open", "investigating"]),
   ]);
 
   let knockRows: { from_admin?: boolean | null; user_agent?: string | null }[] | null =
