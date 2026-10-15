@@ -7,10 +7,6 @@ import { afterCreatorSignup } from "@/actions/signup-complete";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { TERMS_VERSION } from "@/lib/legal";
-import {
-  isPlaceholderStudioName,
-  PLACEHOLDER_STUDIO_NAME_ERROR,
-} from "@/lib/creator/studioName";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
 const REF_STORAGE_KEY = "vigo_referral_ref";
@@ -64,11 +60,6 @@ export function RegisterForm() {
 
     if (!email || !password || !realName || !studioName) {
       setError("請填寫所有必填欄位");
-      return;
-    }
-
-    if (isPlaceholderStudioName(studioName)) {
-      setError(PLACEHOLDER_STUDIO_NAME_ERROR);
       return;
     }
 
@@ -159,7 +150,6 @@ export function RegisterForm() {
             .update({
               studio_name: studioName,
               contact_email: email,
-              verification_status: "pending",
             })
             .eq("user_id", data.user.id),
           6000,
@@ -217,13 +207,7 @@ export function RegisterForm() {
         </p>
       ) : null}
       <input className="input" name="real_name" placeholder="真實姓名（實名驗證用）" required />
-      <input
-        className="input"
-        name="studio_name"
-        placeholder="工作室或品牌名稱（沒有店名就填你的名字）"
-        required
-        minLength={2}
-      />
+      <input className="input" name="studio_name" placeholder="工作室名稱" required />
       <input className="input" name="email" type="email" placeholder="Email" required />
       <input
         className="input"

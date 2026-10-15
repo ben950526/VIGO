@@ -1,5 +1,4 @@
 import { MIN_PUBLIC_BIO_CHARS } from "@/lib/creator/listing";
-import { isPlaceholderStudioName } from "@/lib/creator/studioName";
 import type { CreatorProfile } from "@/types/database";
 
 export type StudioSubmitInput = Pick<
@@ -10,9 +9,7 @@ export type StudioSubmitInput = Pick<
 /** 引導用：還缺哪些工作室欄位。不擋註冊、也不擋審核。 */
 export function studioSubmitGaps(input: StudioSubmitInput): string[] {
   const gaps: string[] = [];
-  if (!input.studio_name.trim() || isPlaceholderStudioName(input.studio_name)) {
-    gaps.push("真實工作室名稱（不要填「無」）");
-  }
+  if (!input.studio_name.trim()) gaps.push("工作室名稱");
   if ((input.bio?.trim().length ?? 0) < MIN_PUBLIC_BIO_CHARS) {
     gaps.push(`自我介紹（至少約 ${MIN_PUBLIC_BIO_CHARS} 字）`);
   }

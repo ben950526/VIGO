@@ -22,10 +22,6 @@ import { formatSchemaError } from "@/lib/db-schema";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { collectTagsFromForm } from "@/lib/tags";
 import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
-import {
-  isPlaceholderStudioName,
-  PLACEHOLDER_STUDIO_NAME_ERROR,
-} from "@/lib/creator/studioName";
 
 type AuthedClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -117,15 +113,10 @@ export async function updateCreatorProfile(formData: FormData) {
     JSON.parse(String(formData.get("price_list_json") ?? "[]")),
   );
 
-  const studioName = String(formData.get("studio_name") ?? "").trim();
-  if (isPlaceholderStudioName(studioName)) {
-    return { error: PLACEHOLDER_STUDIO_NAME_ERROR };
-  }
-
   const { error } = await supabase
     .from("creator_profiles")
     .update({
-      studio_name: studioName,
+      studio_name: String(formData.get("studio_name") ?? "").trim(),
       bio: String(formData.get("bio") ?? "").trim() || null,
       region: region || null,
       style_tags: styleTags,
