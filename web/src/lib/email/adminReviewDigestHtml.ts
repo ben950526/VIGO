@@ -164,7 +164,11 @@ export function buildAdminReviewDigestHtml(params: {
 <html lang="zh-Hant">
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 640px; margin: 0 auto; padding: 24px;">
   <h1 style="font-size: 20px; margin-bottom: 8px;">昨天的平台狀況</h1>
-  <p style="color:#64748b;">${escapeHtml(rangeLabel)} · 共 ${total} 筆新內容，有空再處理就好。</p>
+  <p style="color:#64748b;">${
+    total === 0
+      ? `${escapeHtml(rangeLabel)} · 昨天沒有新的待審、意見或問題回報。這封信代表每日摘要有正常跑完。`
+      : `${escapeHtml(rangeLabel)} · 共 ${total} 筆新內容，有空再處理就好。`
+  }</p>
   ${sectionHeading(`待審（${events.length}）`)}
   ${reviewRows}
   <p style="margin: 12px 0 0;">${emailCta(reviewUrl, "打開審核後台")}</p>

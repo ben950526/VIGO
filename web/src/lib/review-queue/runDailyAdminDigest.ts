@@ -80,18 +80,6 @@ export async function runDailyAdminReviewDigest(now = new Date()): Promise<Diges
   const bugs = (bugRes.data ?? []) as DigestBugRow[];
   const total = events.length + feedback.length + bugs.length;
 
-  if (total === 0) {
-    return {
-      ok: true,
-      sent: false,
-      count: 0,
-      reviewCount: 0,
-      feedbackCount: 0,
-      bugCount: 0,
-      reason: "no_activity_yesterday",
-    };
-  }
-
   const base = siteUrl();
   const rangeLabel = digestRangeLabel(start);
   const resend = new Resend(apiKey);
