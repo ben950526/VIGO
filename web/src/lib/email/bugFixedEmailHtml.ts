@@ -13,8 +13,9 @@ export function buildBugFixedEmailHtml(params: {
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="font-size: 22px; margin-bottom: 16px;">你回報的問題已修好</h1>
-  <p>嗨，謝謝你跟我們說。這個狀況已經修好了，請用下面步驟再試一次。</p>
+  <h1 style="font-size: 22px; margin-bottom: 16px;">真的很抱歉，給你添麻煩了</h1>
+  <p>嗨，謝謝你願意把問題告訴我們。這個狀況我們已經修好了；讓你白忙一場、花了時間重試，我們很過意不去。</p>
+  <p>麻煩你用下面步驟再試一次。若這次順利了，請直接回這封信跟我們說一聲；若還是不行，也請回信，我們會立刻再跟。</p>
   <p style="margin: 20px 0 8px; font-size: 13px; color: #64748b;">你當時回報的內容</p>
   <p style="background: #f8fafc; border-radius: 8px; padding: 12px 16px;">${withLineBreaks(params.reportMessage)}</p>
   <p style="margin: 24px 0 8px; font-weight: 600;">請這樣再試一次</p>
@@ -22,7 +23,7 @@ export function buildBugFixedEmailHtml(params: {
   <p style="margin: 24px 0;">
     ${emailCta(params.retryUrl, "打開頁面再試")}
   </p>
-  <p style="margin-top: 32px; font-size: 13px; color: #64748b;">這封信是因為你在 Vigo 回報過問題才寄的。若還是不對，直接回這封信或再到網站回報即可。</p>
+  <p style="margin-top: 32px; font-size: 13px; color: #64748b;">這封信是因為你在 Vigo 回報過問題才寄的。直接回覆即可，我們看得到。</p>
 </body>
 </html>`;
 }

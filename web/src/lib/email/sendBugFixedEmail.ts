@@ -1,4 +1,4 @@
-import { siteUrl } from "@/lib/email/config";
+import { adminNotifyEmail, siteUrl } from "@/lib/email/config";
 import { dispatchEmail } from "@/lib/email/dispatchEmail";
 import { buildBugFixedEmailHtml } from "@/lib/email/bugFixedEmailHtml";
 
@@ -29,7 +29,8 @@ export async function sendBugFixedEmail(params: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   return dispatchEmail({
     to: params.to,
-    subject: "【Vigo】你回報的問題已修好，請再試一次",
+    replyTo: adminNotifyEmail() ?? undefined,
+    subject: "【Vigo】抱歉造成困擾，問題已修好，請再試一次",
     html: buildBugFixedEmailHtml({
       reportMessage: params.reportMessage,
       retrySteps: params.retrySteps,

@@ -5,6 +5,7 @@ export async function dispatchEmail(params: {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const apiKey = resendApiKey();
   if (!apiKey) {
@@ -21,6 +22,7 @@ export async function dispatchEmail(params: {
   const { error } = await resend.emails.send({
     from: emailFrom(),
     to,
+    replyTo: params.replyTo,
     subject: params.subject,
     html: params.html,
   });
