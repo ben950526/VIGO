@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateCreatorProfile } from "@/actions/creator";
+import { planAvatarSubmit, studioActionFailureMessage, validateAvatarFile } from "@/lib/avatar-file";
+import { uploadAvatarInBrowser } from "@/lib/avatar-upload-browser";
 import { PriceListEditor } from "@/components/forms/PriceListEditor";
 import { TagCheckboxGroup } from "@/components/forms/TagCheckboxGroup";
 import {
@@ -41,28 +43,95 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
     profile.price_list?.length ? profile.price_list : [],
   );
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (!error) return;
+    errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [error]);
 
   function handleAvatarChange(file: File | undefined) {
-    if (file) setPreview(URL.createObjectURL(file));
+    if (!file) return;
+    const checked = validateAvatarFile(file);
+    if (!checked.ok) {
+      setSuccess(false);
+      setError(checked.error);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      return;
+    }
+    setError("");
+    setPreview(URL.createObjectURL(file));
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     setSuccess(false);
     setPending(true);
     setError("");
-    const formData = new FormData(event.currentTarget);
+
+    const file = avatarInputRef.current?.files?.[0];
+    let upload: { ext: string } | { error: string } | null = null;
+    let validationFailed = false;
+    if (file && file.size > 0) {
+      const checked = validateAvatarFile(file);
+      if (!checked.ok) {
+        validationFailed = true;
+        upload = { error: checked.error };
+      } else {
+        try {
+          upload = await uploadAvatarInBrowser(file);
+        } catch {
+          upload = { error: "上傳沒有成功，請換一張 JPG、PNG 或 WebP 再試一次" };
+        }
+      }
+    }
+    const planned = planAvatarSubmit({
+      fileSize: file?.size ?? 0,
+      upload,
+      validationFailed,
+    });
+
+    const formData = new FormData(form);
+    formData.delete("avatar");
     formData.set("price_list_json", JSON.stringify(parsePriceList(priceList)));
+    if (planned.avatarExt) formData.set("avatar_ext", planned.avatarExt);
+    if (planned.sendFile && file) formData.set("avatar", file);
+    const photoError = planned.photoError;
+
     try {
       const result = await updateCreatorProfile(formData);
       if (result.error) {
         setError(result.error);
         return;
       }
+      if (photoError) {
+        setError(`文字資料已儲存，但照片沒放上去：${photoError}`);
+        router.refresh();
+        return;
+      }
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
       setSuccess(true);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "儲存失敗，請再試一次");
+      console.error("[studio] save failed", err);
+      if (formData.has("avatar")) {
+        formData.delete("avatar");
+        try {
+          const retry = await updateCreatorProfile(formData);
+          if (retry.error) {
+            setError(retry.error);
+            return;
+          }
+          setError("文字資料已儲存，但照片沒放上去：請再選一次照片後儲存。已填的內容不用重打。");
+          router.refresh();
+          return;
+        } catch {
+          setError(studioActionFailureMessage());
+          return;
+        }
+      }
+      setError(studioActionFailureMessage());
     } finally {
       setPending(false);
     }
@@ -103,15 +172,14 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
                     上傳照片
                   </button>
                   <p className="text-xs text-[var(--text-muted)]">
-                    支援 JPG、PNG、WebP，最大 5MB
+                    支援 JPG、PNG、WebP、GIF，最大 5MB。若照片沒放上去，其他欄位仍會先儲存，不用整份重打。
                   </p>
                 </div>
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  name="avatar"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+                  className="sr-only"
                   onChange={(e) => handleAvatarChange(e.target.files?.[0])}
                 />
               </div>
@@ -211,7 +279,11 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p ref={errorRef} className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
           {success && <p className="text-sm text-green-700">已儲存。</p>}
           <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
             {pending ? "儲存中…" : "儲存資料"}
