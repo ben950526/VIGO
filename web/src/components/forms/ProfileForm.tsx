@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { updateCreatorProfile } from "@/actions/creator";
+import { prepareAvatarFile } from "@/lib/image/prepareAvatarFile";
 import { PriceListEditor } from "@/components/forms/PriceListEditor";
 import { TagCheckboxGroup } from "@/components/forms/TagCheckboxGroup";
 import {
@@ -21,6 +21,7 @@ interface ProfileFormProps {
   profile: CreatorProfile;
   /** 嵌入「編輯工作室內容」頁時不顯示頁首 */
   embedded?: boolean;
+  justSaved?: boolean;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -31,10 +32,9 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
-  const router = useRouter();
+export function ProfileForm({ profile, embedded = false, justSaved = false }: ProfileFormProps) {
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState(justSaved);
   const [pending, setPending] = useState(false);
   const [preview, setPreview] = useState<string | null>(profile.avatar_url);
   const [priceList, setPriceList] = useState<PriceListItem[]>(
@@ -51,16 +51,29 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
     setSuccess(false);
     setPending(true);
     setError("");
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     formData.set("price_list_json", JSON.stringify(parsePriceList(priceList)));
+    formData.delete("avatar");
+    const picked = avatarInputRef.current?.files?.[0];
     try {
+      if (picked && picked.size > 0) {
+        const prepared = await prepareAvatarFile(picked);
+        if ("error" in prepared) {
+          setError(prepared.error);
+          setPending(false);
+          return;
+        }
+        formData.set("avatar", prepared, prepared.name);
+      }
       const result = await updateCreatorProfile(formData);
       if (result.error) {
         setError(result.error);
         return;
       }
-      setSuccess(true);
-      router.refresh();
+      const next = new URL(window.location.href);
+      next.searchParams.set("saved", "1");
+      window.location.assign(next.pathname + next.search);
     } catch (err) {
       setError(err instanceof Error ? err.message : "儲存失敗，請再試一次");
     } finally {
@@ -69,7 +82,7 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
   }
 
   const form = (
-        <form onSubmit={handleSubmit} className="space-y-10">
+        <form onSubmit={handleSubmit} noValidate className="space-y-10">
           {/* 基本 */}
           <div className="space-y-4">
             <SectionTitle>基本資料</SectionTitle>
@@ -103,14 +116,14 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
                     上傳照片
                   </button>
                   <p className="text-xs text-[var(--text-muted)]">
-                    支援 JPG、PNG、WebP，最大 5MB
+                    手機相簿可直接選，HEIC 會自動轉成 JPG，最大約 5MB
                   </p>
                 </div>
                 <input
                   ref={avatarInputRef}
                   type="file"
                   name="avatar"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept="image/*,.heic,.heif,image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={(e) => handleAvatarChange(e.target.files?.[0])}
                 />
@@ -198,7 +211,7 @@ export function ProfileForm({ profile, embedded = false }: ProfileFormProps) {
           {/* 聯絡 */}
           <div className="space-y-4">
             <SectionTitle>聯絡方式（建議至少一種）</SectionTitle>
-            <input className="input" name="contact_email" type="email" placeholder="聯絡 Email" defaultValue={profile.contact_email ?? ""} />
+            <input className="input" name="contact_email" type="text" inputMode="email" placeholder="聯絡 Email" defaultValue={profile.contact_email ?? ""} />
             <div>
               <label className="mb-1 block text-sm font-medium">LINE ID</label>
               <input className="input" name="line_id" placeholder="@yourline" defaultValue={profile.line_id ?? ""} />

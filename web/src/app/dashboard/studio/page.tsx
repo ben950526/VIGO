@@ -8,7 +8,11 @@ import { getDashboardData } from "@/lib/data/dashboard";
 import { checkCreatorProfileSchema } from "@/lib/db-schema";
 import { isSupabaseConfigured } from "@/lib/utils";
 
-export default async function StudioContentPage() {
+export default async function StudioContentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
   if (!isSupabaseConfigured()) {
     redirect("/dashboard");
   }
@@ -16,8 +20,9 @@ export default async function StudioContentPage() {
   const data = await getDashboardData();
   if (!data) redirect("/login");
 
+  const { saved } = await searchParams;
   const { profile, portfolio } = data;
-  const schema = await checkCreatorProfileSchema();
+  const schema = await checkCreatorProfileSchema().catch(() => ({ ok: true as const }));
 
   return (
     <>
@@ -43,7 +48,7 @@ export default async function StudioContentPage() {
           <StudioPreviewBar slug={profile.slug} />
 
           <div className="space-y-16">
-            <ProfileForm profile={profile} embedded />
+            <ProfileForm profile={profile} embedded justSaved={saved === "1"} />
             <PortfolioSection portfolio={portfolio} />
           </div>
         </div>

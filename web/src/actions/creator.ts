@@ -169,10 +169,14 @@ export async function updateCreatorProfile(formData: FormData) {
     });
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/studio");
-  revalidatePath("/dashboard/profile");
-  revalidateCreatorList();
+  try {
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/studio");
+    revalidatePath("/dashboard/profile");
+    revalidateCreatorList();
+  } catch {
+    // 刷新快取失敗不應讓使用者以為沒存到
+  }
   return { success: true };
 }
 
