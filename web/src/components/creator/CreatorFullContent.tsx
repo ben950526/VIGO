@@ -69,15 +69,34 @@ export function CreatorFullContent({ creator, previewMode = false }: CreatorFull
               )}
             </div>
             {heroItem ? (
-              <ClickToPlayVideo
-                embedType={heroItem.embed_type}
-                embedUrl={heroItem.embed_url}
-                title={heroItem.title}
-                thumbnailUrl={resolvePortfolioThumbnail(
-                  heroItem.embed_url,
-                  heroItem.thumbnail_url,
-                )}
-              />
+              <div className="space-y-4">
+                <ClickToPlayVideo
+                  embedType={heroItem.embed_type}
+                  embedUrl={heroItem.embed_url}
+                  title={heroItem.title}
+                  thumbnailUrl={resolvePortfolioThumbnail(
+                    heroItem.embed_url,
+                    heroItem.thumbnail_url,
+                  )}
+                />
+                <div>
+                  <h3 className="text-lg font-bold text-[var(--text)]">{heroItem.title}</h3>
+                  {heroItem.description?.trim() ? (
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--text-secondary)]">
+                      {heroItem.description}
+                    </p>
+                  ) : null}
+                  {heroItem.style_tags.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {heroItem.style_tags.map((tag) => (
+                        <span key={tag} className="tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             ) : (
               <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]">
                 <UnpublishedText />
