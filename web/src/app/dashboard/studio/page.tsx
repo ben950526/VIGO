@@ -4,6 +4,7 @@ import { SchemaSetupBanner } from "@/components/admin/SchemaSetupBanner";
 import { PortfolioSection } from "@/components/dashboard/PortfolioSection";
 import { StudioPreviewBar } from "@/components/dashboard/StudioPreviewBar";
 import { ProfileForm } from "@/components/forms/ProfileForm";
+import { studioExploreContentGaps } from "@/lib/creator/listing";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { checkCreatorProfileSchema } from "@/lib/db-schema";
 import { isSupabaseConfigured } from "@/lib/utils";
@@ -48,7 +49,15 @@ export default async function StudioContentPage({
           <StudioPreviewBar slug={profile.slug} />
 
           <div className="space-y-16">
-            <ProfileForm profile={profile} embedded justSaved={saved === "1"} />
+            <ProfileForm
+              profile={profile}
+              embedded
+              justSaved={saved === "1"}
+              exploreGaps={studioExploreContentGaps({
+                ...profile,
+                portfolio_items: portfolio,
+              })}
+            />
             <PortfolioSection portfolio={portfolio} />
           </div>
         </div>

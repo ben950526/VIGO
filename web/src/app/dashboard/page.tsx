@@ -95,7 +95,9 @@ export default async function DashboardPage() {
                 ? "已下架（帳號保留，不對外顯示）"
                 : visibleOnExplore
                   ? "已公開上架"
-                  : "已通過審核，補作品後才會出現在探索頁"
+                  : exploreGaps.length > 0
+                    ? `已通過審核，還差${exploreGaps.join("、")}才會出現在探索頁`
+                    : "已通過審核"
               : profile.verification_status === "rejected"
                 ? "未通過"
                 : "審核中"}

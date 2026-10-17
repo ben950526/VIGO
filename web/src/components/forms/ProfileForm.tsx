@@ -23,6 +23,7 @@ interface ProfileFormProps {
   /** 嵌入「編輯工作室內容」頁時不顯示頁首 */
   embedded?: boolean;
   justSaved?: boolean;
+  exploreGaps?: string[];
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -33,7 +34,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ProfileForm({ profile, embedded = false, justSaved = false }: ProfileFormProps) {
+export function ProfileForm({
+  profile,
+  embedded = false,
+  justSaved = false,
+  exploreGaps = [],
+}: ProfileFormProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(justSaved);
   const [pending, setPending] = useState(false);
@@ -144,7 +150,7 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
               <input className="input" name="studio_name" placeholder="例如：Reel Lab 短影工作室" defaultValue={profile.studio_name} required />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">自我介紹（建議填，發案者會先看這段）</label>
+              <label className="mb-1 block text-sm font-medium">自我介紹（探索頁至少約 20 字，沒寫會像沒存到）</label>
               <textarea
                 className="input min-h-28"
                 name="bio"
@@ -235,7 +241,16 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {success && <p className="text-sm text-green-700">已儲存。</p>}
+          {success && (
+            <div className="space-y-2">
+              <p className="text-sm text-green-700">已儲存。資料有進去，不是沒反應。</p>
+              {exploreGaps.length > 0 ? (
+                <p className="text-sm text-amber-800">
+                  探索頁還不會顯示，還差：{exploreGaps.join("、")}。補上再按一次儲存即可。
+                </p>
+              ) : null}
+            </div>
+          )}
           <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
             {pending ? "儲存中…" : "儲存資料"}
           </button>
