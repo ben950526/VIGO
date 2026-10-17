@@ -18,6 +18,12 @@ import {
   STYLE_TAGS,
   TEAM_SIZES,
 } from "@/lib/constants";
+import {
+  avatarObjectPath,
+  avatarUploadErrorMessage,
+  isAvatarExt,
+  validateAvatarFile,
+} from "@/lib/avatar-file";
 import { formatSchemaError } from "@/lib/db-schema";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { collectTagsFromForm } from "@/lib/tags";
@@ -25,15 +31,16 @@ import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
 
 type AuthedClient = Awaited<ReturnType<typeof createClient>>;
 
-function inferImageContentType(file: File): string | null {
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (allowed.includes(file.type)) return file.type;
-  const name = file.name.toLowerCase();
-  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
-  if (name.endsWith(".png")) return "image/png";
-  if (name.endsWith(".webp")) return "image/webp";
-  if (name.endsWith(".gif")) return "image/gif";
-  return null;
+async function saveAvatarUrl(
+  supabase: AuthedClient,
+  profileId: string,
+  publicUrl: string,
+): Promise<string | null> {
+  const { error } = await supabase
+    .from("creator_profiles")
+    .update({ avatar_url: `${publicUrl}?v=${Date.now()}` })
+    .eq("id", profileId);
+  return error ? error.message : null;
 }
 
 async function uploadCreatorAvatar(
@@ -42,33 +49,46 @@ async function uploadCreatorAvatar(
   profileId: string,
   avatarFile: File,
 ): Promise<string | null> {
-  const contentType = inferImageContentType(avatarFile);
-  if (!contentType) return "請上傳 JPG、PNG、WebP 或 GIF，檔案需小於 5MB";
-  if (avatarFile.size > 5 * 1024 * 1024) return "圖片需小於 5MB";
+  const checked = validateAvatarFile(avatarFile);
+  if (!checked.ok) return checked.error;
 
-  const ext = contentType === "image/jpeg" ? "jpg" : contentType.replace("image/", "");
-  const path = `${userId}/avatar.${ext}`;
+  const path = avatarObjectPath(userId, checked.ext);
   const buffer = Buffer.from(await avatarFile.arrayBuffer());
-
   const { error: uploadError } = await supabase.storage
     .from("avatars")
-    .upload(path, buffer, { contentType, upsert: true });
+    .upload(path, buffer, { contentType: checked.contentType, upsert: true });
 
-  if (uploadError) {
-    if (uploadError.message.includes("Bucket not found")) {
-      return "儲存空間尚未建立。請到 Supabase → SQL Editor 執行 supabase/migrations/003_avatar_storage.sql";
-    }
-    return uploadError.message;
-  }
+  if (uploadError) return avatarUploadErrorMessage(uploadError.message);
 
   const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-  const { error: urlError } = await supabase
-    .from("creator_profiles")
-    .update({ avatar_url: `${urlData.publicUrl}?v=${Date.now()}` })
-    .eq("id", profileId);
+  return saveAvatarUrl(supabase, profileId, urlData.publicUrl);
+}
 
-  if (urlError) return urlError.message;
-  return null;
+async function publicAvatarExists(publicUrl: string): Promise<boolean> {
+  try {
+    const response = await fetch(publicUrl, { method: "HEAD", cache: "no-store" });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function attachUploadedAvatar(
+  supabase: AuthedClient,
+  userId: string,
+  profileId: string,
+  ext: string,
+): Promise<string | null> {
+  if (!isAvatarExt(ext)) return "請上傳 JPG、PNG、WebP 或 GIF";
+
+  const path = avatarObjectPath(userId, ext);
+  const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+  const { data: files, error } = await supabase.storage.from("avatars").list(userId, { limit: 20 });
+  const listed = !error && files?.some((file) => file.name === `avatar.${ext}`);
+  const exists = listed || (error ? await publicAvatarExists(urlData.publicUrl) : false);
+  if (!exists) return "照片沒有上傳成功，請再選一次後儲存";
+
+  return saveAvatarUrl(supabase, profileId, urlData.publicUrl);
 }
 
 export async function updateCreatorProfile(formData: FormData) {
@@ -154,11 +174,15 @@ export async function updateCreatorProfile(formData: FormData) {
   }
 
   const avatarFile = formData.get("avatar");
+  const avatarExt = String(formData.get("avatar_ext") ?? "").trim().toLowerCase();
+  let avatarError: string | null = null;
   if (avatarFile instanceof File && avatarFile.size > 0) {
-    const avatarError = await uploadCreatorAvatar(supabase, userId, profile.id, avatarFile);
-    if (avatarError) {
-      return { error: `文字資料已儲存，但照片沒放上去：${avatarError}` };
-    }
+    avatarError = await uploadCreatorAvatar(supabase, userId, profile.id, avatarFile);
+  } else if (avatarExt) {
+    avatarError = await attachUploadedAvatar(supabase, userId, profile.id, avatarExt);
+  }
+  if (avatarError) {
+    return { error: `文字資料已儲存，但照片沒放上去：${avatarError}` };
   }
 
   if (profile.verification_status === "rejected" || profile.verification_status === "draft") {
