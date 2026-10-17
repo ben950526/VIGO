@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { updateCreatorProfile } from "@/actions/creator";
+import { planAvatarSubmit, studioActionFailureMessage } from "@/lib/avatar-file";
+import { uploadAvatarInBrowser } from "@/lib/avatar-upload-browser";
 import { prepareAvatarFile } from "@/lib/image/prepareAvatarFile";
 import { PriceListEditor } from "@/components/forms/PriceListEditor";
 import { TagCheckboxGroup } from "@/components/forms/TagCheckboxGroup";
@@ -41,6 +43,12 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
     profile.price_list?.length ? profile.price_list : [],
   );
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (!error) return;
+    errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [error]);
 
   function handleAvatarChange(file: File | undefined) {
     if (file) setPreview(URL.createObjectURL(file));
@@ -55,27 +63,58 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
     const formData = new FormData(form);
     formData.set("price_list_json", JSON.stringify(parsePriceList(priceList)));
     formData.delete("avatar");
+
     const picked = avatarInputRef.current?.files?.[0];
-    try {
-      if (picked && picked.size > 0) {
-        const prepared = await prepareAvatarFile(picked);
-        if ("error" in prepared) {
-          setError(prepared.error);
-          setPending(false);
-          return;
+    let photoError: string | null = null;
+    if (picked && picked.size > 0) {
+      const prepared = await prepareAvatarFile(picked);
+      if ("error" in prepared) {
+        photoError = prepared.error;
+      } else {
+        let upload: { ext: string } | { error: string } | null = null;
+        try {
+          upload = await uploadAvatarInBrowser(prepared);
+        } catch {
+          upload = { error: "上傳沒有成功，請換一張 JPG、PNG 或 WebP 再試一次" };
         }
-        formData.set("avatar", prepared, prepared.name);
+        const planned = planAvatarSubmit({ fileSize: prepared.size, upload });
+        if (planned.avatarExt) formData.set("avatar_ext", planned.avatarExt);
+        if (planned.sendFile) formData.set("avatar", prepared, prepared.name);
+        photoError = planned.photoError;
       }
+    }
+
+    try {
       const result = await updateCreatorProfile(formData);
       if (result.error) {
         setError(result.error);
+        return;
+      }
+      if (photoError) {
+        setError(`文字資料已儲存，但照片沒放上去：${photoError}`);
         return;
       }
       const next = new URL(window.location.href);
       next.searchParams.set("saved", "1");
       window.location.assign(next.pathname + next.search);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "儲存失敗，請再試一次");
+      console.error("[studio] save failed", err);
+      if (formData.has("avatar")) {
+        formData.delete("avatar");
+        try {
+          const retry = await updateCreatorProfile(formData);
+          if (retry.error) {
+            setError(retry.error);
+            return;
+          }
+          setError("文字資料已儲存，但照片沒放上去：請再選一次照片後儲存。已填的內容不用重打。");
+          return;
+        } catch {
+          setError(studioActionFailureMessage());
+          return;
+        }
+      }
+      setError(studioActionFailureMessage());
     } finally {
       setPending(false);
     }
@@ -116,7 +155,7 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
                     上傳照片
                   </button>
                   <p className="text-xs text-[var(--text-muted)]">
-                    手機相簿可直接選，HEIC 會自動轉成 JPG，最大約 5MB
+                    手機相簿可直接選，HEIC 會自動轉成 JPG，最大約 5MB。照片會另外上傳，其他欄位不會因為照片太大而整份沒存。
                   </p>
                 </div>
                 <input
@@ -224,7 +263,11 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p ref={errorRef} className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
           {success && <p className="text-sm text-green-700">已儲存。</p>}
           <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
             {pending ? "儲存中…" : "儲存資料"}
