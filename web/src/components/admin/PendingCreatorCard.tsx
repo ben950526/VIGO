@@ -74,7 +74,6 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
           <h3 className="text-xl font-bold">{creator.studio_name}</h3>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             {creator.contact_email ?? "未填 Email"} · slug: {creator.slug}
-            {creator.verification_status === "rejected" ? " · 已退件" : ""}
           </p>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
             待審作品 {pendingCount} 件 · 共 {creator.portfolio_items.length} 件

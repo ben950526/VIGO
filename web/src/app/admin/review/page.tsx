@@ -4,11 +4,13 @@ import { AdminPublishedCreatorCard } from "@/components/admin/AdminPublishedCrea
 import { PendingCreatorCard } from "@/components/admin/PendingCreatorCard";
 import { PendingPortfolioRow } from "@/components/admin/PendingPortfolioRow";
 import { PendingPromoShareRow } from "@/components/admin/PendingPromoShareRow";
+import { RejectedCreatorRow } from "@/components/admin/RejectedCreatorRow";
 import { requireAdmin } from "@/lib/auth/admin";
 import {
   getPendingCreators,
   getPendingPortfolioItems,
   getPublishedCreators,
+  getRejectedCreators,
 } from "@/lib/data/admin";
 import { getAdminHealthStats } from "@/lib/data/adminHealth";
 import { getPendingPromoShareSubmissions } from "@/lib/data/promo-share";
@@ -57,14 +59,21 @@ export default async function AdminReviewPage({
   await requireAdmin();
 
   const params = await searchParams;
-  const [pendingCreators, pendingItems, pendingPromoShares, health, publishedCreators] =
-    await Promise.all([
-      getPendingCreators(),
-      getPendingPortfolioItems(),
-      getPendingPromoShareSubmissions(),
-      getAdminHealthStats(),
-      getPublishedCreators(),
-    ]);
+  const [
+    pendingCreators,
+    pendingItems,
+    pendingPromoShares,
+    health,
+    publishedCreators,
+    rejectedCreators,
+  ] = await Promise.all([
+    getPendingCreators(),
+    getPendingPortfolioItems(),
+    getPendingPromoShareSubmissions(),
+    getAdminHealthStats(),
+    getPublishedCreators(),
+    getRejectedCreators(),
+  ]);
 
   const totalPending = pendingCreators.length + pendingItems.length;
 
@@ -153,6 +162,9 @@ export default async function AdminReviewPage({
           <h2 className="mb-4 text-xl font-bold">
             待審創作者 ({pendingCreators.length})
           </h2>
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
+            退件後不會再出現在這裡。對方若改資料再送審，才會重新進來。
+          </p>
           {pendingCreators.length === 0 ? (
             <p className="text-[var(--text-muted)]">目前沒有待審創作者</p>
           ) : (
@@ -177,6 +189,24 @@ export default async function AdminReviewPage({
             <ul className="space-y-4">
               {pendingItems.map((item) => (
                 <PendingPortfolioRow key={item.id} item={item} />
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="mb-12">
+          <h2 className="mb-4 text-xl font-bold">
+            已退件（不佔待審）({rejectedCreators.length})
+          </h2>
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
+            測試帳號若要拿掉，請在這裡完整註銷。不要一直按退件。
+          </p>
+          {rejectedCreators.length === 0 ? (
+            <p className="text-[var(--text-muted)]">目前沒有已退件工作室</p>
+          ) : (
+            <ul className="space-y-3">
+              {rejectedCreators.map((creator) => (
+                <RejectedCreatorRow key={creator.id} creator={creator} />
               ))}
             </ul>
           )}

@@ -240,7 +240,7 @@ export async function rejectCreator(formData: FormData): Promise<void> {
 
   await supabase
     .from("creator_profiles")
-    .update({ verification_status: "rejected" })
+    .update({ verification_status: "rejected", is_listed: false })
     .eq("id", id);
 
   await notifyCreatorRejectedFromPending(before);

@@ -19,7 +19,7 @@ export async function getPendingCreators(): Promise<PendingCreator[]> {
   const { data, error } = await supabase
     .from("creator_profiles")
     .select(`${PENDING_CREATOR_FIELDS}, portfolio_items(${PORTFOLIO_REVIEW_FIELDS})`)
-    .in("verification_status", ["pending", "rejected"])
+    .eq("verification_status", "pending")
     .eq("is_demo", false)
     .order("created_at", { ascending: false });
 
@@ -67,6 +67,25 @@ export async function getPendingPortfolioItems(): Promise<
 
 export interface PublishedCreator extends CreatorProfile {
   portfolio_items: PortfolioItem[];
+}
+
+export type RejectedCreator = Pick<
+  CreatorProfile,
+  "id" | "studio_name" | "slug" | "contact_email" | "created_at" | "is_demo"
+>;
+
+export async function getRejectedCreators(): Promise<RejectedCreator[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("creator_profiles")
+    .select("id, studio_name, slug, contact_email, created_at, is_demo")
+    .eq("verification_status", "rejected")
+    .eq("is_demo", false)
+    .order("updated_at", { ascending: false })
+    .limit(50);
+
+  if (error || !data) return [];
+  return data as RejectedCreator[];
 }
 
 export const getPublishedCreators = cache(async (): Promise<PublishedCreator[]> => {
