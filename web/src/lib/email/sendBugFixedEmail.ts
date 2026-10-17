@@ -35,6 +35,7 @@ export async function sendBugFixedEmail(params: {
       reportMessage: params.reportMessage,
       retrySteps: params.retrySteps,
       retryUrl: retryUrlFromPage(params.pageUrl),
+      confirmUrl: `${siteUrl()}/dashboard`,
     }),
   });
 }

@@ -4,10 +4,13 @@ import { requireAdmin } from "@/lib/auth/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { BugReportItem, BugReportStatus } from "@/types/database";
 
-const tabs: { value: BugReportStatus | "all"; label: string }[] = [
+type BugListFilter = BugReportStatus | "all" | "awaiting";
+
+const tabs: { value: BugListFilter; label: string }[] = [
   { value: "open", label: "待處理" },
   { value: "investigating", label: "處理中" },
-  { value: "fixed", label: "已修復" },
+  { value: "awaiting", label: "等對方確認" },
+  { value: "fixed", label: "對方已確認" },
   { value: "wont_fix", label: "無法重現" },
   { value: "all", label: "未結案" },
 ];
@@ -20,8 +23,10 @@ export default async function AdminBugsPage({
   await requireAdmin();
 
   const { status: statusParam } = await searchParams;
-  const statusFilter =
-    statusParam && tabs.some((t) => t.value === statusParam) ? statusParam : "open";
+  const statusFilter: BugListFilter =
+    statusParam && tabs.some((t) => t.value === statusParam)
+      ? (statusParam as BugListFilter)
+      : "open";
 
   const supabase = await createClient();
   let query = supabase
@@ -31,7 +36,13 @@ export default async function AdminBugsPage({
     .limit(100);
 
   if (statusFilter === "all") {
-    query = query.in("status", ["open", "investigating"]);
+    query = query.or(
+      "status.in.(open,investigating),and(status.eq.fixed,user_confirmed_at.is.null)",
+    );
+  } else if (statusFilter === "awaiting") {
+    query = query.eq("status", "fixed").is("user_confirmed_at", null);
+  } else if (statusFilter === "fixed") {
+    query = query.eq("status", "fixed").not("user_confirmed_at", "is", null);
   } else {
     query = query.eq("status", statusFilter);
   }
@@ -49,7 +60,7 @@ export default async function AdminBugsPage({
               {tabs.find((t) => t.value === statusFilter)?.label}：{items.length} 則
             </p>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              標成已修復後，寫「給對方的重試步驟」並勾選寄信。舊回報若沒留信箱，請手動填 Email。
+              標成已修好並寄信後，對方登入 Vigo 按「已修復」才算真正結案。舊回報若沒留信箱，請手動填 Email。
             </p>
           </div>
           <Link href="/admin/review" className="btn-secondary text-sm">

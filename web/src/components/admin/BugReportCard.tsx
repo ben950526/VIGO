@@ -8,7 +8,7 @@ import type { BugReportItem, BugReportStatus } from "@/types/database";
 const statusOptions: { value: BugReportStatus; label: string }[] = [
   { value: "open", label: "待處理" },
   { value: "investigating", label: "處理中" },
-  { value: "fixed", label: "已修復" },
+  { value: "fixed", label: "已修好（等對方確認）" },
   { value: "wont_fix", label: "無法重現" },
 ];
 
@@ -40,7 +40,7 @@ export function BugReportCard({ item }: BugReportCardProps) {
       return;
     }
     const nextStatus = String(formData.get("status") ?? "");
-    if (nextStatus === "fixed" || nextStatus === "wont_fix") {
+    if (nextStatus === "wont_fix") {
       setHidden(true);
       router.refresh();
       return;
@@ -62,7 +62,9 @@ export function BugReportCard({ item }: BugReportCardProps) {
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge[item.status]}`}
         >
-          {statusOptions.find((o) => o.value === item.status)?.label ?? item.status}
+          {item.status === "fixed" && item.user_confirmed_at
+            ? "對方已確認"
+            : statusOptions.find((o) => o.value === item.status)?.label ?? item.status}
         </span>
         <span className="text-xs text-[var(--text-muted)]">
           {new Date(item.created_at).toLocaleString("zh-TW")}
@@ -70,6 +72,11 @@ export function BugReportCard({ item }: BugReportCardProps) {
         {item.notified_at && (
           <span className="text-xs text-green-700">
             已通知 {new Date(item.notified_at).toLocaleString("zh-TW")}
+          </span>
+        )}
+        {item.user_confirmed_at && (
+          <span className="text-xs text-green-700">
+            對方確認 {new Date(item.user_confirmed_at).toLocaleString("zh-TW")}
           </span>
         )}
       </div>
@@ -148,7 +155,7 @@ export function BugReportCard({ item }: BugReportCardProps) {
             defaultChecked={item.status === "fixed" && !item.notified_at}
           />
           <span>
-            標成已修復時，寄信告訴對方已修好，並附上上面的重試步驟
+            標成已修好時，寄信請對方再試；對方登入後可按「已修復」才算真正結案
             {item.notified_at ? "（已寄過，勾選會再寄一次）" : ""}
           </span>
         </label>

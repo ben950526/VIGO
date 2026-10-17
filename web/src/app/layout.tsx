@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { BugFixConfirmHost } from "@/components/bugs/BugFixConfirmHost";
 import { HelpFab } from "@/components/feedback/HelpFab";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -22,6 +24,9 @@ export default function RootLayout({
     <html lang="zh-Hant">
       <body className="min-h-screen antialiased">
         <Navbar />
+        <Suspense fallback={null}>
+          <BugFixConfirmHost />
+        </Suspense>
         <main>{children}</main>
         <Footer />
         <HelpFab />

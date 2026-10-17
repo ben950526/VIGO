@@ -308,6 +308,7 @@ export interface Database {
           contact_email: string | null;
           user_reply: string | null;
           notified_at: string | null;
+          user_confirmed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -324,6 +325,7 @@ export interface Database {
           contact_email?: string | null;
           user_reply?: string | null;
           notified_at?: string | null;
+          user_confirmed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -340,6 +342,7 @@ export interface Database {
           contact_email?: string | null;
           user_reply?: string | null;
           notified_at?: string | null;
+          user_confirmed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -505,6 +508,10 @@ export interface Database {
           p_referred_user_id: string;
           p_referrer_slug: string;
         };
+        Returns: Json;
+      };
+      confirm_own_bug_fixed: {
+        Args: { p_id: string };
         Returns: Json;
       };
       admin_approve_promo_share: {

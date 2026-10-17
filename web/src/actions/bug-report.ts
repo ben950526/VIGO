@@ -84,3 +84,32 @@ export async function submitBugReport(formData: FormData) {
 
   return { success: true };
 }
+
+export async function confirmOwnBugFixed(reportId: string) {
+  if (!isSupabaseConfigured()) {
+    return { error: "請先設定資料庫" };
+  }
+  const session = await getAuthSession();
+  if (!session?.user?.id) {
+    return { error: "請先登入" };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("confirm_own_bug_fixed", {
+    p_id: reportId,
+  });
+
+  if (error) {
+    if (error.message.includes("confirm_own_bug_fixed") || error.message.includes("schema cache")) {
+      return { error: "確認功能尚未啟用。請先執行 migrations/029_bug_user_confirm.sql" };
+    }
+    return { error: error.message };
+  }
+
+  const payload = data as { ok?: boolean; error?: string } | null;
+  if (!payload?.ok) {
+    return { error: payload?.error || "確認失敗，請再試一次" };
+  }
+
+  return { success: true };
+}
