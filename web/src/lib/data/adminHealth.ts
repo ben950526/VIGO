@@ -13,6 +13,12 @@ export type AdminHealthStats = {
   approvedListed: number;
   feedbackThisWeek: number;
   bugsThisWeek: number;
+  realStudios: number;
+  referredStudios: number;
+  referralSignups: number;
+  referrersWithSuccess: number;
+  promoSharesSubmitted: number;
+  promoSharesApproved: number;
 };
 
 export async function getAdminHealthStats(): Promise<AdminHealthStats> {
@@ -27,6 +33,12 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
     approvedListed: 0,
     feedbackThisWeek: 0,
     bugsThisWeek: 0,
+    realStudios: 0,
+    referredStudios: 0,
+    referralSignups: 0,
+    referrersWithSuccess: 0,
+    promoSharesSubmitted: 0,
+    promoSharesApproved: 0,
   };
 
   if (!isSupabaseConfigured()) return empty;
@@ -52,6 +64,9 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
     listedRes,
     feedbackRes,
     bugRes,
+    studioRes,
+    signupRes,
+    shareRes,
   ] = await Promise.all([
     supabase
       .from("creator_profiles")
@@ -85,6 +100,12 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
       .select("id", { count: "exact", head: true })
       .gte("created_at", weekIso)
       .in("status", ["open", "investigating"]),
+    supabase
+      .from("creator_profiles")
+      .select("user_id, referred_by_user_id")
+      .eq("is_demo", false),
+    supabase.from("referral_signups").select("referrer_user_id"),
+    supabase.from("promo_share_submissions").select("status"),
   ]);
 
   let knockRows: { from_admin?: boolean | null; user_agent?: string | null }[] | null =
@@ -111,6 +132,18 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
     approvedListed: listedRes.count ?? 0,
     feedbackThisWeek: feedbackRes.count ?? 0,
     bugsThisWeek: bugRes.count ?? 0,
+    realStudios: studioRes.error ? 0 : (studioRes.data ?? []).length,
+    referredStudios: studioRes.error
+      ? 0
+      : (studioRes.data ?? []).filter((row) => Boolean(row.referred_by_user_id)).length,
+    referralSignups: signupRes.error ? 0 : (signupRes.data ?? []).length,
+    referrersWithSuccess: signupRes.error
+      ? 0
+      : new Set((signupRes.data ?? []).map((row) => row.referrer_user_id)).size,
+    promoSharesSubmitted: shareRes.error ? 0 : (shareRes.data ?? []).length,
+    promoSharesApproved: shareRes.error
+      ? 0
+      : (shareRes.data ?? []).filter((row) => row.status === "approved").length,
   };
 }
 

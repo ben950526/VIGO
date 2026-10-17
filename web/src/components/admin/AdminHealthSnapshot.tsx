@@ -31,6 +31,28 @@ export function AdminHealthSnapshot({ stats }: { stats: AdminHealthStats }) {
           hint={`意見 ${stats.feedbackThisWeek} · BUG ${stats.bugsThisWeek}`}
         />
       </div>
+      <h3 className="mb-1 mt-8 text-base font-bold">邀請碼全站使用</h3>
+      <p className="mb-4 text-sm text-[var(--text-muted)]">
+        看得到「有沒有人用別人的碼註冊」，看不到有沒有轉貼但沒人點。不含示範帳號。
+      </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <Stat label="真實工作室" value={stats.realStudios} />
+        <Stat
+          label="用邀請碼註冊"
+          value={stats.referredStudios}
+          hint={
+            stats.realStudios
+              ? `約 ${Math.round((stats.referredStudios / stats.realStudios) * 100)}%`
+              : undefined
+          }
+        />
+        <Stat label="成功邀請筆數" value={stats.referralSignups} />
+        <Stat
+          label="有拉到人的邀請人"
+          value={stats.referrersWithSuccess}
+          hint={`宣傳貼文送審 ${stats.promoSharesSubmitted} · 通過 ${stats.promoSharesApproved}`}
+        />
+      </div>
     </div>
   );
 }
