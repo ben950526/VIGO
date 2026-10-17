@@ -113,3 +113,32 @@ export async function confirmOwnBugFixed(reportId: string) {
 
   return { success: true };
 }
+
+export async function reopenOwnBug(reportId: string) {
+  if (!isSupabaseConfigured()) {
+    return { error: "請先設定資料庫" };
+  }
+  const session = await getAuthSession();
+  if (!session?.user?.id) {
+    return { error: "請先登入" };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("reopen_own_bug", {
+    p_id: reportId,
+  });
+
+  if (error) {
+    if (error.message.includes("reopen_own_bug") || error.message.includes("schema cache")) {
+      return { error: "回報功能尚未啟用。請先執行 migrations/030_bug_user_reopen.sql" };
+    }
+    return { error: error.message };
+  }
+
+  const payload = data as { ok?: boolean; error?: string } | null;
+  if (!payload?.ok) {
+    return { error: payload?.error || "送出失敗，請再試一次" };
+  }
+
+  return { success: true };
+}

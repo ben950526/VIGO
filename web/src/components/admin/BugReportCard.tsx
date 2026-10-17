@@ -155,7 +155,7 @@ export function BugReportCard({ item }: BugReportCardProps) {
             defaultChecked={item.status === "fixed" && !item.notified_at}
           />
           <span>
-            標成已修好時，寄信請對方再試；對方登入後可按「已修復」才算真正結案
+            標成已修好時，寄信請對方再試；對方會先「去再試一次」，再選「已修復」或「還有問題」
             {item.notified_at ? "（已寄過，勾選會再寄一次）" : ""}
           </span>
         </label>

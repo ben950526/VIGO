@@ -60,7 +60,7 @@ export default async function AdminBugsPage({
               {tabs.find((t) => t.value === statusFilter)?.label}：{items.length} 則
             </p>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              標成已修好並寄信後，對方登入 Vigo 按「已修復」才算真正結案。舊回報若沒留信箱，請手動填 Email。
+              標成已修好並寄信後，對方會先「去再試一次」，再選「已修復」或「還有問題」。舊回報若沒留信箱，請手動填 Email。
             </p>
           </div>
           <Link href="/admin/review" className="btn-secondary text-sm">

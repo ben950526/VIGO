@@ -514,6 +514,10 @@ export interface Database {
         Args: { p_id: string };
         Returns: Json;
       };
+      reopen_own_bug: {
+        Args: { p_id: string };
+        Returns: Json;
+      };
       admin_approve_promo_share: {
         Args: { p_submission_id: string };
         Returns: Json;
