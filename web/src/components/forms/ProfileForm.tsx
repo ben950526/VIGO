@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { updateCreatorProfile } from "@/actions/creator";
 import { prepareAvatarFile } from "@/lib/image/prepareAvatarFile";
+import { uploadAvatarFromBrowser } from "@/lib/image/uploadAvatarFromBrowser";
 import { PriceListEditor } from "@/components/forms/PriceListEditor";
 import { TagCheckboxGroup } from "@/components/forms/TagCheckboxGroup";
 import {
@@ -57,18 +58,28 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
     formData.delete("avatar");
     const picked = avatarInputRef.current?.files?.[0];
     try {
+      let photoError = "";
       if (picked && picked.size > 0) {
         const prepared = await prepareAvatarFile(picked);
         if ("error" in prepared) {
-          setError(prepared.error);
-          setPending(false);
-          return;
+          photoError = prepared.error;
+        } else {
+          const uploaded = await uploadAvatarFromBrowser(prepared);
+          if (!uploaded.ok) {
+            photoError = uploaded.error;
+          } else {
+            formData.set("avatar_storage_path", uploaded.path);
+          }
         }
-        formData.set("avatar", prepared, prepared.name);
       }
       const result = await updateCreatorProfile(formData);
       if (result.error) {
         setError(result.error);
+        return;
+      }
+      if (photoError) {
+        setError(`資料已儲存，但照片沒放上去：${photoError}`);
+        setSuccess(true);
         return;
       }
       const next = new URL(window.location.href);
@@ -116,13 +127,12 @@ export function ProfileForm({ profile, embedded = false, justSaved = false }: Pr
                     上傳照片
                   </button>
                   <p className="text-xs text-[var(--text-muted)]">
-                    手機相簿可直接選，HEIC 會自動轉成 JPG，最大約 5MB
+                    手機相簿可直接選，HEIC 會自動轉成 JPG。加照片不會再把整份儲存打掉。
                   </p>
                 </div>
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  name="avatar"
                   accept="image/*,.heic,.heif,image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={(e) => handleAvatarChange(e.target.files?.[0])}

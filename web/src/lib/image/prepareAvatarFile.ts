@@ -1,6 +1,6 @@
-const MAX_EDGE = 1600;
-const JPEG_QUALITY = 0.85;
-const MAX_OUTPUT_BYTES = 5 * 1024 * 1024;
+const MAX_EDGE = 1200;
+const JPEG_QUALITY = 0.8;
+const MAX_OUTPUT_BYTES = 900 * 1024;
 
 function isAlreadyWebImage(file: File): boolean {
   return ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type);
@@ -41,7 +41,7 @@ export async function prepareAvatarFile(file: File): Promise<File | { error: str
     return { error: "圖片太大，請選 20MB 以內的照片" };
   }
 
-  if (isAlreadyWebImage(file) && file.size <= MAX_OUTPUT_BYTES) {
+  if (isAlreadyWebImage(file) && file.size <= 400 * 1024) {
     return file;
   }
 

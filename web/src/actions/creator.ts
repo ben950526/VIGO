@@ -25,41 +25,20 @@ import { notifyAdminReviewPending } from "@/lib/email/notifyAdminReviewPending";
 
 type AuthedClient = Awaited<ReturnType<typeof createClient>>;
 
-function inferImageContentType(file: File): string | null {
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (allowed.includes(file.type)) return file.type;
-  const name = file.name.toLowerCase();
-  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
-  if (name.endsWith(".png")) return "image/png";
-  if (name.endsWith(".webp")) return "image/webp";
-  if (name.endsWith(".gif")) return "image/gif";
-  return null;
-}
-
-async function uploadCreatorAvatar(
+async function attachUploadedAvatar(
   supabase: AuthedClient,
   userId: string,
   profileId: string,
-  avatarFile: File,
+  rawPath: string,
 ): Promise<string | null> {
-  const contentType = inferImageContentType(avatarFile);
-  if (!contentType) return "請上傳 JPG、PNG、WebP 或 GIF，檔案需小於 5MB";
-  if (avatarFile.size > 5 * 1024 * 1024) return "圖片需小於 5MB";
-
-  const ext = contentType === "image/jpeg" ? "jpg" : contentType.replace("image/", "");
-  const path = `${userId}/avatar.${ext}`;
-  const buffer = Buffer.from(await avatarFile.arrayBuffer());
-
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(path, buffer, { contentType, upsert: true });
-
-  if (uploadError) {
-    if (uploadError.message.includes("Bucket not found")) {
-      return "儲存空間尚未建立。請到 Supabase → SQL Editor 執行 supabase/migrations/003_avatar_storage.sql";
-    }
-    return uploadError.message;
-  }
+  const path = rawPath.replace(/^\/+/, "");
+  const allowed = new Set([
+    `${userId}/avatar.jpg`,
+    `${userId}/avatar.jpeg`,
+    `${userId}/avatar.png`,
+    `${userId}/avatar.webp`,
+  ]);
+  if (!allowed.has(path)) return "照片路徑無效";
 
   const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
   const { error: urlError } = await supabase
@@ -153,9 +132,9 @@ export async function updateCreatorProfile(formData: FormData) {
     return { error: formatSchemaError(error.message) ?? error.message };
   }
 
-  const avatarFile = formData.get("avatar");
-  if (avatarFile instanceof File && avatarFile.size > 0) {
-    const avatarError = await uploadCreatorAvatar(supabase, userId, profile.id, avatarFile);
+  const avatarPath = String(formData.get("avatar_storage_path") ?? "").trim();
+  if (avatarPath) {
+    const avatarError = await attachUploadedAvatar(supabase, userId, profile.id, avatarPath);
     if (avatarError) {
       return { error: `文字資料已儲存，但照片沒放上去：${avatarError}` };
     }
