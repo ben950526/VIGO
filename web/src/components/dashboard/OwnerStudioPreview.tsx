@@ -51,7 +51,7 @@ export function OwnerStudioPreview({ creator }: OwnerStudioPreviewProps) {
                   : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]"
               }`}
             >
-              敲門後（完整）
+              敲門後（含聯絡）
             </button>
             <button
               type="button"
@@ -62,7 +62,7 @@ export function OwnerStudioPreview({ creator }: OwnerStudioPreviewProps) {
                   : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]"
               }`}
             >
-              敲門前
+              敲門前（可看作品）
             </button>
           </div>
           <Link href="/dashboard/studio" className="text-sm text-[var(--accent)] hover:underline">
@@ -107,22 +107,25 @@ export function OwnerStudioPreview({ creator }: OwnerStudioPreviewProps) {
             </h1>
             {view === "knock" && (
               <p className="text-sm text-[var(--text-muted)]">
-                敲門後查看自介、風格、作品與聯絡方式
+                發案者可先看作品；敲門後才看得到聯絡方式
               </p>
             )}
           </div>
         </div>
       </section>
 
-      {view === "full" ? (
-        <CreatorFullContent creator={creator} previewMode />
-      ) : (
+      <CreatorFullContent
+        creator={creator}
+        previewMode
+        lockContact={view === "knock"}
+      />
+      {view === "knock" ? (
         <CreatorKnockGate
           creator={publicCreator}
           previewSimulation
           onPreviewReveal={() => setView("full")}
         />
-      )}
+      ) : null}
 
       {isDemo && view === "full" && (
         <p className="pb-8 text-center text-xs text-[var(--text-muted)]">

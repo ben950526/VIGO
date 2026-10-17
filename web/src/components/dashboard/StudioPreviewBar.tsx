@@ -13,10 +13,10 @@ export function StudioPreviewBar({ slug }: StudioPreviewBarProps) {
       </p>
       <div className="flex flex-wrap gap-3">
         <Link href="/dashboard/preview" className="btn-primary text-sm">
-          預覽敲門後（完整內容）
+          預覽敲門後（含聯絡）
         </Link>
         <Link href="/dashboard/preview?view=knock" className="btn-secondary text-sm">
-          預覽敲門前
+          預覽敲門前（可看作品）
         </Link>
         <Link
           href={`/creator/${slug}`}

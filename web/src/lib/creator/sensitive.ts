@@ -1,7 +1,7 @@
 import type { CreatorProfile, PortfolioItem, PriceListItem } from "@/types/database";
 import { parsePriceList } from "@/lib/price-list";
 
-/** 敲门前公開：僅基本識別資訊 */
+/** 敲門前公開頁仍會用到的識別資訊（作品已可先看，聯絡方式另鎖） */
 export type PublicCreatorProfile = Pick<
   CreatorProfile,
   | "id"
@@ -20,7 +20,7 @@ export type PublicCreatorProfile = Pick<
   | "updated_at"
 >;
 
-/** 敲門後解鎖的完整工作室內容 */
+/** 敲門後解鎖的內容（現況：聯絡方式；其餘作品與介紹已公開） */
 export type CreatorKnockUnlock = {
   bio: string | null;
   style_tags: string[];

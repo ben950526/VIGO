@@ -39,11 +39,11 @@ export function buildApprovalEmailHtml({
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 560px; margin: 0 auto; padding: 24px;">
   <h1 style="font-size: 22px; margin-bottom: 16px;">恭喜，工作室可以上架了</h1>
   <p>嗨，好消息：<strong>${name}</strong> 已經通過審核，會出現在探索頁。</p>
-  <p>發案者會先逛作品；他們按「敲門」之後，才看得到完整介紹和聯絡方式。所以頁面有東西可看，會差很多。</p>
+  <p>發案者會先逛作品；對到風格才按「敲門」看聯絡方式。所以作品要先能看、能懂。</p>
   <p style="margin: 24px 0 8px;">${emailCta(creatorUrl, "先看自己的公開頁")}</p>
 
   <h2 style="font-size: 17px; margin-top: 28px;">有空的話，先花約 15 分鐘補齊</h2>
-  <p>介紹或作品太空的話，對方敲門進來也留不久。建議可以：</p>
+  <p>介紹或作品太空的話，對方看完也不會敲門。建議可以：</p>
   <ol>
     <li>把介紹、服務、地區、聯絡方式寫清楚一點。</li>
     <li>先掛上 <strong>3 支</strong> YouTube 或 Reels（有能點開的就好）。</li>

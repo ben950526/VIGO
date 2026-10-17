@@ -115,14 +115,14 @@ export default async function DashboardPage() {
               {viewStats.uniqueThisMonth} 人
             </p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">
-              公開頁被打開即計算（同一人同一天只算一次）。自己預覽不算。
+              有人打開你的公開頁來看作品（同一人同一天只算一次）。自己預覽不算。
             </p>
             <p className="mt-3 font-medium text-[var(--text)]">敲門</p>
             <p className="mt-1 text-[var(--text-secondary)]">
               累計 {knockStats.total} 次 · 本週 {knockStats.thisWeek} 次 · 本月 {knockStats.thisMonth} 次
             </p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">
-              發案者按敲門後才看得到完整內容與聯絡方式。
+              發案者可先看作品；按敲門後才看得到聯絡方式。
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

@@ -30,7 +30,7 @@ export function buildWelcomeEmailHtml(params: {
   </ol>
   <p>補完之後：</p>
   <ul>
-    <li>發案者按「敲門」後，才看得到完整介紹和聯絡方式。</li>
+    <li>發案者可先看作品；按「敲門」後才看得到聯絡方式。</li>
     <li>邀請同行完成接案者註冊拿 ${REFERRAL_CREDIT_PER_SIGNUP} 點／人；公開貼文附連結送審通過拿 ${SOCIAL_SHARE_CREDIT} 點（每人一次）。點數不能換現，上限 ${REFERRAL_CREDIT_MAX_BALANCE} 點。</li>
   </ul>
   <p style="margin: 24px 0 8px;">

@@ -49,10 +49,10 @@ export function CreatorKnockGate({
     return (
       <section className="section bg-[var(--surface)]">
         <div className="container-narrow mx-auto max-w-2xl text-center">
-          <h2 className="mb-3 text-3xl font-bold">敲門查看工作室</h2>
+          <h2 className="mb-3 text-3xl font-bold">敲門查看聯絡方式</h2>
           <p className="mb-4 text-[var(--text-secondary)]">
-            發案者在此按<strong className="text-[var(--text)]">敲門</strong>後，才會看到{" "}
-            {creator.studio_name} 的自介、作品與聯絡方式。
+            上面的作品可以先看。對到風格後，按<strong className="text-[var(--text)]">敲門</strong>
+            才會看到 {creator.studio_name} 的聯絡方式。
           </p>
           <p className="mb-6 text-sm text-[var(--text-muted)]">
             這是預覽模擬，不會計入敲門次數。
@@ -69,7 +69,7 @@ export function CreatorKnockGate({
             disabled={!agreedAttribution}
             className="btn-primary px-10 py-3 text-lg disabled:opacity-70"
           >
-            模擬敲門成功 → 看完整內容
+            模擬敲門成功 → 看聯絡方式
           </button>
         </div>
       </section>
@@ -116,13 +116,13 @@ export function CreatorKnockGate({
   return (
     <section className="section bg-[var(--surface)]">
       <div className="container-narrow mx-auto max-w-2xl text-center">
-        <h2 className="mb-3 text-3xl font-bold">敲門查看工作室</h2>
+        <h2 className="mb-3 text-3xl font-bold">敲門查看聯絡方式</h2>
         <p className="mb-4 text-[var(--text-secondary)]">
-          按<strong className="text-[var(--text)]">敲門</strong>後，即可查看{" "}
-          {creator.studio_name} 的自介、風格、作品集、價目表與聯絡方式。
+          作品可以免費先看。真的想進一步合作，再按<strong className="text-[var(--text)]">敲門</strong>
+          查看 {creator.studio_name} 的聯絡方式。
         </p>
         <p className="mb-6 text-sm text-[var(--text-muted)]">
-          創作者會在後台看到被瀏覽次數，方便了解有多少發案者感興趣。
+          創作者後台會分開看「有多少人來逛作品」和「有多少人敲門要聯絡」。
         </p>
         <KnockAttributionNotice />
         <KnockAttributionCheckbox
@@ -136,11 +136,11 @@ export function CreatorKnockGate({
           disabled={pending || !agreedAttribution}
           className="btn-primary px-10 py-3 text-lg disabled:opacity-70"
         >
-          {pending ? "敲門中…" : "敲門"}
+          {pending ? "敲門中…" : "敲門，查看聯絡方式"}
         </button>
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         <p className="mt-6 text-xs text-[var(--text-muted)]">
-          敲門表示你有興趣進一步了解。平台不介入後續洽談，次數不限。
+          敲門表示你願意留下聯絡、進一步洽談。平台不介入後續，次數不限。
         </p>
       </div>
     </section>

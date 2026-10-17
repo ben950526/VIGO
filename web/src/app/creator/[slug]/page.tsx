@@ -36,7 +36,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   const publicCreator = toPublicCreatorProfile(creator);
   const knocked =
     !isPreview && !isDemo && (await isCreatorKnockUnlocked(creator.id));
-  const showFullContent = isPreview || isDemo || knocked;
+  const showContact = isPreview || isDemo || knocked;
 
   return (
     <>
@@ -68,20 +68,21 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
               {creator.studio_name}
               <DemoBadge creator={creator} className="text-sm" />
             </h1>
-            {!showFullContent && (
+            {!showContact && (
               <p className="text-sm text-[var(--text-muted)]">
-                敲門後查看自介、風格、作品與聯絡方式
+                先看作品；對到風格再敲門，才會看到聯絡方式
               </p>
             )}
           </div>
         </div>
       </section>
 
-      {showFullContent ? (
-        <CreatorFullContent creator={creator} />
-      ) : (
-        <CreatorKnockGate creator={publicCreator} />
-      )}
+      <CreatorFullContent
+        creator={creator}
+        previewMode={isPreview}
+        lockContact={!showContact}
+      />
+      {!showContact ? <CreatorKnockGate creator={publicCreator} /> : null}
     </>
   );
 }

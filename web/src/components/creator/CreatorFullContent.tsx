@@ -14,9 +14,15 @@ interface CreatorFullContentProps {
   creator: CreatorWithPortfolio;
   /** 接案者預覽：含待審作品、顯示審核中標籤 */
   previewMode?: boolean;
+  /** 未敲門時不顯示 Email／LINE／電話 */
+  lockContact?: boolean;
 }
 
-export function CreatorFullContent({ creator, previewMode = false }: CreatorFullContentProps) {
+export function CreatorFullContent({
+  creator,
+  previewMode = false,
+  lockContact = false,
+}: CreatorFullContentProps) {
   const heroItem = previewMode
     ? getFeaturedPortfolioItemForPreview(creator.portfolio_items)
     : getFeaturedPortfolioItem(creator.portfolio_items);
@@ -115,7 +121,7 @@ export function CreatorFullContent({ creator, previewMode = false }: CreatorFull
 
       <CreatorStudioInfo creator={creator} />
       <CreatorPriceList creator={creator} />
-      <ContactSection creator={creator} />
+      {lockContact ? null : <ContactSection creator={creator} />}
     </>
   );
 }
