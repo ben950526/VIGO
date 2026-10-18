@@ -12,6 +12,10 @@ import { AdminActionForm } from "@/components/admin/AdminActionForm";
 import { AdminPendingCreatorPreview } from "@/components/admin/AdminPendingCreatorPreview";
 import { AdminPurgeAccountForm } from "@/components/admin/AdminPurgeAccountForm";
 import type { PendingCreator } from "@/lib/data/admin";
+import {
+  isReadyForPriorityReview,
+  studioExploreContentGaps,
+} from "@/lib/creator/listing";
 
 function ReviewActions({
   creatorId,
@@ -62,6 +66,8 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
   if (removed) return null;
 
   const pendingCount = creator.portfolio_items.filter((p) => p.status === "pending").length;
+  const exploreGaps = studioExploreContentGaps(creator);
+  const readyForExplore = isReadyForPriorityReview(creator);
 
   function onDone() {
     setRemoved(true);
@@ -77,6 +83,15 @@ export function PendingCreatorCard({ creator }: { creator: PendingCreator }) {
           </p>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
             待審作品 {pendingCount} 件 · 共 {creator.portfolio_items.length} 件
+          </p>
+          <p className="mt-1 text-sm">
+            {readyForExplore ? (
+              <span className="text-green-700">過審後就能出現在探索頁</span>
+            ) : (
+              <span className="text-amber-800">
+                現在過審也不會上探索頁（還差{exploreGaps.join("、")}）
+              </span>
+            )}
           </p>
         </div>
         <ReviewActions creatorId={creator.id} onDone={onDone} />

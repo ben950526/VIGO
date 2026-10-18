@@ -10,6 +10,7 @@ export async function sendPortfolioApprovedEmail(params: {
   studioName: string;
   slug: string;
   workTitle: string;
+  exploreGaps?: string[];
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const baseUrl = siteUrl();
   return dispatchEmail({
@@ -20,6 +21,8 @@ export async function sendPortfolioApprovedEmail(params: {
       workTitle: params.workTitle,
       creatorUrl: `${baseUrl}/creator/${params.slug}`,
       dashboardUrl: `${baseUrl}/dashboard`,
+      studioEditUrl: `${baseUrl}/dashboard/studio`,
+      exploreGaps: params.exploreGaps ?? [],
     }),
   });
 }

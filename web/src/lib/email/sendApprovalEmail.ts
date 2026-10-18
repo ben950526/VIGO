@@ -8,14 +8,20 @@ export async function sendCreatorApprovalEmail(params: {
   studioName: string;
   slug: string;
   inviteCode?: string | null;
+  exploreGaps?: string[];
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const baseUrl = siteUrl();
   const inviteCode = params.inviteCode?.trim() || null;
   const referralUrl = inviteCode ? buildReferralRegisterUrl(baseUrl, inviteCode) : null;
+  const exploreGaps = params.exploreGaps ?? [];
+  const subject =
+    exploreGaps.length === 0
+      ? `【Vigo】恭喜，「${params.studioName}」已出現在探索頁`
+      : `【Vigo】「${params.studioName}」已通過審核，還差一點才會出現在探索頁`;
 
   return dispatchEmail({
     to: params.to,
-    subject: `【Vigo】恭喜，「${params.studioName}」可以上架了`,
+    subject,
     html: buildApprovalEmailHtml({
       studioName: params.studioName,
       creatorUrl: `${baseUrl}/creator/${params.slug}`,
@@ -25,6 +31,7 @@ export async function sendCreatorApprovalEmail(params: {
       termsUrl: `${baseUrl}/terms#promo-credits`,
       inviteCode,
       referralUrl,
+      exploreGaps,
     }),
   });
 }

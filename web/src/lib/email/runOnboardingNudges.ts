@@ -1,4 +1,4 @@
-import { studioSubmitGaps } from "@/lib/creator/studioSubmit";
+import { studioExploreContentGaps } from "@/lib/creator/listing";
 import { adminNotifyEmail, emailFrom, resendApiKey, siteUrl } from "@/lib/email/config";
 import {
   buildOnboardingNudgeHtml,
@@ -116,10 +116,10 @@ export async function runOnboardingNudges(now = new Date()): Promise<OnboardingN
     .select("creator_id, status")
     .in("creator_id", ids);
 
-  const hasWork = new Set<string>();
+  const workCountByCreator = new Map<string, number>();
   for (const w of works ?? []) {
     if (w.status === "rejected") continue;
-    hasWork.add(w.creator_id);
+    workCountByCreator.set(w.creator_id, (workCountByCreator.get(w.creator_id) ?? 0) + 1);
   }
 
   const userIds = [...new Set(rows.map((r) => r.user_id))];
@@ -138,18 +138,12 @@ export async function runOnboardingNudges(now = new Date()): Promise<OnboardingN
   let failed = 0;
 
   for (const row of rows) {
-    const gaps = studioSubmitGaps({
-      studio_name: row.studio_name,
+    const missing = studioExploreContentGaps({
       bio: row.bio,
-      region: row.region,
-      service_types: row.service_types ?? [],
-      style_tags: row.style_tags ?? [],
-      contact_email: row.contact_email,
-      line_id: row.line_id,
-      phone: row.phone,
-    });
-    const missing = [...gaps];
-    if (!hasWork.has(row.id)) missing.push("至少 1 支 YouTube／Reels 作品");
+      approvedWorkCount: workCountByCreator.get(row.id) ?? 0,
+    }).map((gap) =>
+      gap.includes("作品") ? "至少 1 支 YouTube／Reels 作品" : gap,
+    );
     if (missing.length === 0) {
       skipped += 1;
       continue;

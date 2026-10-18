@@ -16,6 +16,7 @@ import { getAdminHealthStats } from "@/lib/data/adminHealth";
 import { getPendingPromoShareSubmissions } from "@/lib/data/promo-share";
 import { AdminHealthSnapshot } from "@/components/admin/AdminHealthSnapshot";
 import { ExploreUnblockQueue } from "@/components/admin/ExploreUnblockQueue";
+import { isReadyForPriorityReview } from "@/lib/creator/listing";
 
 export const metadata = {
   title: "審核管理",
@@ -169,9 +170,15 @@ export default async function AdminReviewPage({
             <p className="text-[var(--text-muted)]">目前沒有待審創作者</p>
           ) : (
             <ul className="space-y-6">
-              {pendingCreators.map((creator) => (
-                <PendingCreatorCard key={creator.id} creator={creator} />
-              ))}
+              {[...pendingCreators]
+                .sort((a, b) => {
+                  const aReady = isReadyForPriorityReview(a) ? 0 : 1;
+                  const bReady = isReadyForPriorityReview(b) ? 0 : 1;
+                  return aReady - bReady;
+                })
+                .map((creator) => (
+                  <PendingCreatorCard key={creator.id} creator={creator} />
+                ))}
             </ul>
           )}
         </div>

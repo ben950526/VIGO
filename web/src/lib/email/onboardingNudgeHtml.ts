@@ -47,7 +47,7 @@ export function buildOnboardingNudgeHtml(params: {
   ${items}
   <p>補完之後：</p>
   <ul>
-    <li>審核通過、又有已公開作品，就會出現在探索頁。</li>
+    <li>審核通過，且介紹約 20 字、至少 1 支已公開作品，才會出現在探索頁。</li>
     <li>發案者可先看作品；按「敲門」後才看得到聯絡方式。</li>
     <li>邀請同行完成接案者註冊拿 ${REFERRAL_CREDIT_PER_SIGNUP} 點／人；公開貼文附連結送審通過拿 ${SOCIAL_SHARE_CREDIT} 點（每人一次）。點數不能換現，上限 ${REFERRAL_CREDIT_MAX_BALANCE} 點。</li>
   </ul>

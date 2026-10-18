@@ -4,7 +4,7 @@ interface StudioPreviewBannerProps {
 
 const messages: Record<StudioPreviewBannerProps["reason"], string> = {
   draft: "工作室尚未對外公開，目前僅您可預覽。補上介紹與作品、通過審核後才會出現在探索頁。",
-  pending: "工作室審核中，目前僅您可預覽此頁。通過審核後才會出現在探索頁。",
+  pending: "工作室審核中，目前僅您可預覽此頁。通過審核，且介紹與作品齊了，才會出現在探索頁。",
   unlisted: "工作室已下架，目前僅您可預覽此頁。重新上架後才會對外顯示。",
   rejected: "工作室未通過審核，目前僅您可預覽此頁。請修改資料後再儲存，我們會再看一次。",
   incomplete:

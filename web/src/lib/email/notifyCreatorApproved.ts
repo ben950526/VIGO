@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { studioExploreContentGaps } from "@/lib/creator/listing";
 import { sendCreatorApprovalEmail } from "@/lib/email/sendApprovalEmail";
 import { sendCreatorRejectionEmail } from "@/lib/email/sendRejectionEmail";
 import {
@@ -53,8 +54,37 @@ export async function loadCreatorReviewSnapshot(
 /** @deprecated */
 export const loadCreatorApprovalSnapshot = loadCreatorReviewSnapshot;
 
+async function loadExploreGapsForCreator(
+  supabase: SupabaseClient<Database>,
+  creatorId: string,
+): Promise<string[]> {
+  const [{ data: profile, error: profileError }, { data: works, error: workError }] =
+    await Promise.all([
+      supabase.from("creator_profiles").select("bio").eq("id", creatorId).maybeSingle(),
+      supabase.from("portfolio_items").select("status").eq("creator_id", creatorId),
+    ]);
+
+  if (profileError) {
+    console.error("[email] could not load explore gaps:", profileError.message);
+    return [];
+  }
+  if (workError) {
+    console.error("[email] could not load explore works:", workError.message);
+  }
+
+  const approvedWorkCount = (works ?? []).filter((item) => item.status === "approved")
+    .length;
+
+  return studioExploreContentGaps({
+    bio: profile?.bio,
+    approvedWorkCount,
+  });
+}
+
 export async function notifyCreatorApprovedFromPending(
+  supabase: SupabaseClient<Database>,
   before: CreatorReviewSnapshot | null,
+  creatorId: string,
 ): Promise<void> {
   if (!before || before.is_demo) return;
   if (before.verification_status === "approved") return;
@@ -65,11 +95,13 @@ export async function notifyCreatorApprovedFromPending(
     return;
   }
 
+  const exploreGaps = await loadExploreGapsForCreator(supabase, creatorId);
   const result = await sendCreatorApprovalEmail({
     to,
     studioName: before.studio_name,
     slug: before.slug,
     inviteCode: before.invite_code,
+    exploreGaps,
   });
   if (!result.ok) {
     console.error("[email] approval send failed:", result.error);
@@ -98,7 +130,9 @@ export async function notifyCreatorRejectedFromPending(
 
 /** 已通過者補寄（不看審核前狀態） */
 export async function sendApprovalEmailForCreator(
+  supabase: SupabaseClient<Database>,
   snapshot: CreatorReviewSnapshot,
+  creatorId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (snapshot.is_demo) {
     return { ok: false, error: "示範帳號不寄信" };
@@ -107,11 +141,13 @@ export async function sendApprovalEmailForCreator(
   if (!to) {
     return { ok: false, error: "找不到收件 Email" };
   }
+  const exploreGaps = await loadExploreGapsForCreator(supabase, creatorId);
   return sendCreatorApprovalEmail({
     to,
     studioName: snapshot.studio_name,
     slug: snapshot.slug,
     inviteCode: snapshot.invite_code,
+    exploreGaps,
   });
 }
 
@@ -148,12 +184,17 @@ export async function notifyPortfolioReviewed(
     return;
   }
 
+  const exploreGaps = params.approved
+    ? await loadExploreGapsForCreator(supabase, params.creatorId)
+    : [];
+
   const result = params.approved
     ? await sendPortfolioApprovedEmail({
         to,
         studioName: data.studio_name,
         slug: data.slug,
         workTitle: params.workTitle,
+        exploreGaps,
       })
     : await sendPortfolioRejectedEmail({
         to,

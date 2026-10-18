@@ -1,9 +1,10 @@
 /**
- * 找出工作室資料不完整的接案者並列出／寄提醒信
+ * 已通過但還沒上探索頁的工作室：只依探索頁門檻（約 20 字介紹 + 1 支已過審作品）
  *
  * cd web
  * npx tsx scripts/remind-incomplete-studios.ts
- * npx tsx scripts/remind-incomplete-studios.ts --send
+ * npx tsx scripts/remind-incomplete-studios.ts --send          # 只寄最接近的 10 間
+ * npx tsx scripts/remind-incomplete-studios.ts --send --all    # 全部空殼（通常不要）
  */
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -11,6 +12,12 @@ import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { buildIncompleteStudioReminderHtml } from "../src/lib/email/incompleteStudioReminderHtml";
+import {
+  EXPLORE_UNBLOCK_FOCUS_LIMIT,
+  compareExploreUnblockKind,
+  exploreUnblockKind,
+  studioExploreContentGaps,
+} from "../src/lib/creator/listing";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const env: Record<string, string> = {};
@@ -33,36 +40,9 @@ try {
   process.exit(1);
 }
 
-const MIN_WORKS = 3;
-const MIN_BIO = 40;
-
-function missingParts(row: {
-  bio: string | null;
-  region: string | null;
-  service_types: string[] | null;
-  contact_email: string | null;
-  line_id: string | null;
-  phone: string | null;
-  workCount: number;
-}): string[] {
-  const missing: string[] = [];
-  if (!(row.bio?.trim().length ?? 0) || (row.bio?.trim().length ?? 0) < MIN_BIO) {
-    missing.push("介紹還太短或空白");
-  }
-  if (!row.region?.trim()) missing.push("還沒填地區");
-  if (!(row.service_types?.length ?? 0)) missing.push("還沒選服務項目");
-  const hasContact = Boolean(
-    row.contact_email?.trim() || row.line_id?.trim() || row.phone?.trim(),
-  );
-  if (!hasContact) missing.push("還沒填聯絡方式");
-  if (row.workCount < MIN_WORKS) {
-    missing.push(`作品不足 ${MIN_WORKS} 支（目前 ${row.workCount}）`);
-  }
-  return missing;
-}
-
 async function main() {
   const send = process.argv.includes("--send");
+  const sendAll = process.argv.includes("--all");
   const url = (process.env.VIGO_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
   const serviceKey = (process.env.VIGO_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
   const anonKey = (process.env.VIGO_SUPABASE_ANON || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
@@ -79,9 +59,11 @@ async function main() {
   const { data: creators, error } = await supabase
     .from("creator_profiles")
     .select(
-      "id, user_id, slug, studio_name, bio, region, service_types, contact_email, line_id, phone, verification_status, is_listed, is_demo",
+      "id, user_id, slug, studio_name, bio, contact_email, verification_status, is_listed, is_demo",
     )
-    .eq("is_demo", false);
+    .eq("is_demo", false)
+    .eq("verification_status", "approved")
+    .neq("is_listed", false);
 
   if (error) {
     console.error("讀工作室失敗:", error.message);
@@ -99,10 +81,10 @@ async function main() {
     process.exit(1);
   }
 
-  const workCount = new Map<string, number>();
+  const approvedWorkCount = new Map<string, number>();
   for (const w of works ?? []) {
-    if (w.status === "rejected") continue;
-    workCount.set(w.creator_id, (workCount.get(w.creator_id) ?? 0) + 1);
+    if (w.status !== "approved") continue;
+    approvedWorkCount.set(w.creator_id, (approvedWorkCount.get(w.creator_id) ?? 0) + 1);
   }
 
   const emailByUser = new Map<string, string>();
@@ -117,39 +99,42 @@ async function main() {
   const incomplete: {
     studio: string;
     slug: string;
-    status: string;
     email: string | null;
     missing: string[];
+    kind: "bio_only" | "work_only" | "both";
   }[] = [];
 
   for (const row of creators ?? []) {
-    const missing = missingParts({
+    const input = {
       bio: row.bio,
-      region: row.region,
-      service_types: row.service_types,
-      contact_email: row.contact_email,
-      line_id: row.line_id,
-      phone: row.phone,
-      workCount: workCount.get(row.id) ?? 0,
-    });
+      approvedWorkCount: approvedWorkCount.get(row.id) ?? 0,
+    };
+    const missing = studioExploreContentGaps(input);
     if (missing.length === 0) continue;
+    const kind = exploreUnblockKind(input) ?? "both";
     const email =
       (row.contact_email?.trim() || emailByUser.get(row.user_id) || "").toLowerCase() || null;
     incomplete.push({
       studio: row.studio_name,
       slug: row.slug,
-      status: row.verification_status,
       email,
       missing,
+      kind,
     });
   }
+
+  incomplete.sort((a, b) => compareExploreUnblockKind(a.kind, b.kind));
+  const focus = incomplete.slice(0, EXPLORE_UNBLOCK_FOCUS_LIMIT);
+  const toSend = sendAll ? incomplete : focus;
 
   console.log(
     JSON.stringify(
       {
         source: serviceKey ? "service" : "anon(僅公開可見列)",
-        totalStudios: creators?.length ?? 0,
+        totalApprovedListed: creators?.length ?? 0,
         incomplete: incomplete.length,
+        focus: focus.length,
+        sendAll,
         rows: incomplete,
       },
       null,
@@ -158,7 +143,7 @@ async function main() {
   );
 
   if (!send) {
-    console.log("未加 --send，只列出、不寄信");
+    console.log("未加 --send，只列出、不寄信。預設只會寄最接近的 10 間；要全部請加 --all。");
     return;
   }
 
@@ -174,14 +159,14 @@ async function main() {
   let sent = 0;
   let failed = 0;
 
-  for (const row of incomplete) {
+  for (const row of toSend) {
     if (!row.email || row.email.endsWith("@vigo.local")) continue;
     if (row.email === "benten950526@gmail.com") continue;
     if (row.email === "f@gmail.com") continue;
     const { error: sendError } = await resend.emails.send({
       from,
       to: row.email,
-      subject: `【Vigo】${row.studio} 還差一點，補一下會比較容易被看到`,
+      subject: `【Vigo】${row.studio} 還差一點，補了就會出現在探索頁`,
       html: buildIncompleteStudioReminderHtml({
         studioName: row.studio,
         missing: row.missing,
@@ -194,12 +179,12 @@ async function main() {
       failed += 1;
     } else {
       sent += 1;
-      console.log("已寄", row.email, row.studio);
+      console.log("已寄", row.email, row.studio, row.kind);
     }
     await new Promise((r) => setTimeout(r, 600));
   }
 
-  console.log({ sent, failed, skippedNoEmail: incomplete.filter((r) => !r.email).length });
+  console.log({ sent, failed, skippedNoEmail: toSend.filter((r) => !r.email).length });
 }
 
 void main();

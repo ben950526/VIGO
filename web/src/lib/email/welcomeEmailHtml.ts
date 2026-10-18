@@ -26,7 +26,7 @@ export function buildWelcomeEmailHtml(params: {
   <p>接下來請做這兩件事：</p>
   <ol>
     <li>填工作室：介紹、地區、服務、風格、聯絡方式。</li>
-    <li>貼至少 1 支 YouTube 或 Reels。審核通過後，才會出現在探索頁。</li>
+    <li>貼至少 1 支 YouTube 或 Reels。審核通過，且介紹約 20 字，才會出現在探索頁。</li>
   </ol>
   <p>補完之後：</p>
   <ul>

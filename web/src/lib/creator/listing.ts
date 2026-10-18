@@ -23,6 +23,19 @@ export function countApprovedPortfolioItems(
   return (items ?? []).filter((item) => item.status === "approved").length;
 }
 
+/** 探索頁先湊到這個數量就夠冷啟動；不必把所有空殼都救回來 */
+export const EXPLORE_VISIBLE_TARGET = 30;
+/** 後台每週只盯最接近上架的這幾間 */
+export const EXPLORE_UNBLOCK_FOCUS_LIMIT = 10;
+
+export type ExploreUnblockKind = "bio_only" | "work_only" | "both";
+
+const EXPLORE_UNBLOCK_KIND_ORDER: Record<ExploreUnblockKind, number> = {
+  bio_only: 0,
+  work_only: 1,
+  both: 2,
+};
+
 export function studioExploreContentGaps(input: {
   bio?: string | null;
   portfolio_items?: Pick<PortfolioItem, "status">[] | null;
@@ -38,6 +51,34 @@ export function studioExploreContentGaps(input: {
     gaps.push(`至少 ${MIN_PUBLIC_APPROVED_WORKS} 支已通過審核的作品`);
   }
   return gaps;
+}
+
+export function exploreUnblockKind(input: {
+  bio?: string | null;
+  portfolio_items?: Pick<PortfolioItem, "status">[] | null;
+  approvedWorkCount?: number;
+}): ExploreUnblockKind | null {
+  const bioShort = (input.bio?.trim().length ?? 0) < MIN_PUBLIC_BIO_CHARS;
+  const works =
+    input.approvedWorkCount ?? countApprovedPortfolioItems(input.portfolio_items);
+  const workShort = works < MIN_PUBLIC_APPROVED_WORKS;
+  if (!bioShort && !workShort) return null;
+  if (bioShort && !workShort) return "bio_only";
+  if (!bioShort && workShort) return "work_only";
+  return "both";
+}
+
+export function exploreUnblockKindLabel(kind: ExploreUnblockKind): string {
+  if (kind === "bio_only") return "只差介紹（最快）";
+  if (kind === "work_only") return "只差 1 支已過審作品";
+  return "介紹和作品都還沒齊";
+}
+
+export function compareExploreUnblockKind(
+  a: ExploreUnblockKind,
+  b: ExploreUnblockKind,
+): number {
+  return EXPLORE_UNBLOCK_KIND_ORDER[a] - EXPLORE_UNBLOCK_KIND_ORDER[b];
 }
 
 export function isStudioContentReadyForExplore(input: {

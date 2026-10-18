@@ -6,12 +6,22 @@ export function buildPortfolioApprovedEmailHtml(params: {
   workTitle: string;
   creatorUrl: string;
   dashboardUrl: string;
+  studioEditUrl: string;
+  exploreGaps?: string[];
 }): string {
+  const gaps = params.exploreGaps ?? [];
+  const listingNote =
+    gaps.length === 0
+      ? `<p>這支作品已公開。介紹也齊的話，探索頁現在就可以找到你。</p>`
+      : `<p>這支作品已公開。探索頁要再補：${gaps.map((gap) => escapeHtml(gap)).join("、")}。補上會自動出現，不用再送審。</p>
+  <p style="margin: 16px 0 0;">${emailCta(params.studioEditUrl, "去補介紹")}</p>`;
+
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <body style="font-family: sans-serif; line-height: 1.6; color: #1e293b; max-width: 560px; margin: 0 auto; padding: 24px;">
   <h1 style="font-size: 22px; margin-bottom: 16px;">作品可以公開了</h1>
   <p>嗨，<strong>${escapeHtml(params.studioName)}</strong> 的「${escapeHtml(params.workTitle)}」已經通過，會出現在你的公開頁上。</p>
+  ${listingNote}
   <p style="margin: 24px 0;">
     ${emailCta(params.creatorUrl, "去公開頁看看")}
   </p>

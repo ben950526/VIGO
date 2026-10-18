@@ -226,7 +226,7 @@ export async function approveCreator(formData: FormData): Promise<void> {
     .update({ verification_status: "approved", is_listed: true })
     .eq("id", id);
 
-  await notifyCreatorApprovedFromPending(before);
+  await notifyCreatorApprovedFromPending(supabase, before, id);
   revalidateAfterPublicCreatorChange();
 }
 
@@ -323,7 +323,7 @@ export async function approveCreatorAndWorks(formData: FormData): Promise<void> 
       .eq("status", "pending"),
   ]);
 
-  await notifyCreatorApprovedFromPending(before);
+  await notifyCreatorApprovedFromPending(supabase, before, id);
   revalidateAfterPublicCreatorChange();
 }
 
@@ -370,7 +370,7 @@ export async function resendCreatorApprovalEmail(
   const snapshot = await loadCreatorReviewSnapshot(supabase, id);
   if (!snapshot) return { error: "找不到工作室" };
 
-  const result = await sendApprovalEmailForCreator(snapshot);
+  const result = await sendApprovalEmailForCreator(supabase, snapshot, id);
   if (!result.ok) return { error: result.error };
   return { ok: true, message: "已補寄通過信，請查收件匣與垃圾郵件" };
 }
