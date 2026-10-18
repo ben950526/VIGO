@@ -25,9 +25,9 @@ export function DashboardOnboarding({
 
   return (
     <div className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-      <h2 className="mb-1 text-xl font-bold">現在補齊，發案者才找得到你</h2>
+      <h2 className="mb-1 text-xl font-bold">補齊工作室，出現在探索頁</h2>
       <p className="mb-4 text-sm text-[var(--text-secondary)]">
-        目前有發案者在找固定配合的剪輯，人都還沒選定。探索頁只顯示介紹夠、且有已通過作品的工作室。
+        探索頁只顯示介紹夠、且有已通過作品的工作室。
         {exploreGaps.length > 0 ? ` 你還差：${exploreGaps.join("、")}。` : ""}
         {studioDone && hasWork && reviewStatus !== "approved"
           ? " 資料已齊，通過審核後就會出現。"

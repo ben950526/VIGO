@@ -37,10 +37,10 @@ export default async function HomePage() {
             </Link>
           </div>
           <p className="mt-6 text-sm text-[var(--text-secondary)]">
-            現在有發案者在找固定剪輯，人都還沒選定。{" "}
             <Link href="/explore" className="text-[var(--accent)] hover:underline">
               先逛作品、對到風格再敲門
             </Link>
+            。平台不抽成、不介入交易。
           </p>
         </div>
       </section>
