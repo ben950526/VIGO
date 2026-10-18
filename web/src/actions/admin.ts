@@ -21,6 +21,7 @@ import {
   notifyPortfolioReviewed,
   sendApprovalEmailForCreator,
 } from "@/lib/email/notifyCreatorApproved";
+import { runExploreIncompleteReminders } from "@/lib/email/runExploreIncompleteReminders";
 
 export async function seedDemoAccounts(): Promise<{ ok: boolean; message: string }> {
   await requireAdmin();
@@ -373,6 +374,29 @@ export async function resendCreatorApprovalEmail(
   const result = await sendApprovalEmailForCreator(supabase, snapshot, id);
   if (!result.ok) return { error: result.error };
   return { ok: true, message: "已補寄通過信，請查收件匣與垃圾郵件" };
+}
+
+export type ExploreIncompleteMailState = { error?: string; ok?: boolean; message?: string };
+
+const EXPLORE_INCOMPLETE_CONFIRM = "確認發送";
+
+/** 寄給已通過、已上架、但還沒出現在探索頁的工作室（每人寫還差哪一項） */
+export async function sendExploreIncompleteReminders(
+  _prev: ExploreIncompleteMailState | null,
+  formData: FormData,
+): Promise<ExploreIncompleteMailState> {
+  await requireAdmin();
+  const confirm = String(formData.get("confirm") ?? "").trim();
+  if (confirm !== EXPLORE_INCOMPLETE_CONFIRM) {
+    return { error: `請輸入「${EXPLORE_INCOMPLETE_CONFIRM}」才會寄出` };
+  }
+
+  const result = await runExploreIncompleteReminders();
+  if (result.error) return { error: result.error };
+  return {
+    ok: result.failed === 0,
+    message: `已處理 ${result.incomplete} 間尚未上探索頁：成功 ${result.sent}、失敗 ${result.failed}、略過 ${result.skipped}`,
+  };
 }
 
 export type PurgeCreatorState = { error?: string; ok?: boolean; message?: string };

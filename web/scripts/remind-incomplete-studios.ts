@@ -3,8 +3,8 @@
  *
  * cd web
  * npx tsx scripts/remind-incomplete-studios.ts
- * npx tsx scripts/remind-incomplete-studios.ts --send          # 只寄最接近的 10 間
- * npx tsx scripts/remind-incomplete-studios.ts --send --all    # 全部空殼（通常不要）
+ * npx tsx scripts/remind-incomplete-studios.ts --send --closest  # 只寄最接近的 10 間
+ * npx tsx scripts/remind-incomplete-studios.ts --send           # 全部尚未上探索頁（已過審）
  */
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -42,7 +42,7 @@ try {
 
 async function main() {
   const send = process.argv.includes("--send");
-  const sendAll = process.argv.includes("--all");
+  const closestOnly = process.argv.includes("--closest");
   const url = (process.env.VIGO_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
   const serviceKey = (process.env.VIGO_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
   const anonKey = (process.env.VIGO_SUPABASE_ANON || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
@@ -125,7 +125,7 @@ async function main() {
 
   incomplete.sort((a, b) => compareExploreUnblockKind(a.kind, b.kind));
   const focus = incomplete.slice(0, EXPLORE_UNBLOCK_FOCUS_LIMIT);
-  const toSend = sendAll ? incomplete : focus;
+  const toSend = closestOnly ? focus : incomplete;
 
   console.log(
     JSON.stringify(
@@ -134,7 +134,7 @@ async function main() {
         totalApprovedListed: creators?.length ?? 0,
         incomplete: incomplete.length,
         focus: focus.length,
-        sendAll,
+        closestOnly,
         rows: incomplete,
       },
       null,
@@ -143,7 +143,7 @@ async function main() {
   );
 
   if (!send) {
-    console.log("未加 --send，只列出、不寄信。預設只會寄最接近的 10 間；要全部請加 --all。");
+    console.log("未加 --send，只列出、不寄信。加 --send 會寄給全部尚未上探索頁者；加 --closest 才只寄 10 間。");
     return;
   }
 

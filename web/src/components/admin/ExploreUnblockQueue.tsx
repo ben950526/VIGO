@@ -8,6 +8,7 @@ import {
   isReadyForPriorityReview,
   studioExploreContentGaps,
 } from "@/lib/creator/listing";
+import { ExploreIncompleteMailForm } from "@/components/admin/ExploreIncompleteMailForm";
 import type { PendingCreator, PublishedCreator } from "@/lib/data/admin";
 
 type ExploreUnblockQueueProps = {
@@ -58,8 +59,10 @@ export function ExploreUnblockQueue({
       <p className="mb-4 text-sm text-[var(--text-muted)]">
         探索頁目前 {visibleCount} 間，目標約 {EXPLORE_VISIBLE_TARGET} 間
         {stillNeeded > 0 ? `，再 ${stillNeeded} 間就夠。` : "，已達標。"}
-        只處理最接近的 {EXPLORE_UNBLOCK_FOCUS_LIMIT} 間；其餘空殼等對方登入後台黃字即可，不要逐封私訊。
+        對「已通過但還沒上探索頁」這批寄信沒問題，信裡寫還差哪一項即可。不要寄給已經在探索頁的人。下面名單給你對一下；真的有回訊再私訊。
       </p>
+
+      <ExploreIncompleteMailForm incompleteCount={approvedIncomplete.length} />
 
       <div className="mb-6">
         <h3 className="text-sm font-semibold">優先審核（過了就能上探索頁）· {priorityReview.length}</h3>
@@ -89,7 +92,7 @@ export function ExploreUnblockQueue({
         <p className="mt-1 text-xs text-[var(--text-muted)]">
           只差介紹 {bioOnlyCount} · 只差作品 {workOnlyCount} · 兩項都缺{" "}
           {approvedIncomplete.length - bioOnlyCount - workOnlyCount}
-          。排序：只差介紹 → 只差作品 → 兩項都缺。私訊時直接說差哪一項、補了不必再審。
+          。排序：只差介紹 → 只差作品 → 兩項都缺。群發會寫差哪一項、補了不必再審；有回訊的再私訊。
         </p>
         {approvedIncomplete.length === 0 ? (
           <p className="mt-2 text-sm text-[var(--text-muted)]">沒有這種工作室。</p>
@@ -111,7 +114,7 @@ export function ExploreUnblockQueue({
         )}
         {restCount > 0 ? (
           <p className="mt-3 text-xs text-[var(--text-muted)]">
-            另外 {restCount} 間兩項都還沒齊，先不列。對方登入後台會看到黃字。
+            另外 {restCount} 間兩項都還沒齊，畫面先不列，但仍會收到同一封完善信。
           </p>
         ) : null}
       </div>
