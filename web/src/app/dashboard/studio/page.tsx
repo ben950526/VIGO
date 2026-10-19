@@ -38,7 +38,8 @@ export default async function StudioContentPage({
             介紹、地區、服務、風格與聯絡方式建議一次填清楚。作品另外貼連結即可；已通過的作品可在下方修改或移除。
           </p>
           <p className="mb-6 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-            工作室資料按 <strong className="text-[var(--text)]">儲存資料</strong>；新作品按{" "}
+            工作室資料在表單上方按 <strong className="text-[var(--text)]">儲存資料</strong>
+            （往下捲也會留在畫面上方）；新作品按{" "}
             <strong className="text-[var(--text)]">新增作品</strong>。功能有問題可以{" "}
             <Link href="/report-bug?page=/dashboard/studio" className="text-[var(--accent)] hover:underline">
               回報 BUG
