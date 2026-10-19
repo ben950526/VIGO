@@ -34,6 +34,41 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function SaveButton({ pending }: { pending: boolean }) {
+  return (
+    <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
+      {pending ? "儲存中…" : "儲存資料"}
+    </button>
+  );
+}
+
+function SaveStatus({
+  error,
+  success,
+  exploreGaps,
+}: {
+  error: string;
+  success: boolean;
+  exploreGaps: string[];
+}) {
+  if (!error && !success) return null;
+  return (
+    <div className="space-y-2">
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {success ? (
+        <>
+          <p className="text-sm text-green-700">已儲存。資料有進去，不是沒反應。</p>
+          {exploreGaps.length > 0 ? (
+            <p className="text-sm text-amber-800">
+              探索頁還不會顯示，還差：{exploreGaps.join("、")}。補上再按一次儲存即可。
+            </p>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function ProfileForm({
   profile,
   embedded = false,
@@ -100,6 +135,19 @@ export function ProfileForm({
 
   const form = (
         <form onSubmit={handleSubmit} noValidate className="space-y-10">
+          <div className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg)] py-3 shadow-[0_10px_16px_-14px_rgba(0,0,0,0.45)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-[var(--text-secondary)]">
+                這一區改完，按「儲存資料」才會寫進工作室。
+              </p>
+              <SaveButton pending={pending} />
+            </div>
+            {error || success ? (
+              <div className="mt-2">
+                <SaveStatus error={error} success={success} exploreGaps={exploreGaps} />
+              </div>
+            ) : null}
+          </div>
           {/* 基本 */}
           <div className="space-y-4">
             <SectionTitle>基本資料</SectionTitle>
@@ -213,14 +261,14 @@ export function ProfileForm({
               options={STYLE_TAGS}
               checkboxNamePrefix="tag_"
               customFieldName="style_tags_custom"
-              selectedValues={profile.style_tags}
+              selectedValues={profile.style_tags ?? []}
             />
             <TagCheckboxGroup
               legend="服務項目（建議至少 1 項）"
               options={SERVICE_TYPES}
               checkboxNamePrefix="service_"
               customFieldName="service_types_custom"
-              selectedValues={profile.service_types}
+              selectedValues={profile.service_types ?? []}
             />
           </div>
 
@@ -240,20 +288,8 @@ export function ProfileForm({
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {success && (
-            <div className="space-y-2">
-              <p className="text-sm text-green-700">已儲存。資料有進去，不是沒反應。</p>
-              {exploreGaps.length > 0 ? (
-                <p className="text-sm text-amber-800">
-                  探索頁還不會顯示，還差：{exploreGaps.join("、")}。補上再按一次儲存即可。
-                </p>
-              ) : null}
-            </div>
-          )}
-          <button type="submit" disabled={pending} className="btn-primary disabled:opacity-70">
-            {pending ? "儲存中…" : "儲存資料"}
-          </button>
+          <SaveStatus error={error} success={success} exploreGaps={exploreGaps} />
+          <SaveButton pending={pending} />
         </form>
   );
 
@@ -280,7 +316,7 @@ export function ProfileForm({
           填寫發案者最在意的合作資訊，有助提高詢問轉換
         </p>
         <p className="mb-8 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-          修改完記得捲到最下方，按 <strong className="text-[var(--text)]">儲存資料</strong> 才會生效。
+          表單上方會留著 <strong className="text-[var(--text)]">儲存資料</strong>，改完按下去才會生效。
         </p>
         {form}
       </div>
