@@ -518,6 +518,10 @@ export interface Database {
         Args: { p_id: string };
         Returns: Json;
       };
+      record_studio_page_view: {
+        Args: { p_creator_id: string; p_visitor_key: string };
+        Returns: undefined;
+      };
       admin_approve_promo_share: {
         Args: { p_submission_id: string };
         Returns: Json;

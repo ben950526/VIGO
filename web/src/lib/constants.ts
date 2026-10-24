@@ -61,7 +61,8 @@ export const BUDGET_RANGES = [
   "尚未確定",
 ] as const;
 
-export const FREE_PORTFOLIO_LIMIT = 3;
+/** 冷啟動先讓作品集夠看；之後若開 Pro 再另訂付費上限 */
+export const FREE_PORTFOLIO_LIMIT = 12;
 
 export const PLATFORMS = [
   "Instagram Reels",

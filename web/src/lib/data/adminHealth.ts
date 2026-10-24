@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { startOfTaipeiWeek } from "@/lib/time/taipei";
 import { isSupabaseConfigured } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
   });
 
   const supabase = await createClient();
+  const viewsClient = createServiceClient() ?? supabase;
 
   const [
     regRes,
@@ -77,7 +79,7 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
       .from("knocks")
       .select("id, from_admin, user_agent")
       .gte("created_at", weekIso),
-    supabase.from("studio_page_views").select("creator_id, visitor_key").gte("created_at", weekIso),
+    viewsClient.from("studio_page_views").select("creator_id, visitor_key").gte("created_at", weekIso),
     supabase
       .from("creator_profiles")
       .select("id", { count: "exact", head: true })

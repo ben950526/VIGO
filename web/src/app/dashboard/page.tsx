@@ -20,6 +20,7 @@ import { getReferralDashboardStats } from "@/lib/data/referral";
 import { siteUrl } from "@/lib/email/config";
 import { buildReferralRegisterUrl, resolvePublicInviteCode } from "@/lib/referral/config";
 import { isFeaturedPortfolioItem } from "@/lib/portfolio";
+import { FREE_PORTFOLIO_LIMIT } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ListingControl } from "@/components/dashboard/ListingControl";
 import { SubmitButton } from "@/components/forms/SubmitButton";
@@ -166,7 +167,7 @@ export default async function DashboardPage() {
 
         <h2 className="mb-2 text-xl font-bold">我的作品 ({portfolio.length})</h2>
         <p className="mb-4 text-sm text-[var(--text-muted)]">
-          建議至少加 1 支。公開頁只顯示已通過的作品；預覽會連審核中的一起看。要改連結或移除，到編輯工作室。
+          建議至少加 1 支，最多 {FREE_PORTFOLIO_LIMIT} 支。公開頁只顯示已通過的作品；預覽會連審核中的一起看。要改連結或移除，到編輯工作室。
         </p>
         {portfolio.length === 0 ? (
           <p className="text-[var(--text-muted)]">

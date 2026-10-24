@@ -9,6 +9,7 @@ import {
 import { createPublicClient } from "@/lib/supabase/public";
 import { getAuthProfile, isAdminProfile } from "@/lib/auth/session";
 import { setCreatorKnockUnlocked } from "@/lib/knock/cookie";
+import { recordStudioPageViewOnce } from "@/lib/data/record-studio-page-view";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 export type KnockResult =
@@ -117,6 +118,7 @@ export async function knockCreator(formData: FormData): Promise<KnockResult> {
   }
 
   await setCreatorKnockUnlocked(creatorId);
+  void recordStudioPageViewOnce({ creatorId, visitorKey });
   return { success: true, unlock };
 }
 

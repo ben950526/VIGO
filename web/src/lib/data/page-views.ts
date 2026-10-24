@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { startOfTaipeiWeek } from "@/lib/time/taipei";
 import { isSupabaseConfigured } from "@/lib/utils";
 
@@ -22,7 +23,7 @@ export async function getCreatorViewStats(creatorId: string): Promise<CreatorVie
     return { uniqueTotal: 0, uniqueThisWeek: 0, uniqueThisMonth: 0 };
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceClient() ?? (await createClient());
   const { data, error } = await supabase
     .from("studio_page_views")
     .select("visitor_key, created_at")

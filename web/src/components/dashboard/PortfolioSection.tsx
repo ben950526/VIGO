@@ -1,5 +1,6 @@
 import { AddPortfolioForm } from "@/components/dashboard/AddPortfolioForm";
 import { PortfolioItemEditor } from "@/components/dashboard/PortfolioItemEditor";
+import { FREE_PORTFOLIO_LIMIT } from "@/lib/constants";
 import type { PortfolioItem } from "@/types/database";
 
 interface PortfolioSectionProps {
@@ -20,7 +21,7 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
       <div>
         <SectionTitle>作品集</SectionTitle>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          建議至少加 1 支。公開頁只顯示已通過的作品；預覽會連審核中的一起看。已通過的連結可在這裡修改或移除。
+          建議至少加 1 支，最多 {FREE_PORTFOLIO_LIMIT} 支。公開頁只顯示已通過的作品；預覽會連審核中的一起看。已通過的連結可在這裡修改或移除。
         </p>
       </div>
 
@@ -34,7 +35,13 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
         </ul>
       )}
 
-      <AddPortfolioForm />
+      {portfolio.length >= FREE_PORTFOLIO_LIMIT ? (
+        <p className="text-sm text-[var(--text-muted)]">
+          目前最多 {FREE_PORTFOLIO_LIMIT} 支。若要換作品，先移除舊的再新增。
+        </p>
+      ) : (
+        <AddPortfolioForm />
+      )}
     </div>
   );
 }
