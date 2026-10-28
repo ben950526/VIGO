@@ -15,11 +15,11 @@ export function AdminHealthSnapshot({ stats }: { stats: AdminHealthStats }) {
     <div className="mb-10 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <h2 className="mb-1 text-xl font-bold">本週狀況</h2>
       <p className="mb-4 text-sm text-[var(--text-muted)]">
-        台北時間週一 {stats.weekLabel} 起至今。被瀏覽＝有人打開公開頁來看作品（各工作室不重複訪客合計，自己預覽不算）。敲門＝進一步查看聯絡方式（不含管理員測試）。
+        台北時間週一 {stats.weekLabel} 起至今。被瀏覽＝有人打開公開頁來看作品（各工作室不重複訪客合計，自己預覽與管理員測試都不算）。敲門＝進一步查看聯絡方式（不含管理員測試）。
       </p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <Stat label="本週新註冊" value={stats.registrationsThisWeek} />
-        <Stat label="本週被瀏覽" value={stats.uniqueViewsThisWeek} hint="打開公開頁來看作品" />
+        <Stat label="本週被瀏覽" value={stats.uniqueViewsThisWeek} hint="不含自己預覽與管理員" />
         <Stat label="本週敲門" value={stats.knocksThisWeek} hint="不含管理員測試" />
         <Stat label="已上架工作室" value={stats.approvedListed} hint="通過審核且未下架" />
         <Stat label="待審工作室" value={stats.pendingCreators} />

@@ -79,7 +79,10 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
       .from("knocks")
       .select("id, from_admin, user_agent")
       .gte("created_at", weekIso),
-    viewsClient.from("studio_page_views").select("creator_id, visitor_key").gte("created_at", weekIso),
+    viewsClient
+      .from("studio_page_views")
+      .select("creator_id, visitor_key, from_admin")
+      .gte("created_at", weekIso),
     supabase
       .from("creator_profiles")
       .select("id", { count: "exact", head: true })
@@ -119,15 +122,42 @@ export async function getAdminHealthStats(): Promise<AdminHealthStats> {
     knockError = fallback.error;
   }
 
+  let viewRows: { creator_id: string; visitor_key: string; from_admin?: boolean | null }[] | null =
+    viewRes.data;
+  let viewError = viewRes.error;
+  if (viewError?.message.includes("from_admin")) {
+    const fallback = await viewsClient
+      .from("studio_page_views")
+      .select("creator_id, visitor_key")
+      .gte("created_at", weekIso);
+    viewRows = fallback.data;
+    viewError = fallback.error;
+  }
+
+  const adminViewKeysRes = await viewsClient
+    .from("knocks")
+    .select("visitor_key")
+    .eq("from_admin", true);
+  const adminVisitorKeys = new Set(
+    (adminViewKeysRes.error?.message.includes("from_admin")
+      ? []
+      : (adminViewKeysRes.data ?? [])
+    )
+      .map((row) => row.visitor_key)
+      .filter(Boolean),
+  );
+
   const uniqueViews = new Set(
-    (viewRes.data ?? []).map((row) => `${row.creator_id}:${row.visitor_key}`),
+    (viewRows ?? [])
+      .filter((row) => row.from_admin !== true && !adminVisitorKeys.has(row.visitor_key))
+      .map((row) => `${row.creator_id}:${row.visitor_key}`),
   ).size;
 
   return {
     weekLabel,
     registrationsThisWeek: regRes.count ?? 0,
     knocksThisWeek: countPublicKnocks(knockRows, knockError),
-    uniqueViewsThisWeek: viewRes.error ? 0 : uniqueViews,
+    uniqueViewsThisWeek: viewError ? 0 : uniqueViews,
     pendingCreators: pendingCreatorRes.count ?? 0,
     pendingWorks: pendingWorkRes.count ?? 0,
     pendingPromo: pendingPromoRes.count ?? 0,

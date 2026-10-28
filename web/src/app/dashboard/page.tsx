@@ -115,7 +115,7 @@ export default async function DashboardPage() {
               {viewStats.uniqueThisMonth} 人
             </p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">
-              有人打開你的公開頁來看作品（同一人同一天只算一次）。自己預覽不算。
+              有人打開你的公開頁來看作品（同一人同一天只算一次）。自己預覽與管理員測試都不算。
             </p>
             <p className="mt-3 font-medium text-[var(--text)]">敲門</p>
             <p className="mt-1 text-[var(--text-secondary)]">

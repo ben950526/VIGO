@@ -1,4 +1,4 @@
-import { getAuthUserId } from "@/lib/auth/session";
+import { getAuthProfile, getAuthUserId, isAdminProfile } from "@/lib/auth/session";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -12,7 +12,10 @@ export async function recordStudioPageViewOnce(params: {
   const visitorKey = params.visitorKey.trim();
   if (!creatorId || visitorKey.length < 8 || !isSupabaseConfigured()) return;
 
-  const ownerId = await getAuthUserId();
+  const profile = await getAuthProfile();
+  if (profile && isAdminProfile(profile)) return;
+
+  const ownerId = profile?.id ?? (await getAuthUserId());
   if (ownerId) {
     const authed = await createClient();
     const { data: own } = await authed
@@ -37,10 +40,19 @@ export async function recordStudioPageViewOnce(params: {
     rpc.error.message.includes("record_studio_page_view") ||
     rpc.error.message.includes("schema cache")
   ) {
-    const { error } = await supabase.from("studio_page_views").insert({
+    const insert = await supabase.from("studio_page_views").insert({
       creator_id: creatorId,
       visitor_key: visitorKey,
+      from_admin: false,
     });
+    let error = insert.error;
+    if (error?.message.includes("from_admin") || error?.message.includes("schema cache")) {
+      const retry = await supabase.from("studio_page_views").insert({
+        creator_id: creatorId,
+        visitor_key: visitorKey,
+      });
+      error = retry.error;
+    }
     if (error && error.code !== "23505") {
       console.error("[page-view]", error.message);
     }
