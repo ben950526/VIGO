@@ -16,16 +16,16 @@ GitHub：https://github.com/ben950526/VIGO（`main`，Vercel Root Directory = `w
 | 項目 | 結果 | 下一步 |
 |------|------|--------|
 | Vercel 部署 | `e058190` 部署成功。前兩次 `a56e780`、`eaf56a4` **建置失敗**（`page-views.ts` 型別錯誤），所以「管理員瀏覽不計入」到 10/29 才真正上線。 | 無 |
-| `032_studio_page_views_from_admin.sql` | **沒跑**：`studio_page_views.from_admin` 欄位不存在。程式走 fallback，舊的管理員瀏覽沒被回填排除。 | 經營者在 SQL Editor 執行 |
-| `020_promo_rules_and_social_share.sql` | **沒跑**：`promo_share_submissions` 表與 `admin_approve_promo_share` 不存在，社群宣傳送審在正式站不能用；上限 300 未生效。 | 經營者執行（020b 只在 020 中斷時才需要） |
+| `032_studio_page_views_from_admin.sql` | 原本沒跑；**10/29 經營者已執行，複查確認 `from_admin` 欄位存在**。 | 用管理員登入開別人的公開頁，確認本週瀏覽不增加 |
+| `020_promo_rules_and_social_share.sql` | 原本沒跑；**10/29 經營者已執行，複查確認 `promo_share_submissions` 與審核函式存在**，上限 300 生效。 | 無 |
 | `019_referral_cap_500.sql` | 無法用 anon 權限判斷。目前所有人折抵點皆為 0，無實際影響；020 跑完後上限以 300 為準。 | 跑完 020 即可 |
-| `017_invite_code.sql` | **沒跑**：`creator_profiles.invite_code` 欄位不存在，邀請連結暫以 slug 代替（`resolvePublicInviteCode`）。 | 經營者執行 |
+| `017_invite_code.sql` | 原本沒跑；**10/29 經營者已執行，複查確認 `invite_code` 欄位存在**。 | 無 |
 | 其他 | 016、024、025／031、026、027、029、030 確認已在線上。`023` 的 `onboarding_day3_sent_at` 不存在（已由 024 的 1／3／7 天欄位取代，程式不需要）。 | 無 |
 | 「謙卑群發致歉＋推薦碼換點數」 | 查不到：本機 Resend key 是**僅寄信**權限，無法讀寄送紀錄。倉庫內沒有這封信的腳本或 commit，推測未寄。 | 經營者到 Resend 後台 Emails 確認 |
 | try-vigo.com 綁網站 | **沒綁**：根網域無 A／CNAME 紀錄、`www` 不存在。只有 `mail.try-vigo.com`（Resend 寄件）設定正常。正式站仍是 `vigo-woad.vercel.app`。 | 可選，見 `web/DEPLOY.md` |
 | Cursor Automation | 設定在 Cursor 雲端，本機查不到。 | 經營者到 Cursor Automations 關掉（每日報告已由 Vercel Cron 負責） |
 
-建議 SQL Editor 執行順序：`017` → `020` → `032`，每檔看到 Success 再跑下一檔。本機 `.env.local` 沒有 `SUPABASE_SERVICE_ROLE_KEY`。
+017、020、032 已於 10/29 依序執行完成。本機 `.env.local` 沒有 `SUPABASE_SERVICE_ROLE_KEY`。
 
 ---
 
@@ -209,7 +209,7 @@ npm run dev
 
 開 http://localhost:3000。沒有 Supabase 就沒有創作者、不能登入（沒有離線示範模式）。示範帳號要管理員在審核頁建立，且 DB 已跑過 `013_is_demo.sql`。
 
-全新資料庫：依 `web/supabase/SETUP.md` 的精神，在 SQL Editor **依檔名數字順序**跑 `migrations/`（現已遠超過文件寫的 5 檔）。增量變更同樣貼上 Run，看到 Success 再下一檔。**待確認：** 線上是否已跑 `032_studio_page_views_from_admin.sql`（程式已 push；未跑欄位時統計會 fallback，管理員瀏覽仍可在應用層跳過）。
+全新資料庫：依 `web/supabase/SETUP.md` 的精神，在 SQL Editor **依檔名數字順序**跑 `migrations/`（現已遠超過文件寫的 5 檔）。增量變更同樣貼上 Run，看到 Success 再下一檔。線上已跑到 `032`（2026-10-29 複查，見第 0 節）。
 
 本機腳本範例（需 `--env-file=.env.local`，且部分腳本認 `VIGO_*` 別名）：
 
@@ -366,7 +366,7 @@ npm run start    # 正式模式預覽
 - 空 `LIVE_BRIEFS` 不要再寫成 `[] as const` 然後 `.map`。
 - 沒有自動測試；改探索門檻、敲門、寄信時要手動走一遍。
 - 對話裡「謙卑群發致歉＋推薦碼換點數」是否已寄：**待確認**（曾討論文案，以有沒有「確認發送」為準）。
-- 2026-10-28 本週 2 次瀏覽是否含管理員舊資料：程式已排除；**032 是否已在線上執行：待確認**。
+- 2026-10-28 本週 2 次瀏覽是否含管理員舊資料：程式已排除；032 已於 10/29 執行並回填舊資料。
 
 ---
 
@@ -374,7 +374,7 @@ npm run start    # 正式模式預覽
 
 經營者目標是**大大提速、知道何時能收錢**。產品功能不是當前瓶頸，發案者流量才是。
 
-1. **在 SQL Editor 執行 `017`、`020`、`032`**（2026-10-29 查核確認三者都沒跑，見第 0 節），再用管理員登入打開一間別人的公開頁，確認本週瀏覽不增加。
+1. ~~在 SQL Editor 執行 `017`、`020`、`032`~~（10/29 已完成）。剩下：用管理員登入打開一間別人的公開頁，確認本週瀏覽不增加。
 2. **只拉發案者：** 對外文連到 `/explore`，請人看完作品再敲門；不要再徵剪輯師。Threads 文案已給過多款（痛點／反直覺／踩雷／對話／二選一／創辦人／小編）；主文不放連結、第一則留言放探索頁。有人問「哪裡找」只回探索頁，**不要私訊代配**（否則敲門永遠是 0）。
 3. **每週只看兩件事：** 審核後台「本週被瀏覽」「本週敲門」（不含管理員）。連續兩週敲門 ≥ 20 再開始做綠界，不要提前做。
 4. **Pro／綠界：** 僅在計畫門檻達成後——連續 4 週每週敲門 ≥ 20 且活躍接案者 ≥ 40。屆時才做結帳、Free 3 支／Pro 較多作品與排序。發案者保持免費。
