@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useClientValue } from "@/lib/hooks/useClientValue";
 import { confirmOwnBugFixed, reopenOwnBug } from "@/actions/bug-report";
 import {
   bugTriedStorageKey,
@@ -12,19 +13,19 @@ export function BugFixConfirmBanner({ items }: { items: PendingBugConfirm[] }) {
   const [queue, setQueue] = useState(items);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [tried, setTried] = useState(false);
+  const [triedLocalId, setTriedLocalId] = useState<string | null>(null);
   const current = queue[0];
-
-  useEffect(() => {
-    if (!current) return;
-    setTried(sessionStorage.getItem(bugTriedStorageKey(current.id)) === "1");
-  }, [current]);
+  const triedStored = useClientValue(
+    () => (current ? sessionStorage.getItem(bugTriedStorageKey(current.id)) === "1" : false),
+    false,
+  );
+  const tried = Boolean(current) && (triedStored || triedLocalId === current?.id);
 
   if (!current) return null;
 
   function handleRetry() {
     sessionStorage.setItem(bugTriedStorageKey(current.id), "1");
-    setTried(true);
+    setTriedLocalId(current.id);
     goRetryBugPage(current.page_url);
   }
 

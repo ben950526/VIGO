@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { REGIONS, SERVICE_TYPES, STYLE_TAGS } from "@/lib/constants";
 
@@ -8,18 +8,21 @@ export function ExploreFilters() {
   const router = useRouter();
   const params = useSearchParams();
 
-  const [query, setQuery] = useState("");
-  const [style, setStyle] = useState("");
-  const [service, setService] = useState("");
+  const [query, setQuery] = useState(params.get("q") ?? "");
+  const [style, setStyle] = useState(params.get("style") ?? "");
+  const [service, setService] = useState(params.get("service") ?? "");
+  const [region, setRegion] = useState(params.get("region") ?? "");
 
-  const [region, setRegion] = useState("");
-
-  useEffect(() => {
+  // 網址參數變了（例如按上一頁）就把欄位同步回網址的值
+  const paramsKey = params.toString();
+  const [syncedParamsKey, setSyncedParamsKey] = useState(paramsKey);
+  if (paramsKey !== syncedParamsKey) {
+    setSyncedParamsKey(paramsKey);
     setQuery(params.get("q") ?? "");
     setStyle(params.get("style") ?? "");
     setService(params.get("service") ?? "");
     setRegion(params.get("region") ?? "");
-  }, [params]);
+  }
 
   function handleSearch() {
     const next = new URLSearchParams();

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useClientValue } from "@/lib/hooks/useClientValue";
 import { knockCreator, syncKnockCookie } from "@/actions/knock";
 import type { PublicCreatorProfile } from "@/lib/creator/sensitive";
 import {
@@ -26,15 +27,20 @@ export function CreatorKnockGate({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [syncing, setSyncing] = useState(false);
   const [agreedAttribution, setAgreedAttribution] = useState(false);
+  // 在這個頁面剛敲門成功時不要走「同步中」，避免重複 refresh
+  const [knockedHere, setKnockedHere] = useState(false);
+  // 這台瀏覽器之前就敲過門：先顯示同步中，等 cookie 補上後重新整理
+  const unlockedBefore = useClientValue(
+    () => !previewSimulation && isKnockUnlocked(creator.id),
+    false,
+  );
+  const syncing = unlockedBefore && !knockedHere;
 
   useEffect(() => {
-    if (previewSimulation) return;
-    if (!isKnockUnlocked(creator.id)) return;
+    if (!syncing) return;
 
     let cancelled = false;
-    setSyncing(true);
     (async () => {
       await syncKnockCookie(creator.id);
       if (!cancelled) router.refresh();
@@ -43,7 +49,7 @@ export function CreatorKnockGate({
     return () => {
       cancelled = true;
     };
-  }, [creator.id, router, previewSimulation]);
+  }, [creator.id, router, syncing]);
 
   if (previewSimulation) {
     return (
@@ -109,6 +115,7 @@ export function CreatorKnockGate({
       return;
     }
 
+    setKnockedHere(true);
     setKnockUnlocked(creator.id);
     router.refresh();
   }

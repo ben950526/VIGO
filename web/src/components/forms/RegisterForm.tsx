@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { afterCreatorSignup } from "@/actions/signup-complete";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
+import { useClientValue } from "@/lib/hooks/useClientValue";
 import { TERMS_VERSION } from "@/lib/legal";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
@@ -25,22 +26,22 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [pendingLabel, setPendingLabel] = useState("建立中…");
-  const [referrerRef, setReferrerRef] = useState("");
+  // 推薦碼優先順序：使用者自己輸入 > 網址 ?ref= > 這次瀏覽先前存的
+  const [editedRef, setEditedRef] = useState<string | null>(null);
+  const fromUrl = searchParams.get("ref")?.trim() ?? "";
+  const storedRef = useClientValue(
+    () => sessionStorage.getItem(REF_STORAGE_KEY)?.trim() ?? "",
+    "",
+  );
+  const referrerRef = editedRef ?? (fromUrl || storedRef);
 
   useEffect(() => {
-    const fromUrl = searchParams.get("ref")?.trim();
-    if (fromUrl) {
-      sessionStorage.setItem(REF_STORAGE_KEY, fromUrl);
-      setReferrerRef(fromUrl);
-      return;
-    }
-    const stored = sessionStorage.getItem(REF_STORAGE_KEY)?.trim();
-    if (stored) setReferrerRef(stored);
-  }, [searchParams]);
+    if (fromUrl) sessionStorage.setItem(REF_STORAGE_KEY, fromUrl);
+  }, [fromUrl]);
 
   function updateReferrerRef(value: string) {
     const trimmed = value.trim();
-    setReferrerRef(value);
+    setEditedRef(value);
     if (trimmed) sessionStorage.setItem(REF_STORAGE_KEY, trimmed);
     else sessionStorage.removeItem(REF_STORAGE_KEY);
   }

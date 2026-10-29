@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { submitBugReport } from "@/actions/bug-report";
 
@@ -16,19 +16,11 @@ export function BugReportForm({ defaultPageUrl, defaultEmail }: BugReportFormPro
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [env, setEnv] = useState({ userAgent: "", viewport: "" });
-
-  useEffect(() => {
-    setEnv({
-      userAgent: navigator.userAgent,
-      viewport: `${window.innerWidth}x${window.innerHeight}`,
-    });
-  }, []);
-
   async function handleSubmit(formData: FormData) {
     setSuccess(false);
-    formData.set("user_agent", env.userAgent);
-    formData.set("viewport", env.viewport);
+    // 送出時才讀瀏覽器資訊（只會在瀏覽器執行）
+    formData.set("user_agent", navigator.userAgent);
+    formData.set("viewport", `${window.innerWidth}x${window.innerHeight}`);
     if (defaultPageUrl) {
       formData.set("page_url", defaultPageUrl);
     } else if (pageUrl) {
