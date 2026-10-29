@@ -107,6 +107,9 @@ export default async function AdminReviewPage({
           <Link href="/admin/bugs" className="btn-secondary text-sm">
             BUG 回報
           </Link>
+          <Link href="/admin/threads" className="btn-secondary text-sm">
+            Threads 發文
+          </Link>
           <Link href="/admin/broadcast" className="btn-primary text-sm">
             群發 Email
           </Link>

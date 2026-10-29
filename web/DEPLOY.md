@@ -50,7 +50,8 @@ git push -u origin main
 | `RESEND_API_KEY` | `re_...` | [Resend](https://resend.com) → API Keys |
 | `EMAIL_FROM` | `Vigo <notify@mail.try-vigo.com>` | 已驗證網域的寄件人 |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJ...` | Supabase → Settings → API → **service_role**（僅伺服器／Cron，勿公開） |
-| `CRON_SECRET` | 自訂長字串 | Vercel Cron 呼叫 `/api/cron/admin-review-digest` 時驗證用 |
+| `CRON_SECRET` | 自訂長字串 | Vercel Cron 呼叫 `/api/cron/admin-review-digest`、`/api/cron/threads-post` 時驗證用 |
+| `THREADS_APP_SECRET` | Meta 開發者後台 Threads 用途的 App 密鑰 | Threads 自動發文換長效權杖用（步驟見 `THREADS_SETUP.md`） |
 
 勾選 **Production**（Preview 也可一併勾，方便測 PR）。
 
