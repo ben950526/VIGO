@@ -40,10 +40,14 @@ export async function getCreatorViewStats(creatorId: string): Promise<CreatorVie
   }
 
   const supabase = createServiceClient() ?? (await createClient());
-  let { data, error } = await supabase
+  const primary = await supabase
     .from("studio_page_views")
     .select("visitor_key, created_at, from_admin")
     .eq("creator_id", creatorId);
+  // 線上若還沒跑 032，fallback 查詢不會有 from_admin，型別要兩種都收
+  let data: { visitor_key: string; created_at: string; from_admin?: boolean | null }[] | null =
+    primary.data;
+  let error = primary.error;
 
   if (error?.message.includes("from_admin")) {
     const fallback = await supabase
