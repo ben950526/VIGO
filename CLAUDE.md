@@ -30,7 +30,7 @@ Next.js 16 的版本差異提示見 `web/AGENTS.md`（寫程式前先查 `web/no
 ## 完成前的驗證（push 前一定要做）
 
 - 在 `web/` 跑 `npm run build`，**必須成功才能 push**（曾因型別錯誤連續兩次 Vercel 部署失敗卻沒人發現）。
-- 跑 `npm run lint`，**不可新增 lint 錯誤**（目前有 6 個舊錯誤，未被要求前不用順手修）。
+- 跑 `npm run lint`，**必須 0 個錯誤**（警告可以先留著）。
 - 動到 UI 時，要考慮手機版（流量多來自 Threads，iPhone Safari 為主）。
 - push 後可用 `https://api.github.com/repos/ben950526/VIGO/commits/<sha>/status` 確認 Vercel 部署成功。
 - 回報時要老實說：哪些有驗證、哪些沒驗證（例如「build 過了，但沒在正式站實際點過」）。
