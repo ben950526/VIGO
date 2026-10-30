@@ -47,10 +47,7 @@
    - `threads_manage_replies`（自動留言要用）
 3. 切到 **設定（Settings）** 分頁：
    - **回呼網址（Redirect Callback URLs）**、**解除授權回呼網址**、**刪除資料回呼網址**：三格都填 `https://vigo-woad.vercel.app/` 即可（我們不用這些，但欄位必填）。
-   - 同一頁會看到 **Threads 應用程式編號（Threads App ID）** 和 **Threads 應用程式密鑰（Threads App Secret）**。
 4. 按 **儲存**。
-
-> 注意：主控板會有兩組編號／密鑰。要用的是 **Threads 那一組**（在 Threads 用途的設定頁），不是「應用程式設定 → 基本資料」裡的 Facebook 那組。
 
 ---
 
@@ -71,7 +68,11 @@
 
 ## 第 5 步：把 App 密鑰填進 Vercel
 
-1. 回到第 3 步的 Threads 設定頁，**Threads 應用程式密鑰** 旁邊按 **顯示**（可能要再輸入一次 Facebook 密碼），複製下來。
+1. 在 App 主控板左側選 **應用程式設定（App settings）→ 基本資料（Basic）**。這頁有兩組編號／密鑰：
+   - 「應用程式編號／應用程式密鑰」是 Facebook 的，**不要用**。
+   - 「**Threads 應用程式編號／Threads 應用程式密鑰**」才是要用的。
+   在 **Threads 應用程式密鑰** 旁邊按 **顯示**（可能要再輸入一次 Facebook 密碼），複製下來。
+   如果只有一組、沒寫 Threads：回主控板確認「用途（Use cases）」裡有「存取 Threads API」，沒有就加上再回來看。
 2. 登入 https://vercel.com ，打開 **vigo** 專案 → 上方 **Settings** → 左側 **Environment Variables**。
 3. 新增一筆：
    - **Key**：`THREADS_APP_SECRET`
