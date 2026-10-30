@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
+  approveAllDraftsAction,
   connectThreadsAction,
+  pauseAllApprovedAction,
   createThreadsPostAction,
   deleteThreadsPostAction,
   disconnectThreadsAction,
@@ -163,6 +165,7 @@ export default async function AdminThreadsPage({
 
   const queued = posts.filter((p) => p.status === "approved");
   const daysLeft = Math.floor(queued.length / 2);
+  const drafts = posts.filter((p) => p.status === "draft").length;
   const active = posts.filter((p) => p.status !== "posted");
   const posted = posts.filter((p) => p.status === "posted").reverse();
 
@@ -247,6 +250,20 @@ export default async function AdminThreadsPage({
               匯入預設文案（草稿）
             </button>
           </form>
+          {drafts > 0 && (
+            <form action={approveAllDraftsAction}>
+              <button type="submit" className="btn-primary text-sm">
+                草稿全部核准（{drafts} 篇）
+              </button>
+            </form>
+          )}
+          {queued.length > 0 && (
+            <form action={pauseAllApprovedAction}>
+              <button type="submit" className="btn-secondary text-sm">
+                全部暫停
+              </button>
+            </form>
+          )}
           {connection.connected && queued.length > 0 && (
             <form action={publishNowAction}>
               <button type="submit" className="btn-secondary text-sm">

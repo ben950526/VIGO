@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/admin";
 import { siteUrl } from "@/lib/email/config";
 import { STARTER_THREADS_POSTS, starterFirstReply } from "@/lib/threads/starter-posts";
 import {
+  bulkSetThreadsStatus,
   connectThreadsWithToken,
   createThreadsPost,
   deleteThreadsPost,
@@ -134,6 +135,28 @@ export async function importStarterPostsAction() {
     back(errorText(error), "error");
   }
   back(count > 0 ? `已匯入 ${count} 篇草稿，請逐篇看過再核准` : "預設文案都已匯入過了");
+}
+
+export async function approveAllDraftsAction() {
+  await requireAdmin();
+  let count = 0;
+  try {
+    count = await bulkSetThreadsStatus("draft", "approved");
+  } catch (error) {
+    back(errorText(error), "error");
+  }
+  back(count > 0 ? `已核准 ${count} 篇，會依順序每天中午、晚上各發一篇` : "沒有草稿可以核准");
+}
+
+export async function pauseAllApprovedAction() {
+  await requireAdmin();
+  let count = 0;
+  try {
+    count = await bulkSetThreadsStatus("approved", "draft");
+  } catch (error) {
+    back(errorText(error), "error");
+  }
+  back(count > 0 ? `已暫停：${count} 篇改回草稿，不會再自動發` : "目前沒有排隊中的文案");
 }
 
 /** 管理員手動「現在發下一篇」：會真的公開發文 */

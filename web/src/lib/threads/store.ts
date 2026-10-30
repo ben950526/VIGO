@@ -265,6 +265,21 @@ export async function updateThreadsPost(
   if (error) throw new Error(error.message);
 }
 
+/** 一次改狀態：草稿全部核准，或已核准全部改回草稿（暫停）；回傳改了幾篇 */
+export async function bulkSetThreadsStatus(
+  from: "draft" | "approved",
+  to: "draft" | "approved",
+): Promise<number> {
+  const db = requireDb();
+  const { data, error } = await db
+    .from("threads_posts")
+    .update({ status: to, updated_at: new Date().toISOString() })
+    .eq("status", from)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return data?.length ?? 0;
+}
+
 /** 卡在「發送中」（例如執行逾時）時，讓管理員手動改成失敗 */
 export async function markStuckPostFailed(id: string) {
   const db = requireDb();
