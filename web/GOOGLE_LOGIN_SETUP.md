@@ -1,6 +1,6 @@
 # 發案者 Google 登入：一次性設定步驟
 
-> **2026-11-02 狀態：第 0～3 步已由 Claude 用瀏覽器設定完成**（Google Cloud 專案 `Vigo`／ID `vocal-pad-513509-n3`，OAuth 用戶端「Vigo 網站」，已發布為正式版；Supabase Google 已啟用、Redirect URLs 已加 `https://vigo-woad.vercel.app/**`）。剩第 4 步自測與第 5 步開開關。
+> **2026-11-02 狀態：第 0～3 步已由 Claude 用瀏覽器設定完成**（Google Cloud 專案 `Vigo`／ID `vocal-pad-513509-n3`，OAuth 用戶端「Vigo 網站」，已發布為正式版；Supabase Google 已啟用、Redirect URLs 已加 `https://vigo-woad.vercel.app/**`）。第 5 步開關也已於同日打開（`REQUIRE_CLIENT_LOGIN=1`，Production）。
 
 做完之前，網站維持現狀（發案者不用登入就能逛）。**全部設定好、自己測過能登入之後**，才打開第 5 步的開關。
 
