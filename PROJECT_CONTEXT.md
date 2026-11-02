@@ -179,7 +179,7 @@ API：
 ### 資料庫、API、第三方
 
 - **資料庫／登入／Storage：** Supabase（Postgres + Auth email/password + RLS + 頭像 bucket）。
-- **網站託管：** Vercel。
+- **網站託管：** Vercel。函式區域固定 `sin1`（新加坡，`web/vercel.json` 的 `regions`），與 Supabase（Southeast Asia / Singapore）同區；2026-11-02 前預設在美東 iad1，登入後頁面要 1～4 秒，不要改回去。
 - **信件：** Resend；預設 `EMAIL_FROM` 形如 `Vigo <notify@mail.try-vigo.com>`。平台通知寄**登入信箱**，不寄工作室公開聯絡 Email（見 `resolveUserNotifyEmail.ts`）。
 - **金流／CMS／分析：** 無。
 - **主要資料表：** `profiles`、`creator_profiles`、`portfolio_items`、`knocks`、`studio_page_views`、`feedback`、`bug_reports`、`referral_signups`、`promo_credit_transactions`、`promo_share_submissions`、`review_submission_events`、`inquiries`（未使用）。
