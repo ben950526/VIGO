@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { GoogleClientLoginButton } from "@/components/forms/GoogleClientLoginButton";
+import { GoogleSignInButton } from "@/components/forms/GoogleSignInButton";
 import { safeNextPath } from "@/lib/auth/clientGate";
 import { getAuthUserId } from "@/lib/auth/session";
 
@@ -33,7 +33,7 @@ export default async function JoinPage({
           </p>
         )}
 
-        <GoogleClientLoginButton next={next} />
+        <GoogleSignInButton as="client" next={next} />
 
         <ul className="mt-8 space-y-2 text-sm text-[var(--text-secondary)]">
           <li>・先看作品，對到風格再按「敲門」拿聯絡方式</li>

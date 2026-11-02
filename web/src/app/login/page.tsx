@@ -1,11 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { GoogleSignInButton } from "@/components/forms/GoogleSignInButton";
 import { LoginForm } from "@/components/forms/LoginForm";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ registered?: string; error?: string; reset?: string }>;
+  searchParams: Promise<{ registered?: string; error?: string; reset?: string; next?: string }>;
 }) {
   const params = await searchParams;
 
@@ -31,6 +32,17 @@ export default async function LoginPage({
             登入連結無效或已過期，請重新登入或再申請一次忘記密碼。
           </p>
         ) : null}
+        <GoogleSignInButton as="creator_login" next={params.next ?? "/dashboard"} />
+        <p className="mt-2 text-center text-xs text-[var(--text-muted)]">
+          用 Gmail 註冊過的帳號，按這裡就會回到原本的工作室。
+        </p>
+
+        <div className="my-6 flex items-center gap-3 text-xs text-[var(--text-muted)]">
+          <span className="h-px flex-1 bg-[var(--border)]" />
+          或用 Email＋密碼登入
+          <span className="h-px flex-1 bg-[var(--border)]" />
+        </div>
+
         <Suspense fallback={null}>
           <LoginForm />
         </Suspense>

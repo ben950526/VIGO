@@ -7,6 +7,7 @@ import { afterCreatorSignup } from "@/actions/signup-complete";
 import { createClient } from "@/lib/supabase/client";
 import { formatAuthError } from "@/lib/auth/errors";
 import { useClientValue } from "@/lib/hooks/useClientValue";
+import { GoogleSignInButton } from "@/components/forms/GoogleSignInButton";
 import { TERMS_VERSION } from "@/lib/legal";
 import { createCreatorSlug, isSupabaseConfigured } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [pendingLabel, setPendingLabel] = useState("建立中…");
+  const [googleTermsAccepted, setGoogleTermsAccepted] = useState(false);
   // 推薦碼優先順序：使用者自己輸入 > 網址 ?ref= > 這次瀏覽先前存的
   const [editedRef, setEditedRef] = useState<string | null>(null);
   const fromUrl = searchParams.get("ref")?.trim() ?? "";
@@ -196,7 +198,63 @@ export function RegisterForm() {
     }
   }
 
+  const googleError = searchParams.get("error");
+  const needStudio = searchParams.get("need_studio") === "1";
+
   return (
+    <div className="space-y-6">
+      {needStudio && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          這個 Google 帳號還沒有工作室。勾選下方同意後按「用 Google 建立工作室」，就會幫你建好。
+        </p>
+      )}
+      {googleError && (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {googleError === "studio"
+            ? "Google 登入成功，但工作室沒有建立起來，請再按一次；還是不行請到「意見回饋」告訴我們。"
+            : "Google 註冊沒有完成，請再試一次。"}
+        </p>
+      )}
+
+      <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+        <label className="flex items-start gap-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+          <input
+            type="checkbox"
+            checked={googleTermsAccepted}
+            onChange={(e) => setGoogleTermsAccepted(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+          />
+          <span>
+            我已年滿 18 歲（或具完全行為能力），並已閱讀且同意{" "}
+            <Link href="/terms" target="_blank" className="text-[var(--accent)] hover:underline">
+              使用條款
+            </Link>{" "}
+            與{" "}
+            <Link href="/privacy" target="_blank" className="text-[var(--accent)] hover:underline">
+              隱私權政策
+            </Link>
+            。
+          </span>
+        </label>
+        <GoogleSignInButton
+          as="creator"
+          referrerRef={referrerRef}
+          label="用 Google 建立工作室"
+          disabled={!googleTermsAccepted}
+          disabledHint="請先勾選同意使用條款與隱私權政策"
+        />
+        <p className="text-xs text-[var(--text-muted)]">
+          工作室名稱會先用你的 Google 名字，之後在後台隨時可以改。
+          {referrerRef.trim() ? ` 推薦碼「${referrerRef.trim()}」會一起套用。` : ""}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
+        <span className="h-px flex-1 bg-[var(--border)]" />
+        沒有 Gmail？改用 Email 註冊
+        <span className="h-px flex-1 bg-[var(--border)]" />
+      </div>
+
     <form onSubmit={handleSubmit} className="space-y-4">
       {referrerRef.trim() ? (
         <p className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-secondary)]">
@@ -256,5 +314,6 @@ export function RegisterForm() {
         {pending ? pendingLabel : "建立帳號"}
       </button>
     </form>
+    </div>
   );
 }
