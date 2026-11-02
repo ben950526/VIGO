@@ -229,7 +229,7 @@ npx tsx --env-file=.env.local scripts/run-digest-once.ts
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 專案 URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 瀏覽器／SSR anon key |
 | `NEXT_PUBLIC_SITE_URL` | 站台 origin（Auth redirect、信件連結）；本機 `http://localhost:3000` |
-| `ADMIN_EMAIL` | 管理員信箱；每日摘要收件人（2026-11-02 發現 Vercel 漏設、每日摘要沒寄，已補上） |
+| `ADMIN_EMAIL` | 管理員信箱；每日摘要收件人（2026-11-02 發現 Vercel 漏設，每日摘要因此沒寄；**待經營者在 Vercel 補上**，值為唯一管理員帳號的 Gmail） |
 | `RESEND_API_KEY` | 寄信 |
 | `EMAIL_FROM` | 寄件人（需 Resend 已驗證網域） |
 | `SUPABASE_SERVICE_ROLE_KEY` | 僅伺服器：群發名單、Cron、auth.admin 取登入信箱、補瀏覽。禁止 `NEXT_PUBLIC_` |
