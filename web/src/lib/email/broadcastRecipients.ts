@@ -34,6 +34,8 @@ export async function fetchBroadcastRecipients(options: {
 
     const byEmail = new Map<string, BroadcastRecipient>();
     for (const p of profiles ?? []) {
+      // 發案者（Google 登入）只同意收 3 封找工作室提醒，不寄群發
+      if (p.role === "client") continue;
       const email = p.email?.trim();
       if (!email || isExcludedEmail(email)) continue;
       const lower = email.toLowerCase();

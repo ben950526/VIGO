@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
 import { siteUrl } from "@/lib/email/config";
-import { STARTER_THREADS_POSTS, starterFirstReply } from "@/lib/threads/starter-posts";
+import { buildStarterImportRows } from "@/lib/threads/starter-posts";
 import {
   bulkSetThreadsStatus,
   connectThreadsWithToken,
@@ -130,7 +130,7 @@ export async function importStarterPostsAction() {
   await requireAdmin();
   let count = 0;
   try {
-    count = await importStarterPosts(STARTER_THREADS_POSTS, starterFirstReply(siteUrl()));
+    count = await importStarterPosts(buildStarterImportRows(siteUrl()));
   } catch (error) {
     back(errorText(error), "error");
   }

@@ -17,7 +17,7 @@ export async function AuthNavLinks() {
     );
   }
 
-  const { isLoggedIn, isAdmin } = await getNavAuth();
+  const { isLoggedIn, isAdmin, isClient } = await getNavAuth();
 
   if (!isLoggedIn) {
     return (
@@ -34,9 +34,15 @@ export async function AuthNavLinks() {
 
   return (
     <>
-      <Link href="/dashboard" className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--accent)]">
-        我的工作室
-      </Link>
+      {isClient ? (
+        <Link href="/explore" className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--accent)]">
+          逛工作室
+        </Link>
+      ) : (
+        <Link href="/dashboard" className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--accent)]">
+          我的工作室
+        </Link>
+      )}
       {isAdmin && (
         <Link
           href="/admin/review"

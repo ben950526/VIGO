@@ -6,6 +6,8 @@ import { isSupabaseConfigured } from "@/lib/utils";
 export type NavAuth = {
   isLoggedIn: boolean;
   isAdmin: boolean;
+  /** 用 Google 登入的發案者 */
+  isClient?: boolean;
 };
 
 export const getNavAuth = cache(async (): Promise<NavAuth> => {
@@ -23,5 +25,6 @@ export const getNavAuth = cache(async (): Promise<NavAuth> => {
     return { isLoggedIn: true, isAdmin: false };
   }
 
-  return { isLoggedIn: true, isAdmin: isAdminProfile(profile) };
+  const isAdmin = isAdminProfile(profile);
+  return { isLoggedIn: true, isAdmin, isClient: !isAdmin && profile.role === "client" };
 });

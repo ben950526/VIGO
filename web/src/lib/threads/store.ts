@@ -317,36 +317,24 @@ export async function deleteThreadsPost(id: string) {
   if (error) throw new Error(error.message);
 }
 
-/** 匯入預設文案；seed_key 重複的會略過 */
+/** 匯入預設文案；seed_key 重複的會略過，順序照文案本身指定的 sort_order */
 export async function importStarterPosts(
-  posts: { key: string; style: string; body: string }[],
-  firstReply: string,
+  posts: { key: string; style: string; body: string; first_reply: string; sort_order: number }[],
 ): Promise<number> {
   const db = requireDb();
   const { data: existing } = await db.from("threads_posts").select("seed_key").not("seed_key", "is", null);
   const have = new Set((existing ?? []).map((row) => row.seed_key as string));
-  const { data: last } = await db
-    .from("threads_posts")
-    .select("sort_order")
-    .order("sort_order", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  let order = ((last?.sort_order as number | undefined) ?? 0) + 10;
 
   const rows = posts
     .filter((post) => !have.has(post.key))
-    .map((post) => {
-      const row = {
-        body: post.body,
-        first_reply: firstReply,
-        style: post.style,
-        status: "draft",
-        sort_order: order,
-        seed_key: post.key,
-      };
-      order += 10;
-      return row;
-    });
+    .map((post) => ({
+      body: post.body,
+      first_reply: post.first_reply,
+      style: post.style,
+      status: "draft",
+      sort_order: post.sort_order,
+      seed_key: post.key,
+    }));
   if (rows.length === 0) return 0;
   const { error } = await db.from("threads_posts").insert(rows);
   if (error) throw new Error(error.message);

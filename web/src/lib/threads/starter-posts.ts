@@ -150,3 +150,79 @@ export function starterFirstReply(baseUrl: string): string {
   const url = `${baseUrl.replace(/\/$/, "")}/explore`;
   return `想直接看作品可以來這裡逛：${url}\n看到喜歡的工作室按「敲門」就能拿到聯絡方式，免費、不抽成。`;
 }
+
+/**
+ * 招接案者的文案（發案：接案 = 3：1）。
+ * 順序：預設 28 篇是 10、20、30…280，這批放在每 3 篇之後（35、65、95…），
+ * 就算前 28 篇已經匯入過，再匯入也會自動穿插。
+ */
+export const RECRUIT_THREADS_POSTS: { key: string; style: string; body: string }[] = [
+  {
+    key: "v2-recruit-01",
+    style: "招接案",
+    body: "剪輯師朋友們，接案最累的是什麼？\n\n不是剪片，是一直要自我推銷。\n\n我做了一個地方讓你把作品放上去，\n發案者自己來逛、看喜歡再來敲門找你。\n免費上架，不抽成。",
+  },
+  {
+    key: "v2-recruit-02",
+    style: "招接案",
+    body: "接短影音案子，你都靠什麼？\n\nA. 朋友介紹\nB. 社團搶案\nC. 自己經營 IG\n\n如果還想多一個「被動被看到」的管道，\n可以把作品集放到 Vigo，發案者會自己來找。",
+  },
+  {
+    key: "v2-recruit-03",
+    style: "招接案",
+    body: "在社團搶案的日常：\n貼文一出來，三分鐘內五十則留言「+1 私訊」。\n\n你的作品再好，也被淹沒在裡面。\n\n讓發案者先看到你的作品，再決定要不要找你，\n這樣接到的案子，風格通常也比較對。",
+  },
+  {
+    key: "v2-recruit-04",
+    style: "招接案",
+    body: "已經在 Vigo 上架的剪輯師，有個小福利：\n\n分享你的推薦碼給同行，\n每有一位用你的推薦碼完成註冊，你就拿 20 點，\n點數之後可以折抵訂閱（不能換現金）。\n\n推薦碼在你的後台就看得到。",
+  },
+  {
+    key: "v2-recruit-05",
+    style: "招接案",
+    body: "作品集放在雲端硬碟，發案者真的會點開嗎？\n\n大部分不會。\n\n把作品整理成一個頁面：風格標籤、服務項目、價目、幾支代表作，\n對方一眼就知道你適不適合。Vigo 免費幫你做這件事。",
+  },
+  {
+    key: "v2-recruit-06",
+    style: "招接案",
+    body: "給剛開始接案的剪輯師：\n\n不用等作品很多才開始曝光。\n先放 1 支你最有把握的，寫 2～3 句介紹你擅長什麼。\n\n發案者看的是「風格對不對」，不是數量。",
+  },
+  {
+    key: "v2-recruit-07",
+    style: "招接案",
+    body: "身邊有在接短影音的朋友嗎？\n\n可以把 Vigo 推給他：\n免費建立工作室頁面、貼作品連結就好，不用上傳影片檔，\n發案者逛到喜歡的會自己來敲門。\n\n有推薦碼的話記得填，推薦人會拿到點數。",
+  },
+  {
+    key: "v2-recruit-08",
+    style: "招接案",
+    body: "Vigo 對接案者的承諾：\n\n1. 上架免費\n2. 不抽成，案子談成多少都是你的\n3. 不介入你跟發案者的溝通\n4. 審核過才上架，讓發案者信任這裡的每一間\n\n想被更多發案者看到，可以來試試。",
+  },
+  {
+    key: "v2-recruit-09",
+    style: "招接案",
+    body: "接案者限定：社群分享拿點數\n\n在 Threads、IG 或臉書公開分享你的 Vigo 工作室頁面，\n把貼文連結送審，通過就拿 100 點（每人一次）。\n加上邀請同行每位 20 點，點數最多累積到 300 點。",
+  },
+];
+
+export function recruitFirstReply(baseUrl: string): string {
+  const base = baseUrl.replace(/\/$/, "");
+  return `免費建立工作室：${base}/register\n已經有帳號的話，到後台就能複製你的推薦碼分享給同行。`;
+}
+
+/** 匯入用：兩批文案合併，招接案者那批插在每 3 篇發案者文案之後 */
+export function buildStarterImportRows(baseUrl: string) {
+  const clientReply = starterFirstReply(baseUrl);
+  const recruitReply = recruitFirstReply(baseUrl);
+  return [
+    ...STARTER_THREADS_POSTS.map((post, i) => ({
+      ...post,
+      first_reply: clientReply,
+      sort_order: (i + 1) * 10,
+    })),
+    ...RECRUIT_THREADS_POSTS.map((post, i) => ({
+      ...post,
+      first_reply: recruitReply,
+      sort_order: (i + 1) * 30 + 5,
+    })),
+  ];
+}

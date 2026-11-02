@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { runClientNudges } from "@/lib/email/runClientNudges";
 import { runOnboardingNudges } from "@/lib/email/runOnboardingNudges";
 import { runDailyAdminReviewDigest } from "@/lib/review-queue/runDailyAdminDigest";
 
@@ -16,9 +17,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [digest, nudges] = await Promise.all([
+  const [digest, nudges, clientNudges] = await Promise.all([
     runDailyAdminReviewDigest(),
     runOnboardingNudges(),
+    runClientNudges(),
   ]);
 
   if (!digest.ok && !nudges.ok) {
@@ -44,5 +46,6 @@ export async function GET(request: Request) {
       failed: nudges.failed,
       error: nudges.error,
     },
+    clientNudges,
   });
 }

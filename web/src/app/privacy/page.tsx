@@ -30,6 +30,9 @@ export default function PrivacyPage() {
             <strong>帳號資料：</strong>Email、密碼（由 Supabase Auth 加密保存）、真實姓名、角色
           </li>
           <li>
+            <strong>發案者 Google 登入：</strong>使用 Google 帳號登入時，我們會取得您的 Email 與 Google 提供的基本資料（如名稱），不會取得您的 Google 密碼
+          </li>
+          <li>
             <strong>工作室資料：</strong>工作室名稱、簡介、地區、服務類型、風格標籤、價目、聯絡方式（Email、LINE ID、電話等，依您填寫與公開設定）
           </li>
           <li>
@@ -50,6 +53,7 @@ export default function PrivacyPage() {
           <li>提供註冊、登入、工作室管理與媒合展示服務</li>
           <li>審核創作者與作品、維護平台秩序與安全</li>
           <li>回覆您的意見、BUG 回報或客服詢問</li>
+          <li>發案者登入後，於數日內寄送最多 3 封找工作室的提醒信；每封信都附取消連結，取消後即不再寄送</li>
           <li>遵守法律義務、主張或抗辯法律上請求</li>
           <li>在取得同意或法律允許範圍內改善平台功能</li>
         </ul>

@@ -16,6 +16,13 @@ export interface Database {
           role: string;
           real_name: string | null;
           created_at: string;
+          /** 035 起才有 */
+          client_marketing_consent_at?: string | null;
+          client_nudge_1d_sent_at?: string | null;
+          client_nudge_3d_sent_at?: string | null;
+          client_nudge_7d_sent_at?: string | null;
+          email_opt_out?: boolean;
+          unsubscribe_token?: string;
         };
         Insert: {
           id: string;
@@ -30,6 +37,11 @@ export interface Database {
           role?: string;
           real_name?: string | null;
           created_at?: string;
+          client_marketing_consent_at?: string | null;
+          client_nudge_1d_sent_at?: string | null;
+          client_nudge_3d_sent_at?: string | null;
+          client_nudge_7d_sent_at?: string | null;
+          email_opt_out?: boolean;
         };
         Relationships: [];
       };

@@ -26,7 +26,9 @@ export async function updateSession(request: NextRequest) {
   );
 
   // 僅刷新 cookie 內 session，避免每次請求都打 Auth API
-  await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  return supabaseResponse;
+  return { response: supabaseResponse, hasSession: Boolean(session) };
 }
