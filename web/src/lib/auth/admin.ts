@@ -1,12 +1,19 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   getAuthProfile,
   isAdminProfile,
 } from "@/lib/auth/session";
 import type { Profile } from "@/types/database";
 import { isSupabaseConfigured } from "@/lib/utils";
+
+/** 信箱符合 ADMIN_EMAIL 時把 role 補成 admin；一般使用者不能自己改 role（034），所以走 service role */
+async function promoteToAdminRole(userId: string): Promise<void> {
+  const service = createServiceClient();
+  if (!service) return;
+  await service.from("profiles").update({ role: "admin" }).eq("id", userId);
+}
 
 export const getCurrentUserProfile = cache(async (): Promise<Profile | null> => {
   const profile = await getAuthProfile();
@@ -26,8 +33,7 @@ export async function requireAdmin(): Promise<Profile> {
     const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
 
     if (emailMatch) {
-      const supabase = await createClient();
-      await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);
+      await promoteToAdminRole(profile.id);
       return { ...profile, role: "admin" } as Profile;
     }
 
@@ -47,7 +53,6 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
   const emailMatch = adminEmail && profile.email.toLowerCase() === adminEmail;
   if (!emailMatch) return false;
 
-  const supabase = await createClient();
-  await supabase.from("profiles").update({ role: "admin" }).eq("id", profile.id);
+  await promoteToAdminRole(profile.id);
   return true;
 }
