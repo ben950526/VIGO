@@ -39,7 +39,10 @@ Next.js 16 的版本差異提示見 `web/AGENTS.md`（寫程式前先查 `web/no
 
 - **不要修改已存在的 migration 檔**；變更一律新增下一個編號的檔案（目前到 `035`），並用 `if not exists`／`create or replace` 寫成可重跑。
 - 新增的資料表一定要開 RLS 並寫 policy；權限檢查要在伺服器端做，不能只靠前端隱藏。
-- 新增 migration 後要提醒經營者到 Supabase SQL Editor 執行，並告訴他檔案路徑；執行後可用 anon key 唯讀查詢確認欄位存在。
+- **Migration 由 Claude 自己執行**（2026-11-02 經營者授權）：用內建瀏覽器開 `https://supabase.com/dashboard/project/hyrrssbdutwuhmuyctot/sql/new`，把 migration 檔內容放進編輯器（確認字數與檔案一致）後按 Run，看到 Success 再用 anon key 唯讀查詢確認生效，並回報執行了哪個檔案。
+  - 只執行自己寫好、已 commit 的 migration 檔，一次一檔、照編號順序。
+  - 會刪資料、清空表、刪欄位或刪表的 SQL，**一律先問經營者**。只替換 policy／grant 的可以直接跑。
+  - Supabase 要求重新登入時，請經營者自己在瀏覽器登入，不要代填密碼。
 - 檢查正式資料時只做唯讀查詢；任何寫入、刪除正式資料前都要先問。
 - 不要把金鑰、個資或真實使用者 Email 印到輸出或寫進程式與文件。
 
@@ -64,7 +67,7 @@ Next.js 16 的版本差異提示見 `web/AGENTS.md`（寫程式前先查 `web/no
 - 應用程式都在 `web/`（Vercel Root Directory）。指令：`npm run lint`、`npm run build`；沒有自動測試，改探索門檻、敲門、寄信時要手動走一遍。
 - 探索可見條件只維護一處：`web/src/lib/creator/listing.ts` 的 `isCreatorVisibleOnExplore`（探索頁、公開頁、敲門要一致）。
 - Server Actions 放 `web/src/actions/`；資料讀取放 `lib/data`；純規則放 `lib/creator`、`lib/referral`、`lib/knock`。路徑別名 `@/` → `web/src/`。
-- 資料庫 migration 在 `web/supabase/migrations/`，正式庫由經營者在 Supabase SQL Editor 手動執行，**不會**隨部署自動套用；新欄位要做 schema cache fallback。
+- 資料庫 migration 在 `web/supabase/migrations/`，**不會**隨部署自動套用（執行方式見上方「資料庫與安全」）；新欄位要做 schema cache fallback。
 - `SUPABASE_SERVICE_ROLE_KEY` 只能在伺服器端，禁止加 `NEXT_PUBLIC_`。
 - 通知信寄登入信箱，不 BCC 管理員。
 - 週統計用台北時區週一起算（`lib/time/taipei.ts`）；管理員的瀏覽與敲門不計入後台週統計。

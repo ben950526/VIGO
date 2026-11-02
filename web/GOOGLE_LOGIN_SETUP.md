@@ -6,14 +6,10 @@
 
 ---
 
-## 第 0 步：先跑兩個 SQL（一定要照順序）
+## 第 0 步：資料庫（已完成）
 
-Supabase → **SQL Editor** → **New query**，貼上執行，看到 Success 再跑下一個：
-
-1. `web/supabase/migrations/034_profiles_lockdown.sql`：**安全修正，請越快越好**。修好「任何人都讀得到所有使用者 Email」與「使用者能自己改成管理員」兩個漏洞。
-2. `web/supabase/migrations/035_client_login_nudges.sql`：發案者提醒信要用的欄位。
-
-跑完 034 後，請用管理員帳號登入一次 `/admin/review`，確認後台還能正常打開。
+`034_profiles_lockdown.sql`（安全修正）與 `035_client_login_nudges.sql`（提醒信欄位）已於 2026-11-02 由 Claude 在 SQL Editor 執行並驗證。
+請用管理員帳號登入一次 `/admin/review`，確認後台還能正常打開。
 
 ---
 
