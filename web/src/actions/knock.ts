@@ -7,6 +7,7 @@ import {
   type CreatorKnockUnlock,
 } from "@/lib/creator/sensitive";
 import { createPublicClient } from "@/lib/supabase/public";
+import { isClientLoginRequired } from "@/lib/auth/clientGate";
 import { getAuthProfile, isAdminProfile } from "@/lib/auth/session";
 import { setCreatorKnockUnlocked } from "@/lib/knock/cookie";
 import { recordStudioPageViewOnce } from "@/lib/data/record-studio-page-view";
@@ -85,6 +86,9 @@ export async function knockCreator(formData: FormData): Promise<KnockResult> {
   }
 
   const profile = await getAuthProfile();
+  if (!profile && isClientLoginRequired()) {
+    return { error: "請先用 Google 登入再敲門（免費、不用設密碼）" };
+  }
   const fromAdmin = Boolean(profile && isAdminProfile(profile));
 
   const supabase = createPublicClient();

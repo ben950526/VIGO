@@ -6,6 +6,8 @@ import { DemoAccountBanner } from "@/components/creator/DemoAccountBanner";
 import { DemoBadge } from "@/components/creator/DemoBadge";
 import { RecordStudioPageView } from "@/components/creator/RecordStudioPageView";
 import { StudioPreviewBanner } from "@/components/creator/StudioPreviewBanner";
+import { isClientLoginRequired } from "@/lib/auth/clientGate";
+import { getAuthUserId } from "@/lib/auth/session";
 import { isDemoCreator } from "@/lib/demo-creator";
 import { toPublicCreatorProfile } from "@/lib/creator/sensitive";
 import { getCreatorPageBySlug } from "@/lib/data/creators";
@@ -19,9 +21,16 @@ export async function generateMetadata({ params }: CreatorPageProps) {
   const { slug } = await params;
   const page = await getCreatorPageBySlug(slug);
   if (!page) return { title: "找不到創作者" };
+  const c = page.creator;
+  // 搜尋結果會顯示的說明：地區、服務、風格，讓搜「台中 Reels 剪輯」的人看得出相關
+  const facts = [c.region, ...(c.service_types ?? []).slice(0, 3), ...(c.style_tags ?? []).slice(0, 3)]
+    .filter(Boolean)
+    .join("・");
+  const bio = (c.bio ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
   return {
-    title: page.creator.studio_name,
-    description: `${page.creator.studio_name} 的短影音作品集`,
+    title: `${c.studio_name}｜短影音作品集`,
+    description: [facts, bio, "在 Vigo 先看作品，對到風格再聯絡，不抽成。"].filter(Boolean).join("。"),
+    alternates: { canonical: `/creator/${slug}` },
   };
 }
 
@@ -37,6 +46,11 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   const knocked =
     !isPreview && !isDemo && (await isCreatorKnockUnlocked(creator.id));
   const showContact = isPreview || isDemo || knocked;
+  // 逛作品不用登入；開關打開時，沒登入的人要先登入才能敲門
+  const knockLoginHref =
+    !showContact && isClientLoginRequired() && !(await getAuthUserId())
+      ? `/join?next=${encodeURIComponent(`/creator/${slug}`)}`
+      : undefined;
 
   return (
     <>
@@ -82,7 +96,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
         previewMode={isPreview}
         lockContact={!showContact}
       />
-      {!showContact ? <CreatorKnockGate creator={publicCreator} /> : null}
+      {!showContact ? <CreatorKnockGate creator={publicCreator} loginHref={knockLoginHref} /> : null}
     </>
   );
 }

@@ -5,7 +5,7 @@ import { safeNextPath } from "@/lib/auth/clientGate";
 import { getAuthUserId } from "@/lib/auth/session";
 
 export const metadata = {
-  title: "登入逛作品",
+  title: "登入後敲門",
 };
 
 export default async function JoinPage({
@@ -22,9 +22,9 @@ export default async function JoinPage({
   return (
     <section className="section">
       <div className="container-narrow mx-auto max-w-md">
-        <h1 className="mb-3 text-center text-3xl font-bold">登入後逛短影音工作室</h1>
+        <h1 className="mb-3 text-center text-3xl font-bold">登入後敲門，拿工作室聯絡方式</h1>
         <p className="mb-8 text-center text-[var(--text-secondary)]">
-          用 Google 帳號一鍵登入就能看所有工作室的作品。發案者完全免費，Vigo 不抽成、不介入你們的合作。
+          用 Google 帳號一鍵登入，就能直接聯絡喜歡的工作室。發案者完全免費，Vigo 不抽成、不介入你們的合作。
         </p>
 
         {params.error === "auth" && (

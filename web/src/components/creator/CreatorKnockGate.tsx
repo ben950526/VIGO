@@ -17,12 +17,15 @@ interface CreatorKnockGateProps {
   /** 接案者預覽：不寫入敲門紀錄，改切換至完整預覽 */
   previewSimulation?: boolean;
   onPreviewReveal?: () => void;
+  /** 有值代表要先登入才能敲門，按鈕改成連到這個登入網址 */
+  loginHref?: string;
 }
 
 export function CreatorKnockGate({
   creator,
   previewSimulation = false,
   onPreviewReveal,
+  loginHref,
 }: CreatorKnockGateProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -132,19 +135,33 @@ export function CreatorKnockGate({
           創作者後台會分開看「有多少人來逛作品」和「有多少人敲門要聯絡」。
         </p>
         <KnockAttributionNotice />
-        <KnockAttributionCheckbox
-          id="knock-attribution"
-          checked={agreedAttribution}
-          onChange={setAgreedAttribution}
-        />
-        <button
-          type="button"
-          onClick={handleKnock}
-          disabled={pending || !agreedAttribution}
-          className="btn-primary px-10 py-3 text-lg disabled:opacity-70"
-        >
-          {pending ? "敲門中…" : "敲門，查看聯絡方式"}
-        </button>
+        {loginHref ? (
+          <>
+            {/* 逛作品不用登入；要拿聯絡方式時才請發案者用 Google 登入（REQUIRE_CLIENT_LOGIN） */}
+            <a href={loginHref} className="btn-primary inline-block px-10 py-3 text-lg">
+              用 Google 登入後敲門
+            </a>
+            <p className="mt-3 text-sm text-[var(--text-muted)]">
+              免費、不用設密碼，登入完會回到這一頁。
+            </p>
+          </>
+        ) : (
+          <>
+            <KnockAttributionCheckbox
+              id="knock-attribution"
+              checked={agreedAttribution}
+              onChange={setAgreedAttribution}
+            />
+            <button
+              type="button"
+              onClick={handleKnock}
+              disabled={pending || !agreedAttribution}
+              className="btn-primary px-10 py-3 text-lg disabled:opacity-70"
+            >
+              {pending ? "敲門中…" : "敲門，查看聯絡方式"}
+            </button>
+          </>
+        )}
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         <p className="mt-6 text-xs text-[var(--text-muted)]">
           敲門表示你願意留下聯絡、進一步洽談。平台不介入後續，次數不限。
