@@ -37,7 +37,7 @@ Next.js 16 的版本差異提示見 `web/AGENTS.md`（寫程式前先查 `web/no
 
 ## 資料庫與安全
 
-- **不要修改已存在的 migration 檔**；變更一律新增下一個編號的檔案（目前到 `035`），並用 `if not exists`／`create or replace` 寫成可重跑。
+- **不要修改已存在的 migration 檔**；變更一律新增下一個編號的檔案（目前到 `036`），並用 `if not exists`／`create or replace` 寫成可重跑。
 - 新增的資料表一定要開 RLS 並寫 policy；權限檢查要在伺服器端做，不能只靠前端隱藏。
 - **Migration 由 Claude 自己執行**（2026-11-02 經營者授權）：用內建瀏覽器開 `https://supabase.com/dashboard/project/hyrrssbdutwuhmuyctot/sql/new`，把 migration 檔內容放進編輯器（確認字數與檔案一致）後按 Run，看到 Success 再用 anon key 唯讀查詢確認生效，並回報執行了哪個檔案。
   - 只執行自己寫好、已 commit 的 migration 檔，一次一檔、照編號順序。

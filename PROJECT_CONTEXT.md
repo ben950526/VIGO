@@ -40,7 +40,7 @@ GitHub：https://github.com/ben950526/VIGO（`main`，Vercel Root Directory = `w
 1. 發案者逛 `/explore` → 進 `/creator/[slug]` 看作品。
 2. 聯絡方式預設鎖定；按「敲門」後才解鎖（並要求第一則私訊表明來自 Vigo）。
 3. 接案者註冊、填工作室、貼 YouTube／Vimeo／Instagram **embed 連結**（不上傳影片檔）。
-4. 管理員審核工作室與作品；通過且資料齊全才出現在探索頁。
+4. 工作室與作品自動通過（2026-11-11 起取消人工審核，migration 036 觸發器），資料齊全就出現在探索頁；管理員仍可在後台退件或下架。
 
 ### 目標使用者
 
@@ -297,7 +297,7 @@ npm run start    # 正式模式預覽
 - 資料讀取放 `lib/data`，純規則放 `lib/creator`、`lib/referral`、`lib/knock`。
 - 路徑別名 `@/` → `web/src/`。
 - 探索可見條件只維護一處：`isCreatorVisibleOnExplore`（公開頁、探索、敲門要一致）。
-- 新增作品 `status: "pending"`，改 embed URL 會再送審；過審工作室的待審作品出現在審核頁「待審作品」。
+- 新增作品程式仍寫 `status: "pending"`，但 036 觸發器會立刻改成 approved；改 embed URL 也一樣。管理員不再收到待審通知（`notifyAdminReviewPending` 已關閉）。
 - 表單：工作室 `ProfileForm` 使用 `noValidate`（避免 Safari 原生英文驗證擋 HEIC／自訂流程）。
 - 時間統計用台北時區週一當週起點：`lib/time/taipei.ts`。
 - 對 DB 新欄位常做 schema cache fallback（例如 `from_admin` 不存在時改查舊欄或改寫 `user_agent` 前綴 `vigo-admin|`）。

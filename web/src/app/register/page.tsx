@@ -17,7 +17,7 @@ export default function RegisterPage() {
         <ol className="mb-8 space-y-1 text-left text-sm text-[var(--text-secondary)]">
           <li>1. 填工作室介紹、地區、服務、聯絡方式</li>
           <li>2. 貼至少 1 支 YouTube／Reels</li>
-          <li>3. 審核通過後出現在探索頁；邀請同行還可累積折抵點（不能換現）</li>
+          <li>3. 資料和作品補齊後就會出現在探索頁（不用等審核）；邀請同行還可累積折抵點（不能換現）</li>
         </ol>
         <Suspense fallback={<RegisterFormFallback />}>
           <RegisterForm />
