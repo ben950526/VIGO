@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateCreatorList } from "@/lib/cache/revalidate";
 import { getAuthUserId } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/admin";
@@ -40,42 +41,47 @@ export async function submitPromoShareProof(
     return { error: "請填寫有效的公開貼文連結" };
   }
 
+  // 2026-11-11 起不用人工審：送出即精選 14 天（第一次另給折抵點），規則在 migration 037
   const supabase = await createClient();
-
-  const { data: approved } = await supabase
-    .from("promo_share_submissions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("status", "approved")
-    .maybeSingle();
-
-  if (approved) {
-    return { error: "您已領取過社群宣傳獎勵（每人終身一次）" };
-  }
-
-  const { data: pending } = await supabase
-    .from("promo_share_submissions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("status", "pending")
-    .maybeSingle();
-
-  if (pending) {
-    return { error: "您已有待審核的宣傳證明，請等待審核結果" };
-  }
-
-  const { error } = await supabase.from("promo_share_submissions").insert({
-    user_id: userId,
-    platform,
-    post_url: postUrl,
+  const { data, error } = await supabase.rpc("claim_promo_share", {
+    p_platform: platform,
+    p_post_url: postUrl,
   });
 
   if (error) {
-    return { error: error.message.includes("promo_share") ? "資料庫尚未更新，請執行 migration 020" : error.message };
+    return {
+      error: error.message.includes("claim_promo_share")
+        ? "系統更新中，請稍後再試"
+        : error.message,
+    };
+  }
+
+  const payload = (data ?? {}) as { ok?: boolean; reason?: string; credits_awarded?: number };
+  if (!payload.ok) {
+    const reasons: Record<string, string> = {
+      still_featured: "你的工作室還在精選期間，到期後可以用新貼文再換一次",
+      duplicate_url: "這則貼文已經送過了，請換一則新貼文",
+      bad_url: "請填寫有效的公開貼文連結",
+      bad_platform: "請選擇平台",
+      no_profile: "找不到你的工作室",
+      forbidden: "請先登入",
+    };
+    return { error: reasons[payload.reason ?? ""] ?? "送出失敗，請稍後再試" };
   }
 
   revalidatePath("/dashboard");
-  return { ok: true, message: "已送出，審核通過後將發放折抵點" };
+  revalidateCreatorList();
+  revalidatePath("/");
+  revalidatePath("/explore");
+
+  const credits = payload.credits_awarded ?? 0;
+  return {
+    ok: true,
+    message:
+      credits > 0
+        ? `完成！你的工作室接下來 14 天會出現在首頁精選、探索頁排前面，另外拿到 ${credits} 折抵點。`
+        : "完成！你的工作室接下來 14 天會出現在首頁精選、探索頁排前面。",
+  };
 }
 
 export async function approvePromoShareSubmission(formData: FormData): Promise<void> {

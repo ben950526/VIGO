@@ -49,7 +49,7 @@ export function buildOnboardingNudgeHtml(params: {
   <ul>
     <li>審核通過，且介紹約 20 字、至少 1 支已公開作品，才會出現在探索頁。</li>
     <li>發案者可先看作品；按「敲門」後才看得到聯絡方式。</li>
-    <li>邀請同行完成接案者註冊拿 ${REFERRAL_CREDIT_PER_SIGNUP} 點／人；公開貼文附連結送審通過拿 ${SOCIAL_SHARE_CREDIT} 點（每人一次）。點數不能換現，上限 ${REFERRAL_CREDIT_MAX_BALANCE} 點。</li>
+    <li>邀請同行完成接案者註冊拿 ${REFERRAL_CREDIT_PER_SIGNUP} 點／人；公開貼文附上你的作品集連結，送出就上首頁精選 14 天（第一次另給 ${SOCIAL_SHARE_CREDIT} 點）。點數不能換現，上限 ${REFERRAL_CREDIT_MAX_BALANCE} 點。</li>
   </ul>
   <p style="margin: 24px 0 8px;">
     ${emailCta(params.studioEditUrl, "去補工作室")}

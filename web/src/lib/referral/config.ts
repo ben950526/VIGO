@@ -3,6 +3,8 @@ export const REFERRAL_CREDIT_MAX_BALANCE = 300;
 export const SOCIAL_SHARE_CREDIT = 100;
 /** 每人終身僅能通過審核領取一次社群宣傳獎勵 */
 export const SOCIAL_SHARE_MAX_APPROVED = 1;
+/** 宣傳 Vigo 換首頁＋探索頁精選的天數（migration 037） */
+export const PROMO_FEATURED_DAYS = 14;
 
 export const REFERRAL_TERMS_SUMMARY =
   "折抵點不可兌換現金、不可轉讓；僅能於本平台正式推出付費訂閱方案後，依當時公告規則折抵訂閱費用。";
@@ -30,4 +32,16 @@ ${params.referralUrl}
 （邀請碼：${params.inviteCode}）
 
 請在貼文裡加上上面連結或邀請碼，並用 1～2 句話寫你自己的感受，不要只貼官方句。`;
+}
+
+export function buildStudioUrl(siteOrigin: string, slug: string): string {
+  return `${siteOrigin.replace(/\/$/, "")}/creator/${slug}`;
+}
+
+/** 給接案者貼在社群、傳給客戶的文字：主角是自己的作品集，順便讓發案者看到 Vigo */
+export function buildStudioShareText(params: { studioUrl: string }): string {
+  return `最近把接過的短影音作品整理成一頁了：
+${params.studioUrl}
+
+Reels、YouTube 都放在裡面，想找人拍短影音的可以先看看風格，對到再敲我。`;
 }

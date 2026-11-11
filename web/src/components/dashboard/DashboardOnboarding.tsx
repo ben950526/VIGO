@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   REFERRAL_CREDIT_MAX_BALANCE,
   REFERRAL_CREDIT_PER_SIGNUP,
+  PROMO_FEATURED_DAYS,
   SOCIAL_SHARE_CREDIT,
 } from "@/lib/referral/config";
 
@@ -78,8 +79,8 @@ export function DashboardOnboarding({
             點／人。
           </li>
           <li>
-            公開貼文介紹 Vigo 並附上邀請連結，送審通過拿 {SOCIAL_SHARE_CREDIT}{" "}
-            點（每人一次）。
+            公開貼文附上你的作品集連結，送出就上首頁精選 {PROMO_FEATURED_DAYS} 天（第一次另給{" "}
+            {SOCIAL_SHARE_CREDIT} 點）。
           </li>
           <li>上限 {REFERRAL_CREDIT_MAX_BALANCE} 點；之後若有訂閱，可依公告折抵月費。</li>
         </ul>

@@ -66,6 +66,7 @@ export interface Database {
           verification_status: string;
           subscription_tier: string;
           featured: boolean;
+          featured_until?: string | null;
           is_listed: boolean;
           is_demo: boolean;
           avatar_url: string | null;
@@ -109,6 +110,7 @@ export interface Database {
           verification_status?: string;
           subscription_tier?: string;
           featured?: boolean;
+          featured_until?: string | null;
           is_listed?: boolean;
           is_demo?: boolean;
           avatar_url?: string | null;
@@ -153,6 +155,7 @@ export interface Database {
           verification_status?: string;
           subscription_tier?: string;
           featured?: boolean;
+          featured_until?: string | null;
           is_listed?: boolean;
           is_demo?: boolean;
           avatar_url?: string | null;
@@ -539,6 +542,10 @@ export interface Database {
       };
       admin_approve_promo_share: {
         Args: { p_submission_id: string };
+        Returns: Json;
+      };
+      claim_promo_share: {
+        Args: { p_platform: string; p_post_url: string };
         Returns: Json;
       };
       admin_reject_promo_share: {

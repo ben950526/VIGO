@@ -18,7 +18,11 @@ import { getCreatorViewStats } from "@/lib/data/page-views";
 import { getMyPromoShareSubmissions } from "@/lib/data/promo-share";
 import { getReferralDashboardStats } from "@/lib/data/referral";
 import { siteUrl } from "@/lib/email/config";
-import { buildReferralRegisterUrl, resolvePublicInviteCode } from "@/lib/referral/config";
+import {
+  buildReferralRegisterUrl,
+  buildStudioUrl,
+  resolvePublicInviteCode,
+} from "@/lib/referral/config";
 import { isFeaturedPortfolioItem } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ListingControl } from "@/components/dashboard/ListingControl";
@@ -151,17 +155,19 @@ export default async function DashboardPage() {
           )}
         </div>
 
+
+        <PromoSharePanel
+          studioUrl={buildStudioUrl(siteUrl(), profile.slug)}
+          featuredUntil={profile.featured_until ?? null}
+          visibleOnExplore={visibleOnExplore}
+          submissions={promoShareSubmissions}
+        />
+
         <ReferralCreditsPanel
           inviteCode={inviteCode}
           referralUrl={referralUrl}
           balance={profile.promo_credits_balance}
           successfulInvites={referralStats?.successfulInvites ?? 0}
-        />
-
-        <PromoSharePanel
-          inviteCode={inviteCode}
-          referralUrl={referralUrl}
-          submissions={promoShareSubmissions}
         />
 
         <h2 className="mb-2 text-xl font-bold">我的作品 ({portfolio.length})</h2>

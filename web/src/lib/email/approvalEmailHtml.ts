@@ -73,7 +73,7 @@ export function buildApprovalEmailHtml({
   <p>點數不能換現金、也不能轉給別人。之後若有付費訂閱，可依當時公告折抵月費。現在先慢慢累、上限 <strong>${REFERRAL_CREDIT_MAX_BALANCE} 點</strong>。</p>
   <ul>
     <li>朋友用你的邀請碼或連結完成<strong>接案者註冊</strong>：你拿 <strong>${REFERRAL_CREDIT_PER_SIGNUP} 點／人</strong>。</li>
-    <li>在 Threads、Facebook 等發<strong>公開貼文</strong>介紹 Vigo，文裡附邀請連結或邀請碼，到後台送審通過：<strong>${SOCIAL_SHARE_CREDIT} 點，每人終身一次</strong>。</li>
+    <li>在 Threads、Facebook 等發<strong>公開貼文</strong>附上你的作品集連結，到後台送出就<strong>上首頁精選 14 天</strong>（第一次另給 ${SOCIAL_SHARE_CREDIT} 點）。</li>
   </ul>
   <p>如果探索頁還看不到你就先發文，點進來的人會不知道你在做什麼。建議<strong>先補齊再貼</strong>。</p>
   ${codeBlock}

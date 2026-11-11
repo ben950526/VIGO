@@ -38,6 +38,8 @@ export interface CreatorProfile {
   verification_status: VerificationStatus;
   subscription_tier: SubscriptionTier;
   featured: boolean;
+  /** 宣傳換來的精選到期時間（migration 037）；舊資料庫沒有這欄 */
+  featured_until?: string | null;
   is_listed: boolean;
   is_demo: boolean;
   avatar_url: string | null;
