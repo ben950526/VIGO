@@ -9,22 +9,16 @@ import {
 import type { BroadcastAudience } from "@/lib/email/broadcastRecipients";
 const initialState: BroadcastFormState = {};
 
-const DEFAULT_BODY = `我們內部調整了大約一個月，現在重新上線，接下來也會比較積極讓發案者進來逛工作室、找合作。
-
-如果當初只註冊、還沒把工作室或作品填完，有空補一下會差很多——頁面完整，才比較容易被看見、被敲門。
-
-方便的話可以先做這幾件：
-1. 到「編輯工作室內容」補介紹、服務與聯絡方式
-2. 新增至少 1 支 YouTube／Reels 並送審
-3. 到後台複製你的邀請碼，有認識的同行可以一起進來（累點不能換現，訂閱上線後依公告折抵）
-
-謝謝你早點加入。`;
+// 2026-11-12：不放預設內容。以前預設是 10 月重新上線廣播，寄完測試信表單會被重設回它，差點重寄舊廣播。
 
 export function BroadcastMailForm({ adminEmail }: { adminEmail: string }) {
   const [state, formAction, pending] = useActionState(sendAdminBroadcast, initialState);
   const [onlyApproved, setOnlyApproved] = useState(true);
   const [audience, setAudience] = useState<BroadcastAudience>("creators");
   const [count, setCount] = useState<number | null>(null);
+  // 受控欄位：寄完測試信後表單不會被重設，正式群發寄的就是剛測試的內容
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [countError, setCountError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -115,7 +109,9 @@ export function BroadcastMailForm({ adminEmail }: { adminEmail: string }) {
             className="input w-full"
             name="subject"
             required
-            defaultValue="【Vigo】回來了，想請你把工作室再看一眼"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="【Vigo】…"
           />
         </div>
 
@@ -125,7 +121,9 @@ export function BroadcastMailForm({ adminEmail }: { adminEmail: string }) {
             className="input min-h-[220px] w-full font-mono text-sm leading-relaxed"
             name="body"
             required
-            defaultValue={DEFAULT_BODY}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="輸入要寄給大家的內容"
           />
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             空行分段。可用 {"{{studio_name}}"} 帶入工作室名稱。系統會自動加上問候與頁尾聲明。
