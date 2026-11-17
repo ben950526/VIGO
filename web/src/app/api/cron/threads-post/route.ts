@@ -11,7 +11,10 @@ function authorizeCron(request: Request): boolean {
   return request.headers.get("authorization") === `Bearer ${secret}`;
 }
 
-/** Vercel Cron：每天台北 12 點、21 點各發一篇已核准的 Threads 文案 */
+/**
+ * Vercel Cron：每天台北 12 點發一篇已核准的 Threads 文案（工作室帳號 @blazeatlas.studio）。
+ * 防封規則（每天最多 1 篇、帶連結最多每 4 篇 1 篇）寫在 publishNextApprovedPost。
+ */
 export async function GET(request: Request) {
   if (!authorizeCron(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

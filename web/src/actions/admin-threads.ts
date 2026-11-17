@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
-import { siteUrl } from "@/lib/email/config";
+import { isThreadsProject } from "@/lib/threads/projects";
 import { buildStarterImportRows } from "@/lib/threads/starter-posts";
 import {
   bulkSetThreadsStatus,
@@ -32,11 +32,13 @@ function readPostFields(formData: FormData) {
   const body = String(formData.get("body") ?? "").trim();
   const firstReply = String(formData.get("first_reply") ?? "").trim();
   const style = String(formData.get("style") ?? "").trim();
+  const project = String(formData.get("project") ?? "");
   const sortOrder = Number(formData.get("sort_order") ?? 0);
   return {
     body,
     first_reply: firstReply || null,
     style: style || null,
+    project: isThreadsProject(project) ? project : ("vigo" as const),
     sort_order: Number.isFinite(sortOrder) ? Math.round(sortOrder) : 0,
   };
 }
@@ -130,7 +132,7 @@ export async function importStarterPostsAction() {
   await requireAdmin();
   let count = 0;
   try {
-    count = await importStarterPosts(buildStarterImportRows(siteUrl()));
+    count = await importStarterPosts(buildStarterImportRows());
   } catch (error) {
     back(errorText(error), "error");
   }
@@ -145,7 +147,7 @@ export async function approveAllDraftsAction() {
   } catch (error) {
     back(errorText(error), "error");
   }
-  back(count > 0 ? `已核准 ${count} 篇，會依順序每天中午、晚上各發一篇` : "沒有草稿可以核准");
+  back(count > 0 ? `已核准 ${count} 篇，會依順序每天中午發一篇` : "沒有草稿可以核准");
 }
 
 export async function pauseAllApprovedAction() {

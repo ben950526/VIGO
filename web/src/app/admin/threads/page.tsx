@@ -13,6 +13,13 @@ import {
 } from "@/actions/admin-threads";
 import { requireAdmin } from "@/lib/auth/admin";
 import {
+  containsLink,
+  isThreadsProject,
+  THREADS_PROJECT_LABEL,
+  THREADS_PROJECTS,
+  type ThreadsProject,
+} from "@/lib/threads/projects";
+import {
   getThreadsConnection,
   listThreadsPosts,
   type ThreadsPost,
@@ -45,14 +52,33 @@ function formatTaipei(iso: string | null) {
   return new Date(iso).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" });
 }
 
+function ProjectSelect({ value }: { value: ThreadsProject }) {
+  return (
+    <select name="project" defaultValue={value} className={`${fieldClass} max-w-[9rem]`} aria-label="專案">
+      {THREADS_PROJECTS.map((project) => (
+        <option key={project} value={project}>
+          {THREADS_PROJECT_LABEL[project]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function PostEditor({ post }: { post: ThreadsPost }) {
   const locked = post.status === "posted" || post.status === "posting";
+  const hasLink = containsLink(post.body, post.first_reply);
   return (
     <li className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
         <span className={`rounded-full px-2 py-0.5 font-medium ${statusClass[post.status]}`}>
           {statusLabel[post.status]}
         </span>
+        <span className="rounded-full bg-violet-50 px-2 py-0.5 font-medium text-violet-900">
+          {THREADS_PROJECT_LABEL[post.project] ?? post.project}
+        </span>
+        {hasLink && (
+          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-900">含連結</span>
+        )}
         {post.style && <span className="text-[var(--text-muted)]">風格：{post.style}</span>}
         <span className="text-[var(--text-muted)]">順序 {post.sort_order}</span>
         {post.posted_at && (
@@ -95,11 +121,11 @@ function PostEditor({ post }: { post: ThreadsPost }) {
         <form action={saveThreadsPostAction} className="space-y-2">
           <input type="hidden" name="id" value={post.id} />
           <label className="block text-xs text-[var(--text-muted)]">
-            主文（不要放連結，最多 500 字）
+            主文（最多 500 字；帶連結的貼文最多每 4 篇 1 篇）
             <textarea name="body" defaultValue={post.body} rows={5} className={fieldClass} required />
           </label>
           <label className="block text-xs text-[var(--text-muted)]">
-            第一則留言（放探索頁連結；空白就不留言）
+            第一則留言（預設留空；不要每篇都留同一段連結）
             <textarea
               name="first_reply"
               defaultValue={post.first_reply ?? ""}
@@ -108,6 +134,7 @@ function PostEditor({ post }: { post: ThreadsPost }) {
             />
           </label>
           <div className="flex flex-wrap gap-2">
+            <ProjectSelect value={post.project} />
             <input
               name="style"
               defaultValue={post.style ?? ""}
@@ -154,20 +181,23 @@ function PostEditor({ post }: { post: ThreadsPost }) {
 export default async function AdminThreadsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string; error?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string; project?: string }>;
 }) {
   await requireAdmin();
-  const { ok, error: errorMessage } = await searchParams;
+  const { ok, error: errorMessage, project: projectParam } = await searchParams;
+  const filter = isThreadsProject(projectParam) ? projectParam : null;
   const [{ posts, error: loadError }, connection] = await Promise.all([
     listThreadsPosts(),
     getThreadsConnection(),
   ]);
 
   const queued = posts.filter((p) => p.status === "approved");
-  const daysLeft = Math.floor(queued.length / 2);
+  const daysLeft = queued.length;
   const drafts = posts.filter((p) => p.status === "draft").length;
-  const active = posts.filter((p) => p.status !== "posted");
-  const posted = posts.filter((p) => p.status === "posted").reverse();
+  const shown = filter ? posts.filter((p) => p.project === filter) : posts;
+  const active = shown.filter((p) => p.status !== "posted");
+  const posted = shown.filter((p) => p.status === "posted").reverse();
+  const queuedBy = (project: ThreadsProject) => queued.filter((p) => p.project === project).length;
 
   return (
     <section className="section">
@@ -176,7 +206,7 @@ export default async function AdminThreadsPage({
           <div>
             <h1 className="text-3xl font-bold">Threads 自動發文</h1>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              每天台北 12 點、21 點（該小時內）各發一篇「已核准」的文案，接著自動留言放探索頁連結。草稿不會發。
+              工作室帳號替 Vigo、吃藥小幫手、我們的故事書、Logic Gym 輪流發文。每天台北 12 點（該小時內）發一篇「已核准」的文案；草稿不會發。防封：距離上一篇不到 20 小時不發、帶連結的貼文最多每 4 篇 1 篇、不再自動留連結。
             </p>
           </div>
           <Link href="/admin/review" className="btn-secondary text-sm">
@@ -273,12 +303,31 @@ export default async function AdminThreadsPage({
           )}
         </div>
 
+        <nav className="mb-6 flex flex-wrap gap-2 text-sm" aria-label="依專案篩選">
+          <Link
+            href="/admin/threads"
+            className={`rounded-full border px-3 py-1 ${filter === null ? "border-[var(--accent)] font-semibold" : "border-[var(--border)]"}`}
+          >
+            全部
+          </Link>
+          {THREADS_PROJECTS.map((project) => (
+            <Link
+              key={project}
+              href={`/admin/threads?project=${project}`}
+              className={`rounded-full border px-3 py-1 ${filter === project ? "border-[var(--accent)] font-semibold" : "border-[var(--border)]"}`}
+            >
+              {THREADS_PROJECT_LABEL[project]}（排隊 {queuedBy(project)}）
+            </Link>
+          ))}
+        </nav>
+
         <details className="mb-8 rounded-xl border border-[var(--border)] p-4">
           <summary className="cursor-pointer text-sm font-semibold">新增一篇</summary>
           <form action={createThreadsPostAction} className="mt-3 space-y-2">
-            <textarea name="body" rows={5} placeholder="主文（不要放連結）" className={fieldClass} required />
-            <textarea name="first_reply" rows={2} placeholder="第一則留言（放探索頁連結）" className={fieldClass} />
-            <div className="flex gap-2">
+            <textarea name="body" rows={5} placeholder="主文（帶連結的貼文最多每 4 篇 1 篇）" className={fieldClass} required />
+            <textarea name="first_reply" rows={2} placeholder="第一則留言（預設留空）" className={fieldClass} />
+            <div className="flex flex-wrap gap-2">
+              <ProjectSelect value={filter ?? "vigo"} />
               <input name="style" placeholder="風格" className={`${fieldClass} max-w-[8rem]`} />
               <input
                 name="sort_order"

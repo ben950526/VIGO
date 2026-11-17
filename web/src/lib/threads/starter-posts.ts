@@ -57,7 +57,7 @@ export const STARTER_THREADS_POSTS: { key: string; style: string; body: string }
   {
     key: "v1-dialog-02",
     style: "對話",
-    body: "朋友：你們短影音找誰剪的？好好看\n我：一個工作室，我先看過他的作品才找的\n朋友：去哪看？\n我：留言給你\n\n（真的，連結在留言）",
+    body: "朋友：你們短影音找誰剪的？好好看\n我：一個工作室，我先看過他的作品才找的\n朋友：去哪看？\n我：Vigo，上面可以先看作品再聯絡\n\n先看作品再找人，真的少很多來回。",
   },
   {
     key: "v1-choice-02",
@@ -146,11 +146,6 @@ export const STARTER_THREADS_POSTS: { key: string; style: string; body: string }
   },
 ];
 
-export function starterFirstReply(baseUrl: string): string {
-  const url = `${baseUrl.replace(/\/$/, "")}/explore`;
-  return `想直接看作品可以來這裡逛：${url}\n看到喜歡的工作室按「敲門」就能拿到聯絡方式，免費、不抽成。`;
-}
-
 /**
  * 招接案者的文案（發案：接案 = 3：1）。
  * 順序：預設 28 篇是 10、20、30…280，這批放在每 3 篇之後（35、65、95…），
@@ -204,24 +199,20 @@ export const RECRUIT_THREADS_POSTS: { key: string; style: string; body: string }
   },
 ];
 
-export function recruitFirstReply(baseUrl: string): string {
-  const base = baseUrl.replace(/\/$/, "");
-  return `免費建立工作室：${base}/register\n已經有帳號的話，到後台就能複製你的推薦碼分享給同行。`;
-}
-
-/** 匯入用：兩批文案合併，招接案者那批插在每 3 篇發案者文案之後 */
-export function buildStarterImportRows(baseUrl: string) {
-  const clientReply = starterFirstReply(baseUrl);
-  const recruitReply = recruitFirstReply(baseUrl);
+/**
+ * 匯入用：兩批文案合併，招接案者那批插在每 3 篇發案者文案之後。
+ * 2026-11-17 起不再自動留連結（防封：每篇都留同一段連結是垃圾帳號訊號），first_reply 一律留空。
+ */
+export function buildStarterImportRows() {
   return [
     ...STARTER_THREADS_POSTS.map((post, i) => ({
       ...post,
-      first_reply: clientReply,
+      first_reply: null,
       sort_order: (i + 1) * 10,
     })),
     ...RECRUIT_THREADS_POSTS.map((post, i) => ({
       ...post,
-      first_reply: recruitReply,
+      first_reply: null,
       sort_order: (i + 1) * 30 + 5,
     })),
   ];

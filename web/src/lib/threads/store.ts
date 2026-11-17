@@ -7,6 +7,7 @@ import {
   refreshLongLivedToken,
   ThreadsApiError,
 } from "@/lib/threads/api";
+import { containsLink, LINK_POST_WINDOW, type ThreadsProject } from "@/lib/threads/projects";
 
 /** 只在伺服器用；兩張表沒有 RLS policy，只有 service role 讀得到（見 033） */
 function threadsDb() {
@@ -23,6 +24,7 @@ export type ThreadsPost = {
   body: string;
   first_reply: string | null;
   style: string | null;
+  project: ThreadsProject;
   status: ThreadsPostStatus;
   sort_order: number;
   threads_permalink: string | null;
@@ -37,8 +39,17 @@ export type ThreadsConnection = {
   expiresAt: string | null;
 };
 
-const POST_FIELDS =
+const POST_FIELDS_LEGACY =
   "id, body, first_reply, style, status, sort_order, threads_permalink, posted_at, last_error, created_at";
+const POST_FIELDS = `${POST_FIELDS_LEGACY}, project`;
+
+/** 038 還沒執行時，資料庫沒有 project 欄位；這時退回舊查法，全部當作 Vigo */
+function isMissingProjectColumn(error: { message: string } | null): boolean {
+  return !!error && error.message.includes("project");
+}
+
+/** 防封：兩篇之間至少隔這麼久（Cron 每天一次，留一點誤差） */
+const MIN_HOURS_BETWEEN_POSTS = 20;
 
 function requireDb() {
   const db = threadsDb();
@@ -49,19 +60,28 @@ function requireDb() {
 export async function listThreadsPosts(): Promise<{ posts: ThreadsPost[]; error?: string }> {
   const db = threadsDb();
   if (!db) return { posts: [], error: "伺服器缺少 SUPABASE_SERVICE_ROLE_KEY" };
-  const { data, error } = await db
-    .from("threads_posts")
-    .select(POST_FIELDS)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true })
-    .limit(300);
+  const query = (fields: string) =>
+    db
+      .from("threads_posts")
+      .select(fields)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true })
+      .limit(300);
+  const first = await query(POST_FIELDS);
+  let rows: unknown[] = first.data ?? [];
+  let error = first.error;
+  if (isMissingProjectColumn(error)) {
+    const legacy = await query(POST_FIELDS_LEGACY);
+    rows = (legacy.data ?? []).map((row) => ({ ...(row as object), project: "vigo" }));
+    error = legacy.error;
+  }
   if (error) {
     const hint = error.message.includes("threads_posts")
       ? "資料庫尚未更新，請到 Supabase SQL Editor 執行 033_threads_autopost.sql"
       : error.message;
     return { posts: [], error: hint };
   }
-  return { posts: (data ?? []) as ThreadsPost[] };
+  return { posts: rows as ThreadsPost[] };
 }
 
 export async function getThreadsConnection(): Promise<ThreadsConnection> {
@@ -171,21 +191,54 @@ export type PublishResult =
   | { ok: true; posted: true; postId: string; permalink: string | null; replyError?: string }
   | { ok: false; error: string; postId?: string };
 
-/** 取出下一篇「已核准」的文案發出；沒有就什麼都不做 */
+/**
+ * 取出下一篇「已核准」的文案發出；沒有就什麼都不做。
+ * 防封規則（2026-11-17，工作室帳號）：
+ *   1. 距離上一篇不到 20 小時就不發（每天最多 1 篇，手動按「現在發」也一樣）
+ *   2. 帶連結的貼文最多每 4 篇 1 篇：最近 3 篇有帶連結時，跳過含連結的文案，改發下一篇沒連結的
+ */
 export async function publishNextApprovedPost(): Promise<PublishResult> {
   const db = threadsDb();
   if (!db) return { ok: false, error: "伺服器缺少 SUPABASE_SERVICE_ROLE_KEY" };
 
-  const { data: next, error: nextError } = await db
+  const { data: recent, error: recentError } = await db
     .from("threads_posts")
-    .select("id")
+    .select("body, first_reply, status, posted_at")
+    .in("status", ["posted", "posting"])
+    .order("posted_at", { ascending: false, nullsFirst: true })
+    .limit(LINK_POST_WINDOW - 1);
+  if (recentError) return { ok: false, error: recentError.message };
+
+  if (recent?.some((row) => row.status === "posting")) {
+    return { ok: true, posted: false, reason: "有一篇還在「發送中」，先到後台確認再發" };
+  }
+  const lastPostedAt = recent?.[0]?.posted_at ? new Date(recent[0].posted_at as string).getTime() : 0;
+  if (Date.now() - lastPostedAt < MIN_HOURS_BETWEEN_POSTS * 60 * 60 * 1000) {
+    return { ok: true, posted: false, reason: "距離上一篇不到 20 小時，今天先不發（每天最多 1 篇）" };
+  }
+  const recentHasLink = (recent ?? []).some((row) =>
+    containsLink(row.body as string, row.first_reply as string | null),
+  );
+
+  const { data: candidates, error: nextError } = await db
+    .from("threads_posts")
+    .select("id, body, first_reply")
     .eq("status", "approved")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .limit(30);
   if (nextError) return { ok: false, error: nextError.message };
-  if (!next) return { ok: true, posted: false, reason: "沒有已核准的文案" };
+  if (!candidates || candidates.length === 0) return { ok: true, posted: false, reason: "沒有已核准的文案" };
+  const next = recentHasLink
+    ? candidates.find((row) => !containsLink(row.body as string, row.first_reply as string | null))
+    : candidates[0];
+  if (!next) {
+    return {
+      ok: true,
+      posted: false,
+      reason: "排隊中的文案都帶連結，但最近 3 篇內已有帶連結的貼文；請核准一篇沒有連結的",
+    };
+  }
 
   let credentials: { token: string; userId: string };
   try {
@@ -253,15 +306,22 @@ export async function publishNextApprovedPost(): Promise<PublishResult> {
 
 export async function updateThreadsPost(
   id: string,
-  fields: Partial<Pick<ThreadsPost, "body" | "first_reply" | "style" | "status" | "sort_order">>,
+  fields: Partial<Pick<ThreadsPost, "body" | "first_reply" | "style" | "project" | "status" | "sort_order">>,
 ) {
   const db = requireDb();
-  const { error } = await db
-    .from("threads_posts")
-    .update({ ...fields, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    // 已發出或發送中的不能再改
-    .not("status", "in", "(posted,posting)");
+  const run = (values: typeof fields) =>
+    db
+      .from("threads_posts")
+      .update({ ...values, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      // 已發出或發送中的不能再改
+      .not("status", "in", "(posted,posting)");
+  let { error } = await run(fields);
+  if (isMissingProjectColumn(error) && "project" in fields) {
+    const { project: _project, ...rest } = fields;
+    void _project;
+    ({ error } = await run(rest));
+  }
   if (error) throw new Error(error.message);
 }
 
@@ -299,11 +359,17 @@ export async function createThreadsPost(fields: {
   body: string;
   first_reply: string | null;
   style: string | null;
+  project: ThreadsProject;
   sort_order: number;
   seed_key?: string;
 }) {
   const db = requireDb();
-  const { error } = await db.from("threads_posts").insert({ ...fields, status: "draft" });
+  let { error } = await db.from("threads_posts").insert({ ...fields, status: "draft" });
+  if (isMissingProjectColumn(error)) {
+    const { project: _project, ...rest } = fields;
+    void _project;
+    ({ error } = await db.from("threads_posts").insert({ ...rest, status: "draft" }));
+  }
   if (error) throw new Error(error.message);
 }
 
@@ -319,7 +385,7 @@ export async function deleteThreadsPost(id: string) {
 
 /** 匯入預設文案；seed_key 重複的會略過，順序照文案本身指定的 sort_order */
 export async function importStarterPosts(
-  posts: { key: string; style: string; body: string; first_reply: string; sort_order: number }[],
+  posts: { key: string; style: string; body: string; first_reply: string | null; sort_order: number }[],
 ): Promise<number> {
   const db = requireDb();
   const { data: existing } = await db.from("threads_posts").select("seed_key").not("seed_key", "is", null);
