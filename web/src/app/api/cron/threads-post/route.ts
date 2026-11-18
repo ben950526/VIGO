@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refreshThreadsInsights } from "@/lib/threads/insights";
 import { publishNextApprovedPost } from "@/lib/threads/store";
 import { taipeiDateString } from "@/lib/time/taipei";
 
@@ -27,6 +28,7 @@ function isEveningRun(now: Date): boolean {
  * Vercel Cron：每天台北 12 點、21 點各發一篇已核准的 Threads 文案（工作室帳號 @blazeatlas.studio）。
  * 12 點四個產品輪流；12/11 前 21 點只發吃藥小幫手，沒有就跳過。
  * 防封規則（每天最多 2 篇、間隔至少 6 小時、帶連結最多每 4 篇 1 篇）寫在 publishNextApprovedPost。
+ * 發完（或跳過）後順便更新 7 天內貼文與帳號的成效（039）；成效失敗不影響發文結果。
  */
 export async function GET(request: Request) {
   if (!authorizeCron(request)) {
@@ -36,9 +38,18 @@ export async function GET(request: Request) {
   const now = new Date();
   const medOnly = isEveningRun(now) && taipeiDateString(now) <= EVENING_MED_ONLY_UNTIL;
   const result = await publishNextApprovedPost(medOnly ? { project: "med" } : {});
+
+  let insights: Awaited<ReturnType<typeof refreshThreadsInsights>> | { ok: false; error: string };
+  try {
+    insights = await refreshThreadsInsights();
+  } catch (error) {
+    insights = { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+  if (!insights.ok) console.error("[cron/threads-post] 成效更新：", insights.error);
+
   if (!result.ok) {
     console.error("[cron/threads-post]", result.error);
-    return NextResponse.json(result, { status: 500 });
+    return NextResponse.json({ ...result, insights }, { status: 500 });
   }
-  return NextResponse.json(result);
+  return NextResponse.json({ ...result, insights });
 }

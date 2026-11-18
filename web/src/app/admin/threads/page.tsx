@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   approveAllDraftsAction,
+  bulkImportThreadsPostsAction,
   connectThreadsAction,
   pauseAllApprovedAction,
   createThreadsPostAction,
@@ -9,14 +10,17 @@ import {
   importStarterPostsAction,
   markStuckFailedAction,
   publishNowAction,
+  refreshInsightsAction,
   saveThreadsPostAction,
 } from "@/actions/admin-threads";
 import { requireAdmin } from "@/lib/auth/admin";
+import { getThreadsStats, type ThreadsGroupStat } from "@/lib/threads/insights";
 import {
   containsLink,
   isThreadsProject,
   THREADS_PROJECT_LABEL,
   THREADS_PROJECTS,
+  THREADS_STYLES,
   type ThreadsProject,
 } from "@/lib/threads/projects";
 import {
@@ -61,6 +65,62 @@ function ProjectSelect({ value }: { value: ThreadsProject }) {
         </option>
       ))}
     </select>
+  );
+}
+
+function StyleSelect({ value }: { value: string | null }) {
+  const options: string[] = [...THREADS_STYLES];
+  // 舊文案的風格值（痛點、反直覺…）不在清單裡也保留，避免一儲存就被改掉
+  if (value && !options.includes(value)) options.push(value);
+  return (
+    <select name="style" defaultValue={value ?? ""} className={`${fieldClass} max-w-[9rem]`} aria-label="風格">
+      <option value="">（未標）</option>
+      {options.map((style) => (
+        <option key={style} value={style}>
+          {style}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function formatNumber(value: number | null) {
+  return value === null ? "—" : value.toLocaleString("zh-TW");
+}
+
+function formatRate(value: number | null) {
+  return value === null ? "—" : `${(value * 100).toFixed(1)}%`;
+}
+
+function GroupTable({ title, rows }: { title: string; rows: ThreadsGroupStat[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[22rem] text-left text-xs">
+        <thead className="text-[var(--text-muted)]">
+          <tr>
+            <th className="py-1 pr-2 font-medium">{title}</th>
+            <th className="py-1 pr-2 font-medium">篇數</th>
+            <th className="py-1 pr-2 font-medium">views 中位數</th>
+            <th className="py-1 font-medium">互動率中位數</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key} className="border-t border-[var(--border)]">
+              <td className="py-1 pr-2">{row.key}</td>
+              <td className="py-1 pr-2">
+                {row.posts}
+                {row.postsWithViews < row.posts && (
+                  <span className="text-[var(--text-muted)]">（有數據 {row.postsWithViews}）</span>
+                )}
+              </td>
+              <td className="py-1 pr-2">{formatNumber(row.medianViews)}</td>
+              <td className="py-1">{formatRate(row.medianEngagementRate)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -135,12 +195,7 @@ function PostEditor({ post }: { post: ThreadsPost }) {
           </label>
           <div className="flex flex-wrap gap-2">
             <ProjectSelect value={post.project} />
-            <input
-              name="style"
-              defaultValue={post.style ?? ""}
-              placeholder="風格"
-              className={`${fieldClass} max-w-[8rem]`}
-            />
+            <StyleSelect value={post.style} />
             <input
               name="sort_order"
               type="number"
@@ -186,10 +241,12 @@ export default async function AdminThreadsPage({
   await requireAdmin();
   const { ok, error: errorMessage, project: projectParam } = await searchParams;
   const filter = isThreadsProject(projectParam) ? projectParam : null;
-  const [{ posts, error: loadError }, connection] = await Promise.all([
+  const [{ posts, error: loadError }, connection, stats] = await Promise.all([
     listThreadsPosts(),
     getThreadsConnection(),
+    getThreadsStats(),
   ]);
+  const latestAccount = stats.account.find((row) => row.followers_count !== null);
 
   const queued = posts.filter((p) => p.status === "approved");
   const daysLeft = Math.ceil(queued.length / 2);
@@ -206,7 +263,7 @@ export default async function AdminThreadsPage({
           <div>
             <h1 className="text-3xl font-bold">Threads 自動發文</h1>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              工作室帳號替 Vigo、吃藥小幫手、我們的故事書、Logic Gym 輪流發文。每天台北 12 點、21 點（該小時內）各發一篇「已核准」的文案；12/11 前 21 點只發吃藥小幫手，沒有就跳過。草稿不會發。防封：每天最多 2 篇、間隔至少 6 小時、帶連結的貼文最多每 4 篇 1 篇、不再自動留連結。
+              工作室帳號替 Vigo、吃藥小幫手、我們的故事書、Logic Gym 輪流發文（12 點挑有已核准文案、而且最久沒發的專案）。每天台北 12 點、21 點（該小時內）各發一篇「已核准」的文案；12/11 前 21 點只發吃藥小幫手，沒有就跳過。草稿不會發。防封：每天最多 2 篇、間隔至少 6 小時、帶連結的貼文最多每 4 篇 1 篇、不再自動留連結。
             </p>
           </div>
           <Link href="/admin/review" className="btn-secondary text-sm">
@@ -321,6 +378,106 @@ export default async function AdminThreadsPage({
           ))}
         </nav>
 
+        <section className="mb-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">成效（工作室帳號時期）</h2>
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <a href="/admin/threads/stats.json" className="text-[var(--accent)] underline">
+                JSON 版
+              </a>
+              <form action={refreshInsightsAction}>
+                <button type="submit" className="btn-secondary text-xs">
+                  現在更新成效
+                </button>
+              </form>
+            </div>
+          </div>
+          <p className="mb-3 text-xs text-[var(--text-muted)]">
+            每次排程（12 點、21 點）會更新發出 7 天內的貼文成效，7 天後就不再更新。互動率＝（讚＋回覆＋轉發＋引用）÷ views。
+            {latestAccount && (
+              <>
+                {" "}粉絲數 {formatNumber(latestAccount.followers_count)}（{latestAccount.day}）。
+              </>
+            )}
+          </p>
+          {stats.error && (
+            <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950">{stats.error}</p>
+          )}
+          {stats.account[0]?.error && (
+            <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800">
+              帳號成效抓取失敗：{stats.account[0].error}
+            </p>
+          )}
+          {stats.posts.length === 0 ? (
+            <p className="text-sm text-[var(--text-muted)]">還沒有工作室時期發出的貼文。</p>
+          ) : (
+            <>
+              <div className="mb-4 grid gap-4 sm:grid-cols-2">
+                <GroupTable title="風格" rows={stats.byStyle} />
+                <GroupTable title="專案" rows={stats.byProject} />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[36rem] text-left text-xs">
+                  <thead className="text-[var(--text-muted)]">
+                    <tr>
+                      <th className="py-1 pr-2 font-medium">發出</th>
+                      <th className="py-1 pr-2 font-medium">專案</th>
+                      <th className="py-1 pr-2 font-medium">風格</th>
+                      <th className="py-1 pr-2 font-medium">開頭</th>
+                      <th className="py-1 pr-2 font-medium">views</th>
+                      <th className="py-1 pr-2 font-medium">互動</th>
+                      <th className="py-1 font-medium">互動率</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.posts.map((post) => (
+                      <tr key={post.id} className="border-t border-[var(--border)] align-top">
+                        <td className="py-1 pr-2 whitespace-nowrap">{formatTaipei(post.postedAt)}</td>
+                        <td className="py-1 pr-2 whitespace-nowrap">{post.projectLabel}</td>
+                        <td className="py-1 pr-2 whitespace-nowrap">{post.style ?? "—"}</td>
+                        <td className="py-1 pr-2">
+                          {post.permalink ? (
+                            <a href={post.permalink} target="_blank" rel="noreferrer" className="underline">
+                              {post.bodyPreview}
+                            </a>
+                          ) : (
+                            post.bodyPreview
+                          )}
+                          {post.insightsError && (
+                            <span className="block text-red-700">成效抓取失敗：{post.insightsError}</span>
+                          )}
+                        </td>
+                        <td className="py-1 pr-2">{formatNumber(post.views)}</td>
+                        <td className="py-1 pr-2">{formatNumber(post.interactions)}</td>
+                        <td className="py-1">{formatRate(post.engagementRate)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </section>
+
+        <details className="mb-8 rounded-xl border border-[var(--border)] p-4">
+          <summary className="cursor-pointer text-sm font-semibold">批次匯入（貼上 JSON）</summary>
+          <form action={bulkImportThreadsPostsAction} className="mt-3 space-y-2">
+            <p className="text-xs text-[var(--text-muted)]">
+              JSON 陣列，每筆：body（最多 500 字）、project（vigo／med／storybook／logicgym）、style（{THREADS_STYLES.join("、")}，可省略）、sort_order（數字，可省略）。全部匯入成草稿；內容和現有文案重複的會跳過；任何一筆格式不對就整批不匯入。
+            </p>
+            <textarea
+              name="json"
+              rows={6}
+              placeholder='[{"body": "…", "project": "med", "style": "問題與故事", "sort_order": 50}]'
+              className={`${fieldClass} font-mono`}
+              required
+            />
+            <button type="submit" className="btn-primary text-sm">
+              匯入成草稿
+            </button>
+          </form>
+        </details>
+
         <details className="mb-8 rounded-xl border border-[var(--border)] p-4">
           <summary className="cursor-pointer text-sm font-semibold">新增一篇</summary>
           <form action={createThreadsPostAction} className="mt-3 space-y-2">
@@ -328,7 +485,7 @@ export default async function AdminThreadsPage({
             <textarea name="first_reply" rows={2} placeholder="第一則留言（預設留空）" className={fieldClass} />
             <div className="flex flex-wrap gap-2">
               <ProjectSelect value={filter ?? "vigo"} />
-              <input name="style" placeholder="風格" className={`${fieldClass} max-w-[8rem]`} />
+              <StyleSelect value={null} />
               <input
                 name="sort_order"
                 type="number"

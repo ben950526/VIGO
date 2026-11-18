@@ -3,9 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/admin";
-import { isThreadsProject } from "@/lib/threads/projects";
+import { refreshThreadsInsights } from "@/lib/threads/insights";
+import { isThreadsProject, THREADS_STYLES } from "@/lib/threads/projects";
 import { buildStarterImportRows } from "@/lib/threads/starter-posts";
 import {
+  bulkImportThreadsPosts,
+  type BulkImportItem,
   bulkSetThreadsStatus,
   connectThreadsWithToken,
   createThreadsPost,
@@ -168,4 +171,58 @@ export async function publishNowAction() {
   if (!result.ok) back(`發文失敗：${result.error}`, "error");
   if (!result.posted) back(result.reason, "error");
   back(result.replyError ?? "已發出一篇");
+}
+
+/**
+ * 批次匯入：貼上 JSON 陣列，每筆 { body, project, style, sort_order }，全部匯入成草稿。
+ * 任何一筆格式不對就整批不匯入；body 和現有文案重複的跳過。
+ */
+export async function bulkImportThreadsPostsAction(formData: FormData) {
+  await requireAdmin();
+  const raw = String(formData.get("json") ?? "").trim();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    back("JSON 格式錯誤，請確認是一個陣列，例如 [{\"body\": \"…\", \"project\": \"med\"}]", "error");
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) back("要貼上一個非空的 JSON 陣列", "error");
+  if ((parsed as unknown[]).length > 100) back("一次最多匯入 100 篇", "error");
+
+  const items: BulkImportItem[] = [];
+  const problems: string[] = [];
+  (parsed as unknown[]).forEach((entry, index) => {
+    const n = index + 1;
+    const item = (entry ?? {}) as Record<string, unknown>;
+    const body = typeof item.body === "string" ? item.body.trim() : "";
+    const style = typeof item.style === "string" ? item.style.trim() : "";
+    const sortOrder = item.sort_order === undefined ? 0 : Number(item.sort_order);
+    if (!body) problems.push(`第 ${n} 筆沒有 body`);
+    else if ([...body].length > 500) problems.push(`第 ${n} 筆超過 500 字`);
+    if (!isThreadsProject(item.project)) problems.push(`第 ${n} 筆 project 要是 vigo／med／storybook／logicgym`);
+    if (style && !(THREADS_STYLES as readonly string[]).includes(style)) {
+      problems.push(`第 ${n} 筆 style 不在清單內（${THREADS_STYLES.join("、")}）`);
+    }
+    if (!Number.isFinite(sortOrder)) problems.push(`第 ${n} 筆 sort_order 不是數字`);
+    if (body && isThreadsProject(item.project)) {
+      items.push({ body, project: item.project, style: style || null, sort_order: Math.round(sortOrder) || 0 });
+    }
+  });
+  if (problems.length > 0) back(`沒有匯入：${problems.slice(0, 5).join("；")}`, "error");
+
+  let result = { imported: 0, skipped: 0 };
+  try {
+    result = await bulkImportThreadsPosts(items);
+  } catch (error) {
+    back(errorText(error), "error");
+  }
+  back(`已匯入 ${result.imported} 篇草稿${result.skipped ? `，${result.skipped} 篇內容重複已跳過` : ""}，核准後才會發`);
+}
+
+/** 管理員手動更新成效（也用來確認權杖有沒有 threads_manage_insights 權限） */
+export async function refreshInsightsAction() {
+  await requireAdmin();
+  const result = await refreshThreadsInsights();
+  if (!result.ok) back(`成效更新有問題：${result.error ?? "未知錯誤"}（成功 ${result.postsUpdated} 篇）`, "error");
+  back(`已更新 ${result.postsUpdated} 篇貼文的成效與帳號數據`);
 }

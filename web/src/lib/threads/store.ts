@@ -16,7 +16,7 @@ import {
 import { startOfTaipeiDay, taipeiDateString } from "@/lib/time/taipei";
 
 /** 只在伺服器用；兩張表沒有 RLS policy，只有 service role 讀得到（見 033） */
-function threadsDb() {
+export function threadsDb() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
@@ -152,7 +152,7 @@ export async function disconnectThreads(): Promise<void> {
 }
 
 /** 取得可用權杖；快到期（10 天內）或不知道到期日時，順手續期 */
-async function getUsableCredentials() {
+export async function getUsableCredentials() {
   const db = requireDb();
   const { data, error } = await db
     .from("threads_credentials")
@@ -194,6 +194,32 @@ async function getUsableCredentials() {
   return { token, userId };
 }
 
+/**
+ * 專案輪流：allowed 已照 sort_order 排好；挑「最久沒發」的專案（從沒發過的最優先，
+ * 同樣沒發過時看誰的文案 sort_order 比較前面），再取那個專案的第一篇。
+ */
+function pickRotationCandidate<T extends { project: unknown }>(
+  allowed: T[],
+  postedRows: { project: unknown; posted_at: unknown }[],
+): T | undefined {
+  const lastPosted = new Map<string, number>();
+  for (const row of postedRows) {
+    const project = String(row.project);
+    if (!lastPosted.has(project)) lastPosted.set(project, new Date(String(row.posted_at)).getTime());
+  }
+  let best: T | undefined;
+  let bestTime = Infinity;
+  for (const row of allowed) {
+    const time = lastPosted.get(String(row.project)) ?? -Infinity;
+    // allowed 已照順序排，同一個時間只留第一個（sort_order 最小）
+    if (time < bestTime) {
+      best = row;
+      bestTime = time;
+    }
+  }
+  return best;
+}
+
 export type PublishResult =
   | { ok: true; posted: false; reason: string }
   | { ok: true; posted: true; postId: string; permalink: string | null; replyError?: string }
@@ -205,6 +231,7 @@ export type PublishResult =
  *   1. 距離上一篇不到 6 小時、或台北今天已發 2 篇就不發（2026-11-18 改成每天最多 2 篇，手動按「現在發」也一樣）
  *   2. 帶連結的貼文最多每 4 篇 1 篇：最近 3 篇有帶連結時，跳過含連結的文案，改發下一篇沒連結的
  *   3. 指定 project 時只挑那個專案的文案，沒有就跳過、不改發別的
+ *   4. 沒指定 project 時照專案輪流：在有已核准文案的專案裡，挑「最久沒發」的那個，再取它 sort_order 最小的一篇
  */
 export async function publishNextApprovedPost(
   options: { project?: ThreadsProject } = {},
@@ -242,13 +269,13 @@ export async function publishNextApprovedPost(
 
   let candidateQuery = db
     .from("threads_posts")
-    .select("id, body, first_reply")
+    .select("id, body, first_reply, project")
     .eq("status", "approved");
   if (options.project) candidateQuery = candidateQuery.eq("project", options.project);
   const { data: candidates, error: nextError } = await candidateQuery
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true })
-    .limit(30);
+    .limit(300);
   if (nextError) return { ok: false, error: nextError.message };
   if (!candidates || candidates.length === 0) {
     return {
@@ -259,9 +286,21 @@ export async function publishNextApprovedPost(
         : "沒有已核准的文案",
     };
   }
-  const next = recentHasLink
-    ? candidates.find((row) => !containsLink(row.body as string, row.first_reply as string | null))
-    : candidates[0];
+  const allowed = recentHasLink
+    ? candidates.filter((row) => !containsLink(row.body as string, row.first_reply as string | null))
+    : candidates;
+  let next: (typeof allowed)[number] | undefined = allowed[0];
+  if (next && !options.project) {
+    const { data: postedRows, error: postedError } = await db
+      .from("threads_posts")
+      .select("project, posted_at")
+      .eq("status", "posted")
+      .not("posted_at", "is", null)
+      .order("posted_at", { ascending: false })
+      .limit(500);
+    if (postedError) return { ok: false, error: postedError.message };
+    next = pickRotationCandidate(allowed, postedRows ?? []);
+  }
   if (!next) {
     return {
       ok: true,
@@ -435,4 +474,40 @@ export async function importStarterPosts(
   const { error } = await db.from("threads_posts").insert(rows);
   if (error) throw new Error(error.message);
   return rows.length;
+}
+
+export type BulkImportItem = { body: string; project: ThreadsProject; style: string | null; sort_order: number };
+
+/** 批次匯入成草稿；body（去掉前後空白後）和現有任何一篇相同就跳過。回傳匯入與跳過的篇數 */
+export async function bulkImportThreadsPosts(
+  items: BulkImportItem[],
+): Promise<{ imported: number; skipped: number }> {
+  const db = requireDb();
+  const { data: existing, error: readError } = await db.from("threads_posts").select("body").limit(5000);
+  if (readError) throw new Error(readError.message);
+  const seen = new Set((existing ?? []).map((row) => String(row.body).trim()));
+
+  const rows = [];
+  let skipped = 0;
+  for (const item of items) {
+    const body = item.body.trim();
+    if (seen.has(body)) {
+      skipped += 1;
+      continue;
+    }
+    seen.add(body);
+    rows.push({
+      body,
+      first_reply: null,
+      style: item.style,
+      project: item.project,
+      status: "draft",
+      sort_order: item.sort_order,
+    });
+  }
+  if (rows.length > 0) {
+    const { error } = await db.from("threads_posts").insert(rows);
+    if (error) throw new Error(error.message);
+  }
+  return { imported: rows.length, skipped };
 }

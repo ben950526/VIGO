@@ -28,3 +28,13 @@ export function containsLink(...texts: (string | null | undefined)[]): boolean {
       /(https?:\/\/|www\.|\b[a-z0-9-]+\.(?:vercel\.app|workers\.dev|com|tw|io|app|net|org)\b)/i.test(text),
   );
 }
+
+/** 文案類型（後台下拉選單與批次匯入用）；舊文案的風格值（痛點、反直覺…）保留不改 */
+export const THREADS_STYLES = [
+  "問題與故事",
+  "做產品的過程",
+  "實用乾貨",
+  "產品推廣",
+  "反直覺觀點",
+  "二選一提問",
+] as const;
