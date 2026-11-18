@@ -192,7 +192,7 @@ export default async function AdminThreadsPage({
   ]);
 
   const queued = posts.filter((p) => p.status === "approved");
-  const daysLeft = queued.length;
+  const daysLeft = Math.ceil(queued.length / 2);
   const drafts = posts.filter((p) => p.status === "draft").length;
   const shown = filter ? posts.filter((p) => p.project === filter) : posts;
   const active = shown.filter((p) => p.status !== "posted");
@@ -206,7 +206,7 @@ export default async function AdminThreadsPage({
           <div>
             <h1 className="text-3xl font-bold">Threads 自動發文</h1>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              工作室帳號替 Vigo、吃藥小幫手、我們的故事書、Logic Gym 輪流發文。每天台北 12 點（該小時內）發一篇「已核准」的文案；草稿不會發。防封：距離上一篇不到 20 小時不發、帶連結的貼文最多每 4 篇 1 篇、不再自動留連結。
+              工作室帳號替 Vigo、吃藥小幫手、我們的故事書、Logic Gym 輪流發文。每天台北 12 點、21 點（該小時內）各發一篇「已核准」的文案；12/11 前 21 點只發吃藥小幫手，沒有就跳過。草稿不會發。防封：每天最多 2 篇、間隔至少 6 小時、帶連結的貼文最多每 4 篇 1 篇、不再自動留連結。
             </p>
           </div>
           <Link href="/admin/review" className="btn-secondary text-sm">

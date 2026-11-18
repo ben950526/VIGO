@@ -147,7 +147,7 @@ export async function approveAllDraftsAction() {
   } catch (error) {
     back(errorText(error), "error");
   }
-  back(count > 0 ? `已核准 ${count} 篇，會依順序每天中午發一篇` : "沒有草稿可以核准");
+  back(count > 0 ? `已核准 ${count} 篇，會依順序在每天中午、晚上發出` : "沒有草稿可以核准");
 }
 
 export async function pauseAllApprovedAction() {

@@ -7,7 +7,13 @@ import {
   refreshLongLivedToken,
   ThreadsApiError,
 } from "@/lib/threads/api";
-import { containsLink, LINK_POST_WINDOW, type ThreadsProject } from "@/lib/threads/projects";
+import {
+  containsLink,
+  LINK_POST_WINDOW,
+  THREADS_PROJECT_LABEL,
+  type ThreadsProject,
+} from "@/lib/threads/projects";
+import { startOfTaipeiDay, taipeiDateString } from "@/lib/time/taipei";
 
 /** 只在伺服器用；兩張表沒有 RLS policy，只有 service role 讀得到（見 033） */
 function threadsDb() {
@@ -48,8 +54,10 @@ function isMissingProjectColumn(error: { message: string } | null): boolean {
   return !!error && error.message.includes("project");
 }
 
-/** 防封：兩篇之間至少隔這麼久（Cron 每天一次，留一點誤差） */
-const MIN_HOURS_BETWEEN_POSTS = 20;
+/** 防封：兩篇之間至少隔這麼久（Cron 台北 12 點、21 點各一次，留一點誤差） */
+const MIN_HOURS_BETWEEN_POSTS = 6;
+/** 防封：台北同一天最多發幾篇（手動「現在發」也算） */
+const MAX_POSTS_PER_DAY = 2;
 
 function requireDb() {
   const db = threadsDb();
@@ -194,10 +202,13 @@ export type PublishResult =
 /**
  * 取出下一篇「已核准」的文案發出；沒有就什麼都不做。
  * 防封規則（2026-11-17，工作室帳號）：
- *   1. 距離上一篇不到 20 小時就不發（每天最多 1 篇，手動按「現在發」也一樣）
+ *   1. 距離上一篇不到 6 小時、或台北今天已發 2 篇就不發（2026-11-18 改成每天最多 2 篇，手動按「現在發」也一樣）
  *   2. 帶連結的貼文最多每 4 篇 1 篇：最近 3 篇有帶連結時，跳過含連結的文案，改發下一篇沒連結的
+ *   3. 指定 project 時只挑那個專案的文案，沒有就跳過、不改發別的
  */
-export async function publishNextApprovedPost(): Promise<PublishResult> {
+export async function publishNextApprovedPost(
+  options: { project?: ThreadsProject } = {},
+): Promise<PublishResult> {
   const db = threadsDb();
   if (!db) return { ok: false, error: "伺服器缺少 SUPABASE_SERVICE_ROLE_KEY" };
 
@@ -214,21 +225,40 @@ export async function publishNextApprovedPost(): Promise<PublishResult> {
   }
   const lastPostedAt = recent?.[0]?.posted_at ? new Date(recent[0].posted_at as string).getTime() : 0;
   if (Date.now() - lastPostedAt < MIN_HOURS_BETWEEN_POSTS * 60 * 60 * 1000) {
-    return { ok: true, posted: false, reason: "距離上一篇不到 20 小時，今天先不發（每天最多 1 篇）" };
+    return { ok: true, posted: false, reason: "距離上一篇不到 6 小時，這次先不發（每天最多 2 篇）" };
+  }
+  const { count: postedToday, error: countError } = await db
+    .from("threads_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "posted")
+    .gte("posted_at", startOfTaipeiDay(taipeiDateString(new Date())).toISOString());
+  if (countError) return { ok: false, error: countError.message };
+  if ((postedToday ?? 0) >= MAX_POSTS_PER_DAY) {
+    return { ok: true, posted: false, reason: "今天已發 2 篇，這次先不發（每天最多 2 篇）" };
   }
   const recentHasLink = (recent ?? []).some((row) =>
     containsLink(row.body as string, row.first_reply as string | null),
   );
 
-  const { data: candidates, error: nextError } = await db
+  let candidateQuery = db
     .from("threads_posts")
     .select("id, body, first_reply")
-    .eq("status", "approved")
+    .eq("status", "approved");
+  if (options.project) candidateQuery = candidateQuery.eq("project", options.project);
+  const { data: candidates, error: nextError } = await candidateQuery
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true })
     .limit(30);
   if (nextError) return { ok: false, error: nextError.message };
-  if (!candidates || candidates.length === 0) return { ok: true, posted: false, reason: "沒有已核准的文案" };
+  if (!candidates || candidates.length === 0) {
+    return {
+      ok: true,
+      posted: false,
+      reason: options.project
+        ? `沒有已核准的「${THREADS_PROJECT_LABEL[options.project]}」文案，這次跳過`
+        : "沒有已核准的文案",
+    };
+  }
   const next = recentHasLink
     ? candidates.find((row) => !containsLink(row.body as string, row.first_reply as string | null))
     : candidates[0];
